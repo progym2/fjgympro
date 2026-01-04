@@ -63,6 +63,7 @@ const EvolutionGallery: React.FC = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<EvolutionPhoto | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [photoTypeFilter, setPhotoTypeFilter] = useState<string>('all');
   
   const [uploadData, setUploadData] = useState({
     file: null as File | null,
@@ -228,8 +229,14 @@ const EvolutionGallery: React.FC = () => {
     setSelectedPhoto(photos[newIndex]);
   };
 
+  // Filter photos by type
+  const filteredPhotos = useMemo(() => {
+    if (photoTypeFilter === 'all') return photos;
+    return photos.filter(p => p.photo_type === photoTypeFilter);
+  }, [photos, photoTypeFilter]);
+
   // Group photos by month
-  const groupedPhotos = photos.reduce((acc, photo) => {
+  const groupedPhotos = filteredPhotos.reduce((acc, photo) => {
     const month = format(new Date(photo.photo_date), 'MMMM yyyy', { locale: ptBR });
     if (!acc[month]) acc[month] = [];
     acc[month].push(photo);
@@ -271,11 +278,25 @@ const EvolutionGallery: React.FC = () => {
           </TabsList>
 
           <TabsContent value="gallery" className="mt-0">
-            {/* Add Photo Button */}
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-sm text-muted-foreground">
-                Registre sua evolução física
-              </p>
+            {/* Filter + Add Photo Button */}
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <Select value={photoTypeFilter} onValueChange={setPhotoTypeFilter}>
+                  <SelectTrigger className="w-[140px] h-9 text-xs">
+                    <SelectValue placeholder="Filtrar tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os tipos</SelectItem>
+                    <SelectItem value="front">Frente</SelectItem>
+                    <SelectItem value="back">Costas</SelectItem>
+                    <SelectItem value="side_left">Lado Esquerdo</SelectItem>
+                    <SelectItem value="side_right">Lado Direito</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-xs text-muted-foreground hidden sm:inline">
+                  {filteredPhotos.length} foto{filteredPhotos.length !== 1 ? 's' : ''}
+                </span>
+              </div>
               <Button
                 onClick={() => {
                   playClickSound();
@@ -298,21 +319,35 @@ const EvolutionGallery: React.FC = () => {
             </div>
 
         {/* Photo Grid */}
-        {photos.length === 0 ? (
+        {filteredPhotos.length === 0 ? (
           <Card className="bg-card/80 backdrop-blur-md border-border/50">
             <CardContent className="p-8 text-center">
               <ImageIcon className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-              <h3 className="font-semibold mb-2">Nenhuma foto registrada</h3>
+              <h3 className="font-semibold mb-2">
+                {photos.length === 0 ? 'Nenhuma foto registrada' : 'Nenhuma foto deste tipo'}
+              </h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Adicione fotos para acompanhar sua evolução física ao longo do tempo.
+                {photos.length === 0 
+                  ? 'Adicione fotos para acompanhar sua evolução física ao longo do tempo.'
+                  : 'Tente selecionar outro filtro ou adicione mais fotos.'}
               </p>
-              <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Camera className="w-4 h-4 mr-2" />
-                Tirar Primeira Foto
-              </Button>
+              {photos.length === 0 && (
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  Tirar Primeira Foto
+                </Button>
+              )}
+              {photos.length > 0 && photoTypeFilter !== 'all' && (
+                <Button
+                  variant="outline"
+                  onClick={() => setPhotoTypeFilter('all')}
+                >
+                  Ver Todas as Fotos
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
