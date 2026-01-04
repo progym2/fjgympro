@@ -38,6 +38,7 @@ interface Profile {
   cpf: string | null;
   city: string | null;
   cref: string | null;
+  avatar_url: string | null;
   license_key?: string;
   license_type?: string;
   license_status?: string;
@@ -129,7 +130,7 @@ const ListUsers: React.FC = () => {
       let query = supabase
         .from('profiles')
         .select(`
-          id, username, full_name, email, phone, cpf, city, cref, created_by_admin, enrollment_status,
+          id, username, full_name, email, phone, cpf, city, cref, avatar_url, created_by_admin, enrollment_status,
           licenses:licenses!licenses_profile_id_fkey (id, license_key, license_type, status, expires_at)
         `)
         .order('full_name');
@@ -478,8 +479,14 @@ const ListUsers: React.FC = () => {
       className="bg-card/80 backdrop-blur-md rounded-xl p-4 border border-border/50 hover:border-blue-500/30 transition-all"
     >
       <div className="flex items-center gap-4">
-        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${type === 'instructor' ? 'bg-green-500/20' : 'bg-blue-500/20'}`}>
-          {type === 'instructor' ? (
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center overflow-hidden ${type === 'instructor' ? 'bg-green-500/20 border border-green-500/30' : 'bg-blue-500/20 border border-blue-500/30'}`}>
+          {user.avatar_url ? (
+            <img
+              src={user.avatar_url}
+              alt={user.full_name || user.username}
+              className="w-full h-full object-cover"
+            />
+          ) : type === 'instructor' ? (
             <Dumbbell className="w-6 h-6 text-green-500" />
           ) : (
             <User className="w-6 h-6 text-blue-500" />
