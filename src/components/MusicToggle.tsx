@@ -79,9 +79,9 @@ const MusicToggle: React.FC = () => {
 
       {/* Controls Row */}
       <div className="flex items-center gap-2">
-        {/* Skip Button - only show when playing */}
+        {/* Skip Button - only show when music is enabled */}
         <AnimatePresence>
-          {isMusicPlaying && (
+          {isMusicEnabled && (
             <motion.button
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -90,12 +90,12 @@ const MusicToggle: React.FC = () => {
               onClick={skipToNextTrack}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="w-9 h-9 rounded-full bg-card/60 backdrop-blur-md border border-border/30 
-                flex items-center justify-center shadow-md hover:border-primary/40 transition-all"
+              className="w-8 h-8 rounded-full bg-card/70 backdrop-blur-md border border-border/40 
+                flex items-center justify-center shadow-md hover:border-primary/50 transition-all"
               aria-label="Próxima música"
               title="Próxima música"
             >
-              <SkipForward className="text-muted-foreground hover:text-primary" size={16} />
+              <SkipForward className="text-muted-foreground hover:text-primary transition-colors" size={14} />
             </motion.button>
           )}
         </AnimatePresence>
@@ -117,7 +117,7 @@ const MusicToggle: React.FC = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           className={`
-            w-11 h-11 rounded-full 
+            w-10 h-10 rounded-full 
             backdrop-blur-md border flex items-center justify-center 
             shadow-lg transition-all duration-300
             ${isMusicEnabled 
