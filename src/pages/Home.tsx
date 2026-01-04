@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { User, Dumbbell, Shield, Info } from 'lucide-react';
 
@@ -13,9 +12,9 @@ import ParticlesBackground from '@/components/ParticlesBackground';
 import AnimatedLogo from '@/components/AnimatedLogo';
 import AudioVisualizer from '@/components/AudioVisualizer';
 import SportThemeSelector from '@/components/SportThemeSelector';
+import DashboardEntryTransition from '@/components/DashboardEntryTransition';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
-import { useTheme } from '@/contexts/ThemeContext';
 
 import bgHome from '@/assets/bg-home.png';
 
@@ -30,9 +29,11 @@ const Home: React.FC = () => {
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false);
   const [selectedPanel, setSelectedPanel] = useState<'client' | 'instructor' | 'admin'>('client');
+  const [showEntryTransition, setShowEntryTransition] = useState(false);
+  const [transitionRole, setTransitionRole] = useState<string | null>(null);
 
   const navigate = useNavigate();
-  const { licenseExpired } = useAuth();
+  const { licenseExpired, profile } = useAuth();
   const { playClickSound, setOnHomeScreen, setSplashComplete, stopMusicImmediately, tryAutoPlay } = useAudio();
 
   // Marcar que está na tela inicial
@@ -80,20 +81,29 @@ const Home: React.FC = () => {
   const handleLoginSuccess = (role: string) => {
     setLoginDialogOpen(false);
     
-    // Usuário master vai para seleção de painel
+    // Usuário master vai para seleção de painel (sem transição especial)
     if (role === 'master') {
       navigate('/select-panel');
       return;
     }
     
-    // Outros usuários vão direto para seu painel correspondente
-    if (role === 'admin') {
+    // Mostrar transição de entrada para outros usuários
+    setTransitionRole(role);
+    setShowEntryTransition(true);
+  };
+
+  const handleEntryTransitionComplete = () => {
+    setShowEntryTransition(false);
+    
+    // Navegar para o painel correspondente
+    if (transitionRole === 'admin') {
       navigate('/admin');
-    } else if (role === 'instructor') {
+    } else if (transitionRole === 'instructor') {
       navigate('/instructor');
     } else {
       navigate('/client');
     }
+    setTransitionRole(null);
   };
 
   if (showSplash) {
@@ -167,6 +177,14 @@ const Home: React.FC = () => {
       />
       <AboutDialog isOpen={aboutDialogOpen} onClose={() => setAboutDialogOpen(false)} />
 
+      {/* Dashboard Entry Transition */}
+      {showEntryTransition && transitionRole && (
+        <DashboardEntryTransition
+          panelType={transitionRole as 'client' | 'instructor' | 'admin'}
+          userName={profile?.full_name || profile?.username}
+          onComplete={handleEntryTransitionComplete}
+        />
+      )}
 
       {/* Audio Visualizer */}
       <AudioVisualizer />
