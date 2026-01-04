@@ -390,6 +390,16 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Tentar autoplay após interação
   const tryAutoPlay = useCallback(() => {
+    console.log('tryAutoPlay called', { 
+      hasUserInteracted, 
+      isMusicEnabled, 
+      isOnHomeScreen, 
+      isSplashComplete, 
+      isMusicPlaying,
+      shuffledPlaylistLength: shuffledPlaylist.length,
+      audioRef: !!audioRef.current
+    });
+
     if (!hasUserInteracted) {
       setHasUserInteracted(true);
     }
@@ -398,6 +408,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const wasStoppedThisSession = sessionStorage.getItem(MUSIC_STOPPED_SESSION_KEY) === 'true';
     
     if (!audio || !isMusicEnabled || !isOnHomeScreen || !isSplashComplete || wasStoppedThisSession || isMusicPlaying) {
+      console.log('tryAutoPlay blocked', { audio: !!audio, wasStoppedThisSession });
       return;
     }
 
@@ -408,15 +419,19 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     if (shuffledPlaylist.length > 0) {
+      console.log('Playing track:', shuffledPlaylist[currentTrackIndex]?.path);
       audio.src = shuffledPlaylist[currentTrackIndex].path;
       audio.load();
       audio.volume = 0;
       audio.play().then(() => {
+        console.log('Music started playing');
         setIsMusicPlaying(true);
         fadeIn();
       }).catch((e) => {
         console.log('Autoplay blocked:', e.message);
       });
+    } else {
+      console.log('Playlist empty, cannot play');
     }
   }, [hasUserInteracted, isMusicEnabled, isOnHomeScreen, isSplashComplete, isMusicPlaying, shuffledPlaylist, currentTrackIndex, setupAnalyser, fadeIn]);
 
@@ -438,12 +453,22 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [isOnHomeScreen, isMusicPlaying, fadeOut]);
 
   const toggleMusic = useCallback(() => {
+    console.log('toggleMusic called', { isMusicEnabled, shuffledPlaylistLength: shuffledPlaylist.length });
+    
     const newEnabled = !isMusicEnabled;
     setIsMusicEnabled(newEnabled);
     localStorage.setItem(STORAGE_KEY, String(newEnabled));
 
     const audio = audioRef.current;
-    if (!audio || !shuffledPlaylist.length) return;
+    if (!audio) {
+      console.log('No audio ref');
+      return;
+    }
+    
+    if (shuffledPlaylist.length === 0) {
+      console.log('Playlist empty');
+      return;
+    }
 
     if (newEnabled && isOnHomeScreen && isSplashComplete) {
       sessionStorage.removeItem(MUSIC_STOPPED_SESSION_KEY);
@@ -455,13 +480,15 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         audioContextRef.current.resume();
       }
       
+      console.log('Playing track:', shuffledPlaylist[currentTrackIndex]?.path);
       audio.src = shuffledPlaylist[currentTrackIndex].path;
       audio.load();
       audio.volume = 0;
       audio.play().then(() => {
+        console.log('Music started via toggle');
         setIsMusicPlaying(true);
         fadeIn();
-      }).catch(console.error);
+      }).catch((e) => console.error('Play failed:', e));
     } else {
       sessionStorage.setItem(MUSIC_STOPPED_SESSION_KEY, 'true');
       fadeOut();
