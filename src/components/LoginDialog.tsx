@@ -9,6 +9,7 @@ import heroGym from '@/assets/hero-gym.jpg';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import SportThemeSelector from '@/components/SportThemeSelector';
+import LoginLoadingOverlay from '@/components/LoginLoadingOverlay';
 
 interface LoginDialogProps {
   isOpen: boolean;
@@ -582,6 +583,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
             className="relative w-full max-w-md bg-card rounded-2xl border border-primary/30 shadow-2xl shadow-primary/20 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Loading Overlay */}
+            <LoginLoadingOverlay isVisible={isLoading} message="Autenticando..." />
             {/* Background Image with overlay */}
             <div className="absolute inset-0 z-0">
               <img 
