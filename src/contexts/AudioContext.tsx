@@ -34,6 +34,7 @@ interface AudioContextType {
   stopMusicImmediately: () => void;
   tryAutoPlay: () => void;
   skipToNextTrack: () => void;
+  skipToPreviousTrack: () => void;
   playClickSound: () => void;
   playNotificationSound: () => void;
   playSuccessSound: () => void;
@@ -509,6 +510,25 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [shuffledPlaylist, currentTrackIndex, isMusicPlaying, musicVolume]);
 
+  // Voltar para música anterior
+  const skipToPreviousTrack = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio || shuffledPlaylist.length === 0) return;
+
+    const prevIndex = currentTrackIndex === 0 
+      ? shuffledPlaylist.length - 1 
+      : currentTrackIndex - 1;
+    setCurrentTrackIndex(prevIndex);
+    
+    audio.src = shuffledPlaylist[prevIndex].path;
+    audio.load();
+    
+    if (isMusicPlaying) {
+      audio.volume = musicVolume;
+      audio.play().catch(console.error);
+    }
+  }, [shuffledPlaylist, currentTrackIndex, isMusicPlaying, musicVolume]);
+
   // Nome da música atual
   const currentTrackName = shuffledPlaylist.length > 0 
     ? shuffledPlaylist[currentTrackIndex]?.name || 'Música' 
@@ -563,6 +583,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         stopMusicImmediately,
         tryAutoPlay,
         skipToNextTrack,
+        skipToPreviousTrack,
         playClickSound,
         playNotificationSound,
         playSuccessSound,
