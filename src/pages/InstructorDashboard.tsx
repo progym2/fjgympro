@@ -3,7 +3,7 @@ import { Routes, Route, useNavigate } from 'react-router-dom';
 import { 
   Users, Dumbbell, Utensils, Calendar, 
   CreditCard, FileText, QrCode, LogOut, 
-  Info, Bell, TrendingUp, UserPlus, ClipboardList, UserMinus, Library, History, CalendarDays, UserCog, Loader2
+  Info, Bell, TrendingUp, UserPlus, ClipboardList, UserMinus, Library, History, CalendarDays, UserCog, Loader2, Camera
 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,6 +51,7 @@ const ExerciseLibrary = lazy(() => import('@/components/instructor/ExerciseLibra
 const PendingStudents = lazy(() => import('@/components/instructor/PendingStudents'));
 const StudentWorkoutCalendar = lazy(() => import('@/components/instructor/StudentWorkoutCalendar'));
 const InstructorProfile = lazy(() => import('@/components/instructor/InstructorProfile'));
+const StudentEvolutionGallery = lazy(() => import('@/components/instructor/StudentEvolutionGallery'));
 const ProfileCompletionPrompt = lazy(() => import('@/components/ProfileCompletionPrompt'));
 const RealtimeNotifications = lazy(() => import('@/components/client/RealtimeNotifications'));
 const WidgetRestoreButton = lazy(() => import('@/components/shared/WidgetRestoreButton'));
@@ -125,6 +126,7 @@ const InstructorDashboard: React.FC = () => {
     { icon: Utensils, label: 'Planos Alimentares', path: 'meal-plans', color: 'text-orange-500' },
     { icon: Calendar, label: 'Agenda', path: 'schedule', color: 'text-cyan-500' },
     { icon: TrendingUp, label: 'Progresso Alunos', path: 'progress', color: 'text-yellow-500' },
+    { icon: Camera, label: 'Galeria Evolução', path: 'student-gallery', color: 'text-purple-500' },
     { icon: CreditCard, label: 'Financeiro', path: 'finance', color: 'text-emerald-500' },
     { icon: FileText, label: 'Relatórios', path: 'reports', color: 'text-indigo-500' },
     { icon: Bell, label: 'Notificações', path: 'notifications', color: 'text-pink-500' },
@@ -231,6 +233,7 @@ const InstructorDashboard: React.FC = () => {
               <Route path="progress" element={<StudentProgress />} />
               <Route path="workout-plans" element={<WorkoutPlans />} />
               <Route path="student-calendar" element={<StudentWorkoutCalendar />} />
+              <Route path="student-gallery" element={<StudentEvolutionGallery />} />
               <Route path="meal-plans" element={<MealPlans />} />
               <Route path="schedule" element={<Schedule />} />
               <Route path="finance" element={<Finance />} />

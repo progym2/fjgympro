@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Users, Search, Phone, Mail, Scale, Ruler, 
   Target, Calendar, Dumbbell, TrendingUp, Eye,
-  ChevronRight, Loader2, Award, Save
+  ChevronRight, Loader2, Award, Save, Camera
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useInstructorContext } from '@/hooks/useInstructorContext';
@@ -435,6 +435,17 @@ const MyStudents: React.FC = () => {
                     >
                       <Eye className="w-4 h-4" />
                       Ver Planos
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        playClickSound();
+                        navigate(`/instructor/student-gallery?student=${student.id}`);
+                      }}
+                      className="px-3 py-1.5 text-sm bg-pink-500/20 text-pink-500 rounded-lg hover:bg-pink-500/30 transition-colors flex items-center gap-1"
+                    >
+                      <Camera className="w-4 h-4" />
+                      Galeria Evolução
                     </button>
                   </div>
                 </motion.div>
