@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, Volume1 } from 'lucide-react';
+import { Volume2, VolumeX, Volume1, SkipForward } from 'lucide-react';
 import { useAudio } from '@/contexts/AudioContext';
 import { Slider } from '@/components/ui/slider';
 
 const MusicToggle: React.FC = () => {
-  const { isMusicPlaying, isMusicEnabled, isOnHomeScreen, toggleMusic, musicVolume, setMusicVolume } = useAudio();
+  const { 
+    isMusicPlaying, 
+    isMusicEnabled, 
+    isOnHomeScreen, 
+    toggleMusic, 
+    musicVolume, 
+    setMusicVolume,
+    currentTrackName,
+    skipToNextTrack
+  } = useAudio();
   const [showVolume, setShowVolume] = useState(false);
 
   if (!isOnHomeScreen) {
@@ -16,7 +25,6 @@ const MusicToggle: React.FC = () => {
   const volumePercent = Math.round((musicVolume / 0.5) * 100);
 
   const handleVolumeChange = (value: number[]) => {
-    // Converter porcentagem (0-100) para volume (0-0.5)
     const newVolume = (value[0] / 100) * 0.5;
     setMusicVolume(newVolume);
   };
@@ -33,7 +41,7 @@ const MusicToggle: React.FC = () => {
 
   return (
     <div className="fixed bottom-14 right-4 z-40 flex flex-col items-end gap-2">
-      {/* Volume Slider */}
+      {/* Volume Slider & Track Info */}
       <AnimatePresence>
         {showVolume && isMusicEnabled && (
           <motion.div
@@ -43,6 +51,14 @@ const MusicToggle: React.FC = () => {
             transition={{ duration: 0.2 }}
             className="bg-card/90 backdrop-blur-md border border-border/50 rounded-lg p-3 shadow-lg"
           >
+            {/* Track Name */}
+            {isMusicPlaying && currentTrackName && (
+              <p className="text-xs text-primary font-medium mb-2 text-center truncate max-w-[160px]">
+                🎵 {currentTrackName}
+              </p>
+            )}
+            
+            {/* Volume Slider */}
             <div className="flex items-center gap-3 min-w-[140px]">
               <Volume1 size={14} className="text-muted-foreground flex-shrink-0" />
               <Slider
@@ -61,55 +77,79 @@ const MusicToggle: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Toggle Button */}
-      <motion.button
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.8 }}
-        transition={{ duration: 0.3, delay: 0.5 }}
-        onClick={toggleMusic}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          if (isMusicEnabled) setShowVolume(!showVolume);
-        }}
-        onDoubleClick={() => {
-          if (isMusicEnabled) setShowVolume(!showVolume);
-        }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        className={`
-          w-11 h-11 rounded-full 
-          backdrop-blur-md border flex items-center justify-center 
-          shadow-lg transition-all duration-300
-          ${isMusicEnabled 
-            ? 'bg-primary/20 border-primary/40 shadow-primary/20' 
-            : 'bg-card/60 border-border/30 shadow-black/20'
-          }
-        `}
-        aria-label={isMusicEnabled ? 'Desativar música' : 'Ativar música'}
-        title={isMusicEnabled ? 'Clique duplo para volume | Clique para mutar' : 'Ativar música de fundo'}
-      >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={isMusicEnabled ? 'enabled' : 'disabled'}
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            exit={{ scale: 0, rotate: 180 }}
-            transition={{ duration: 0.2 }}
-          >
-            {isMusicPlaying ? (
-              <motion.div
-                animate={{ scale: [1, 1.15, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                {getVolumeIcon()}
-              </motion.div>
-            ) : (
-              getVolumeIcon()
-            )}
-          </motion.div>
+      {/* Controls Row */}
+      <div className="flex items-center gap-2">
+        {/* Skip Button - only show when playing */}
+        <AnimatePresence>
+          {isMusicPlaying && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={skipToNextTrack}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="w-9 h-9 rounded-full bg-card/60 backdrop-blur-md border border-border/30 
+                flex items-center justify-center shadow-md hover:border-primary/40 transition-all"
+              aria-label="Próxima música"
+              title="Próxima música"
+            >
+              <SkipForward className="text-muted-foreground hover:text-primary" size={16} />
+            </motion.button>
+          )}
         </AnimatePresence>
-      </motion.button>
+
+        {/* Toggle Button */}
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ duration: 0.3, delay: 0.5 }}
+          onClick={toggleMusic}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            if (isMusicEnabled) setShowVolume(!showVolume);
+          }}
+          onDoubleClick={() => {
+            if (isMusicEnabled) setShowVolume(!showVolume);
+          }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          className={`
+            w-11 h-11 rounded-full 
+            backdrop-blur-md border flex items-center justify-center 
+            shadow-lg transition-all duration-300
+            ${isMusicEnabled 
+              ? 'bg-primary/20 border-primary/40 shadow-primary/20' 
+              : 'bg-card/60 border-border/30 shadow-black/20'
+            }
+          `}
+          aria-label={isMusicEnabled ? 'Desativar música' : 'Ativar música'}
+          title={isMusicEnabled ? 'Clique duplo para volume | Clique para mutar' : 'Ativar música de fundo'}
+        >
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={isMusicEnabled ? 'enabled' : 'disabled'}
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              exit={{ scale: 0, rotate: 180 }}
+              transition={{ duration: 0.2 }}
+            >
+              {isMusicPlaying ? (
+                <motion.div
+                  animate={{ scale: [1, 1.15, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  {getVolumeIcon()}
+                </motion.div>
+              ) : (
+                getVolumeIcon()
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </motion.button>
+      </div>
 
       {/* Help Text */}
       {isMusicEnabled && !showVolume && (
