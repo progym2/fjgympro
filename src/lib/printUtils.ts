@@ -1,0 +1,367 @@
+// Print utility functions for receipts and reports
+
+interface ReceiptData {
+  title: string;
+  subtitle?: string;
+  items: { label: string; value: string }[];
+  footer?: string;
+  date?: Date;
+}
+
+export const printReceipt = (data: ReceiptData) => {
+  const printWindow = window.open('', '_blank', 'width=400,height=600');
+  if (!printWindow) {
+    alert('Por favor, permita pop-ups para imprimir recibos.');
+    return;
+  }
+
+  const formattedDate = (data.date || new Date()).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${data.title}</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          font-family: 'Courier New', monospace;
+          padding: 20px;
+          max-width: 300px;
+          margin: 0 auto;
+        }
+        .header {
+          text-align: center;
+          border-bottom: 2px dashed #000;
+          padding-bottom: 15px;
+          margin-bottom: 15px;
+        }
+        .title {
+          font-size: 18px;
+          font-weight: bold;
+          margin-bottom: 5px;
+        }
+        .subtitle {
+          font-size: 12px;
+          color: #666;
+        }
+        .date {
+          font-size: 11px;
+          margin-top: 10px;
+        }
+        .items {
+          margin-bottom: 15px;
+        }
+        .item {
+          display: flex;
+          justify-content: space-between;
+          padding: 5px 0;
+          border-bottom: 1px dotted #ccc;
+        }
+        .item-label {
+          font-size: 12px;
+          max-width: 60%;
+        }
+        .item-value {
+          font-size: 12px;
+          font-weight: bold;
+          text-align: right;
+        }
+        .footer {
+          text-align: center;
+          border-top: 2px dashed #000;
+          padding-top: 15px;
+          margin-top: 15px;
+          font-size: 11px;
+        }
+        .logo {
+          font-size: 24px;
+          font-weight: bold;
+          color: #f97316;
+        }
+        @media print {
+          body { padding: 10px; }
+          .no-print { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="logo">FRANCGYMPRO</div>
+        <div class="title">${data.title}</div>
+        ${data.subtitle ? `<div class="subtitle">${data.subtitle}</div>` : ''}
+        <div class="date">${formattedDate}</div>
+      </div>
+      
+      <div class="items">
+        ${data.items.map(item => `
+          <div class="item">
+            <span class="item-label">${item.label}</span>
+            <span class="item-value">${item.value}</span>
+          </div>
+        `).join('')}
+      </div>
+      
+      ${data.footer ? `<div class="footer">${data.footer}</div>` : ''}
+      
+      <div class="no-print" style="text-align: center; margin-top: 20px;">
+        <button onclick="window.print()" style="padding: 10px 20px; cursor: pointer;">
+          Imprimir
+        </button>
+      </div>
+    </body>
+    </html>
+  `;
+
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.focus();
+  
+  // Auto-print after a short delay
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
+};
+
+export const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+};
+
+export const generateReceiptNumber = (): string => {
+  const now = new Date();
+  const year = now.getFullYear().toString().slice(-2);
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `REC${year}${month}${day}${random}`;
+};
+
+export const printPaymentReceipt = (payment: {
+  clientName: string;
+  amount: number;
+  method: string;
+  description?: string;
+  receiptNumber: string;
+  discount?: number;
+  installment?: { current: number; total: number };
+}) => {
+  const methodLabels: Record<string, string> = {
+    cash: 'Dinheiro',
+    pix: 'PIX',
+    card: 'Cartão',
+  };
+
+  const items = [
+    { label: 'Cliente', value: payment.clientName },
+    { label: 'Valor', value: formatCurrency(payment.amount) },
+    { label: 'Método', value: methodLabels[payment.method] || payment.method },
+  ];
+
+  if (payment.discount && payment.discount > 0) {
+    items.push({ label: 'Desconto', value: `${payment.discount}%` });
+  }
+
+  if (payment.installment) {
+    items.push({ 
+      label: 'Parcela', 
+      value: `${payment.installment.current}/${payment.installment.total}` 
+    });
+  }
+
+  if (payment.description) {
+    items.push({ label: 'Descrição', value: payment.description });
+  }
+
+  items.push({ label: 'Recibo Nº', value: payment.receiptNumber });
+
+  printReceipt({
+    title: 'RECIBO DE PAGAMENTO',
+    items,
+    footer: 'Obrigado pela preferência! Este recibo é válido como comprovante de pagamento.',
+  });
+};
+
+export const printEnrollmentReceipt = (enrollment: {
+  clientName: string;
+  plan: string;
+  monthlyFee: number;
+  enrollmentDate: string;
+  licenseKey: string;
+}) => {
+  printReceipt({
+    title: 'COMPROVANTE DE MATRÍCULA',
+    items: [
+      { label: 'Aluno', value: enrollment.clientName },
+      { label: 'Plano', value: enrollment.plan },
+      { label: 'Mensalidade', value: formatCurrency(enrollment.monthlyFee) },
+      { label: 'Data Matrícula', value: enrollment.enrollmentDate },
+      { label: 'Chave de Acesso', value: enrollment.licenseKey },
+    ],
+    footer: 'Guarde sua chave de acesso. Ela será necessária para fazer login no sistema.',
+  });
+};
+
+export const printPaymentPlan = (plan: {
+  clientName: string;
+  totalAmount: number;
+  installments: number;
+  installmentAmount: number;
+  discount: number;
+  startDate: string;
+  payments: { number: number; dueDate: string; status: string }[];
+}) => {
+  const items = [
+    { label: 'Cliente', value: plan.clientName },
+    { label: 'Valor Total', value: formatCurrency(plan.totalAmount) },
+    { label: 'Parcelas', value: `${plan.installments}x de ${formatCurrency(plan.installmentAmount)}` },
+  ];
+
+  if (plan.discount > 0) {
+    items.push({ label: 'Desconto', value: `${plan.discount}%` });
+  }
+
+  items.push({ label: 'Início', value: plan.startDate });
+  items.push({ label: '', value: '--- PARCELAS ---' });
+
+  plan.payments.forEach(p => {
+    items.push({
+      label: `Parcela ${p.number}`,
+      value: `${p.dueDate} - ${p.status === 'paid' ? 'PAGO' : 'PENDENTE'}`,
+    });
+  });
+
+  printReceipt({
+    title: 'CARNÊ DE PAGAMENTO',
+    items,
+    footer: 'Mantenha suas parcelas em dia para manter acesso à academia.',
+  });
+};
+
+export const printAccountsReport = (accounts: {
+  username: string;
+  license_key: string;
+  account_type: string;
+  license_duration_days: number;
+}[], type: string) => {
+  const typeLabels: Record<string, string> = {
+    client: 'CLIENTES',
+    instructor: 'INSTRUTORES',
+    admin: 'GERENTES',
+    trial: 'TRIAL',
+  };
+
+  const printWindow = window.open('', '_blank', 'width=800,height=600');
+  if (!printWindow) {
+    alert('Por favor, permita pop-ups para imprimir.');
+    return;
+  }
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Contas ${typeLabels[type] || type}</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          font-family: 'Courier New', monospace;
+          padding: 20px;
+        }
+        .header {
+          text-align: center;
+          border-bottom: 2px solid #000;
+          padding-bottom: 15px;
+          margin-bottom: 20px;
+        }
+        .title {
+          font-size: 24px;
+          font-weight: bold;
+        }
+        .subtitle {
+          font-size: 14px;
+          color: #666;
+          margin-top: 5px;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        th, td {
+          border: 1px solid #000;
+          padding: 8px;
+          text-align: left;
+        }
+        th {
+          background: #f0f0f0;
+        }
+        .account-row:nth-child(even) {
+          background: #f9f9f9;
+        }
+        .footer {
+          text-align: center;
+          margin-top: 20px;
+          font-size: 12px;
+          color: #666;
+        }
+        @media print {
+          .no-print { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="title">FRANCGYMPRO - CONTAS ${typeLabels[type] || type}</div>
+        <div class="subtitle">Gerado em ${new Date().toLocaleDateString('pt-BR')} - Total: ${accounts.length} contas</div>
+      </div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Usuário</th>
+            <th>Senha/Chave</th>
+            <th>Duração</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${accounts.map((acc, i) => `
+            <tr class="account-row">
+              <td>${i + 1}</td>
+              <td><strong>${acc.username}</strong></td>
+              <td style="font-family: monospace;">${acc.license_key}</td>
+              <td>${acc.license_duration_days} dias</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      
+      <div class="footer">
+        Documento confidencial - Uso exclusivo interno
+      </div>
+      
+      <div class="no-print" style="text-align: center; margin-top: 20px;">
+        <button onclick="window.print()" style="padding: 10px 20px; cursor: pointer;">
+          Imprimir
+        </button>
+      </div>
+    </body>
+    </html>
+  `;
+
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.focus();
+  
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
+};

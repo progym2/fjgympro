@@ -1,0 +1,17 @@
+name = "francgympro"
+compatibility_date = "2024-01-01"
+
+[site]
+bucket = "./dist"
+
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
+
+[build]
+command = "npm run build"
+
+# Single Page Application fallback
+[build.upload]
+format = "service-worker"
