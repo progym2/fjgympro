@@ -2,13 +2,13 @@ import React, { createContext, useContext, useState, useRef, useEffect, useCallb
 
 // Playlist completa - tocará em ordem aleatória
 const MUSIC_TRACKS = [
-  '/audio/background-80.mp3',
-  '/audio/background-lento.mp3',
-  '/audio/gym-pro-funk1.mp3',
-  '/audio/gym-pro-funk2.mp3',
-  '/audio/peso-neon-new.mp3',
-  '/audio/peso-do-ritmo-1-new.mp3',
-  '/audio/peso-do-ritmo-new.mp3',
+  { path: '/audio/background-80.mp3', name: 'Background 80' },
+  { path: '/audio/background-lento.mp3', name: 'Background Lento' },
+  { path: '/audio/gym-pro-funk1.mp3', name: 'Gym Pro Funk 1' },
+  { path: '/audio/gym-pro-funk2.mp3', name: 'Gym Pro Funk 2' },
+  { path: '/audio/peso-neon-new.mp3', name: 'Peso Neon' },
+  { path: '/audio/peso-do-ritmo-1-new.mp3', name: 'Peso do Ritmo 1' },
+  { path: '/audio/peso-do-ritmo-new.mp3', name: 'Peso do Ritmo' },
 ];
 
 const DEFAULT_MUSIC_VOLUME = 0.18;
@@ -25,6 +25,7 @@ interface AudioContextType {
   isSplashComplete: boolean;
   analyserNode: AnalyserNode | null;
   musicVolume: number;
+  currentTrackName: string;
   setMusicVolume: (volume: number) => void;
   toggleMusic: () => void;
   toggleSfx: () => void;
@@ -32,6 +33,7 @@ interface AudioContextType {
   setSplashComplete: (value: boolean) => void;
   stopMusicImmediately: () => void;
   tryAutoPlay: () => void;
+  skipToNextTrack: () => void;
   playClickSound: () => void;
   playNotificationSound: () => void;
   playSuccessSound: () => void;
@@ -229,7 +231,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isSfxEnabled, setIsSfxEnabled] = useState(getSfxStoredPreference);
   const [isOnHomeScreen, setIsOnHomeScreenState] = useState(false);
   const [isSplashComplete, setIsSplashCompleteState] = useState(false);
-  const [shuffledPlaylist, setShuffledPlaylist] = useState<string[]>([]);
+  const [shuffledPlaylist, setShuffledPlaylist] = useState<typeof MUSIC_TRACKS>([]);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
@@ -254,7 +256,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const audio = new Audio();
     audio.crossOrigin = 'anonymous';
     audio.preload = 'auto';
-    audio.src = shuffledPlaylist[0];
+    audio.src = shuffledPlaylist[0].path;
     audio.loop = false;
     audio.volume = 0;
     audioRef.current = audio;
@@ -376,7 +378,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setCurrentTrackIndex(nextIndex);
       
       if (audio && isMusicEnabled && isOnHomeScreen) {
-        audio.src = shuffledPlaylist[nextIndex];
+        audio.src = shuffledPlaylist[nextIndex].path;
         audio.load();
         audio.volume = musicVolume;
         audio.play().catch(console.error);
@@ -407,7 +409,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     if (shuffledPlaylist.length > 0) {
-      audio.src = shuffledPlaylist[currentTrackIndex];
+      audio.src = shuffledPlaylist[currentTrackIndex].path;
       audio.load();
       audio.volume = 0;
       audio.play().then(() => {
@@ -454,7 +456,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         audioContextRef.current.resume();
       }
       
-      audio.src = shuffledPlaylist[currentTrackIndex];
+      audio.src = shuffledPlaylist[currentTrackIndex].path;
       audio.load();
       audio.volume = 0;
       audio.play().then(() => {
@@ -492,7 +494,25 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [isMusicPlaying]);
 
-  // Efeitos sonoros
+  // Pular para próxima música
+  const skipToNextTrack = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio || shuffledPlaylist.length === 0 || !isMusicPlaying) return;
+
+    const nextIndex = (currentTrackIndex + 1) % shuffledPlaylist.length;
+    setCurrentTrackIndex(nextIndex);
+    
+    audio.src = shuffledPlaylist[nextIndex].path;
+    audio.load();
+    audio.volume = musicVolume;
+    audio.play().catch(console.error);
+  }, [shuffledPlaylist, currentTrackIndex, isMusicPlaying, musicVolume]);
+
+  // Nome da música atual
+  const currentTrackName = shuffledPlaylist.length > 0 
+    ? shuffledPlaylist[currentTrackIndex]?.name || 'Música' 
+    : '';
+
   const playClickSound = useCallback(() => {
     if (isOnHomeScreen || !isSfxEnabled) return;
     try { createSinisterClick(); } catch {}
@@ -533,6 +553,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isSplashComplete,
         analyserNode,
         musicVolume,
+        currentTrackName,
         setMusicVolume,
         toggleMusic,
         toggleSfx,
@@ -540,6 +561,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setSplashComplete,
         stopMusicImmediately,
         tryAutoPlay,
+        skipToNextTrack,
         playClickSound,
         playNotificationSound,
         playSuccessSound,
