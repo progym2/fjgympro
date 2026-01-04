@@ -14,7 +14,6 @@ const MUSIC_TRACKS = [
 const MUSIC_VOLUME = 0.18;
 const FADE_DURATION = 2000;
 const SFX_VOLUME = 0.5;
-const AUTO_PLAY_DELAY = 20000; // 20 segundos
 
 interface AudioContextType {
   isMusicPlaying: boolean;
@@ -28,6 +27,7 @@ interface AudioContextType {
   setOnHomeScreen: (value: boolean) => void;
   setSplashComplete: (value: boolean) => void;
   stopMusicImmediately: () => void;
+  tryAutoPlay: () => void;
   playClickSound: () => void;
   playNotificationSound: () => void;
   playSuccessSound: () => void;
@@ -40,7 +40,6 @@ const AudioContextData = createContext<AudioContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'gym_music_enabled';
 const SFX_STORAGE_KEY = 'gym_sfx_enabled';
-const FIRST_VISIT_KEY = 'gym_first_visit_done';
 const MUSIC_STOPPED_SESSION_KEY = 'gym_music_stopped_session';
 
 // Singleton AudioContext para melhor performance
@@ -208,7 +207,6 @@ const createCountdownBeep = () => {
 export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const getStoredPreference = (): boolean => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    // Default true para primeira visita
     return stored === null ? true : stored === 'true';
   };
 
@@ -225,31 +223,45 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [shuffledPlaylist, setShuffledPlaylist] = useState<string[]>([]);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
-  const [hasAutoPlayed, setHasAutoPlayed] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fadeIntervalRef = useRef<number | null>(null);
-  const autoPlayTimerRef = useRef<number | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const isInitializedRef = useRef(false);
 
   // Embaralhar playlist no início
   useEffect(() => {
     setShuffledPlaylist(shuffleArray(MUSIC_TRACKS));
   }, []);
 
-  // Inicializar áudio e analyser
+  // Inicializar áudio
   useEffect(() => {
-    if (shuffledPlaylist.length === 0) return;
+    if (shuffledPlaylist.length === 0 || isInitializedRef.current) return;
+    isInitializedRef.current = true;
 
     const audio = new Audio();
     audio.crossOrigin = 'anonymous';
+    audio.preload = 'auto';
     audio.src = shuffledPlaylist[0];
     audio.loop = false;
     audio.volume = 0;
     audioRef.current = audio;
 
-    // Criar AudioContext e Analyser para visualização
+    return () => {
+      if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, [shuffledPlaylist]);
+
+  // Configurar analyser após interação do usuário
+  const setupAnalyser = useCallback(() => {
+    if (!audioRef.current || audioContextRef.current) return;
+    
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
       audioContextRef.current = ctx;
@@ -259,35 +271,20 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       analyser.smoothingTimeConstant = 0.8;
       setAnalyserNode(analyser);
 
-      const source = ctx.createMediaElementSource(audio);
+      const source = ctx.createMediaElementSource(audioRef.current);
       source.connect(analyser);
       analyser.connect(ctx.destination);
       sourceNodeRef.current = source;
     } catch (e) {
       console.log('AudioContext for visualizer not available');
     }
-
-    return () => {
-      if (fadeIntervalRef.current) {
-        clearInterval(fadeIntervalRef.current);
-      }
-      if (autoPlayTimerRef.current) {
-        clearTimeout(autoPlayTimerRef.current);
-      }
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
-  }, [shuffledPlaylist]);
+  }, []);
 
   const fadeIn = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (fadeIntervalRef.current) {
-      clearInterval(fadeIntervalRef.current);
-    }
+    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
 
     audio.volume = 0;
     const steps = 20;
@@ -298,15 +295,11 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     fadeIntervalRef.current = window.setInterval(() => {
       currentStep++;
       const newVolume = Math.min(volumeStep * currentStep, MUSIC_VOLUME);
-      if (audioRef.current) {
-        audioRef.current.volume = newVolume;
-      }
+      if (audioRef.current) audioRef.current.volume = newVolume;
 
-      if (currentStep >= steps) {
-        if (fadeIntervalRef.current) {
-          clearInterval(fadeIntervalRef.current);
-          fadeIntervalRef.current = null;
-        }
+      if (currentStep >= steps && fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+        fadeIntervalRef.current = null;
       }
     }, stepDuration);
   }, []);
@@ -318,9 +311,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return;
     }
 
-    if (fadeIntervalRef.current) {
-      clearInterval(fadeIntervalRef.current);
-    }
+    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
 
     const startVolume = audio.volume;
     if (startVolume === 0) {
@@ -338,40 +329,30 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     fadeIntervalRef.current = window.setInterval(() => {
       currentStep++;
       const newVolume = Math.max(startVolume - (volumeStep * currentStep), 0);
-      if (audioRef.current) {
-        audioRef.current.volume = newVolume;
-      }
+      if (audioRef.current) audioRef.current.volume = newVolume;
 
       if (currentStep >= steps) {
         if (fadeIntervalRef.current) {
           clearInterval(fadeIntervalRef.current);
           fadeIntervalRef.current = null;
         }
-        if (audioRef.current) {
-          audioRef.current.pause();
-        }
+        if (audioRef.current) audioRef.current.pause();
         setIsMusicPlaying(false);
         onComplete?.();
       }
     }, stepDuration);
   }, []);
 
-  // Para música imediatamente (para login)
   const stopMusicImmediately = useCallback(() => {
     if (fadeIntervalRef.current) {
       clearInterval(fadeIntervalRef.current);
       fadeIntervalRef.current = null;
-    }
-    if (autoPlayTimerRef.current) {
-      clearTimeout(autoPlayTimerRef.current);
-      autoPlayTimerRef.current = null;
     }
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.volume = 0;
     }
     setIsMusicPlaying(false);
-    // Marcar que música foi parada nesta sessão
     sessionStorage.setItem(MUSIC_STOPPED_SESSION_KEY, 'true');
   }, []);
 
@@ -396,72 +377,54 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => audio.removeEventListener('ended', handleTrackEnd);
   }, [currentTrackIndex, shuffledPlaylist, isMusicEnabled, isOnHomeScreen]);
 
-  // Lógica de autoplay com delay de 20s
-  const startMusicWithDelay = useCallback(() => {
+  // Tentar autoplay após interação
+  const tryAutoPlay = useCallback(() => {
+    if (!hasUserInteracted) {
+      setHasUserInteracted(true);
+    }
+
     const audio = audioRef.current;
-    if (!audio || shuffledPlaylist.length === 0) return;
-
-    // Verificar se música foi parada nesta sessão
     const wasStoppedThisSession = sessionStorage.getItem(MUSIC_STOPPED_SESSION_KEY) === 'true';
-    if (wasStoppedThisSession) return;
-
-    // Verificar se é primeira visita
-    const isFirstVisit = !localStorage.getItem(FIRST_VISIT_KEY);
     
-    if (isFirstVisit) {
-      // Primeira visita: aguardar 20 segundos
-      localStorage.setItem(FIRST_VISIT_KEY, 'true');
-      autoPlayTimerRef.current = window.setTimeout(() => {
-        if (audioRef.current && isMusicEnabled && isOnHomeScreen && isSplashComplete) {
-          // Resume audio context se necessário
-          if (audioContextRef.current?.state === 'suspended') {
-            audioContextRef.current.resume();
-          }
-          audioRef.current.src = shuffledPlaylist[currentTrackIndex];
-          audioRef.current.load();
-          audioRef.current.volume = 0;
-          audioRef.current.play().then(() => {
-            setIsMusicPlaying(true);
-            setHasAutoPlayed(true);
-            fadeIn();
-          }).catch(console.error);
-        }
-      }, AUTO_PLAY_DELAY);
-    } else if (!hasAutoPlayed) {
-      // Não é primeira visita mas música não tocou ainda nesta sessão
-      // Iniciar imediatamente após splash
-      if (audioContextRef.current?.state === 'suspended') {
-        audioContextRef.current.resume();
-      }
+    if (!audio || !isMusicEnabled || !isOnHomeScreen || !isSplashComplete || wasStoppedThisSession || isMusicPlaying) {
+      return;
+    }
+
+    setupAnalyser();
+    
+    if (audioContextRef.current?.state === 'suspended') {
+      audioContextRef.current.resume();
+    }
+
+    if (shuffledPlaylist.length > 0) {
       audio.src = shuffledPlaylist[currentTrackIndex];
       audio.load();
       audio.volume = 0;
       audio.play().then(() => {
         setIsMusicPlaying(true);
-        setHasAutoPlayed(true);
         fadeIn();
-      }).catch(console.error);
+      }).catch((e) => {
+        console.log('Autoplay blocked:', e.message);
+      });
     }
-  }, [shuffledPlaylist, currentTrackIndex, isMusicEnabled, isOnHomeScreen, isSplashComplete, hasAutoPlayed, fadeIn]);
+  }, [hasUserInteracted, isMusicEnabled, isOnHomeScreen, isSplashComplete, isMusicPlaying, shuffledPlaylist, currentTrackIndex, setupAnalyser, fadeIn]);
 
-  // Controlar música
+  // Tentar autoplay quando condições forem atendidas
   useEffect(() => {
-    if (!shuffledPlaylist.length) return;
-
-    const wasStoppedThisSession = sessionStorage.getItem(MUSIC_STOPPED_SESSION_KEY) === 'true';
-
-    if (isOnHomeScreen && isSplashComplete && isMusicEnabled && !wasStoppedThisSession) {
-      startMusicWithDelay();
-    } else {
-      if (autoPlayTimerRef.current) {
-        clearTimeout(autoPlayTimerRef.current);
-        autoPlayTimerRef.current = null;
-      }
-      if (isMusicPlaying) {
-        fadeOut();
+    if (isOnHomeScreen && isSplashComplete && isMusicEnabled && hasUserInteracted) {
+      const wasStoppedThisSession = sessionStorage.getItem(MUSIC_STOPPED_SESSION_KEY) === 'true';
+      if (!wasStoppedThisSession && !isMusicPlaying) {
+        tryAutoPlay();
       }
     }
-  }, [isOnHomeScreen, isSplashComplete, isMusicEnabled, shuffledPlaylist, startMusicWithDelay, fadeOut, isMusicPlaying]);
+  }, [isOnHomeScreen, isSplashComplete, isMusicEnabled, hasUserInteracted, isMusicPlaying, tryAutoPlay]);
+
+  // Parar música quando sair da home
+  useEffect(() => {
+    if (!isOnHomeScreen && isMusicPlaying) {
+      fadeOut();
+    }
+  }, [isOnHomeScreen, isMusicPlaying, fadeOut]);
 
   const toggleMusic = useCallback(() => {
     const newEnabled = !isMusicEnabled;
@@ -472,12 +435,15 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!audio || !shuffledPlaylist.length) return;
 
     if (newEnabled && isOnHomeScreen && isSplashComplete) {
-      // Limpar flag de parado na sessão
       sessionStorage.removeItem(MUSIC_STOPPED_SESSION_KEY);
+      setHasUserInteracted(true);
+      
+      setupAnalyser();
       
       if (audioContextRef.current?.state === 'suspended') {
         audioContextRef.current.resume();
       }
+      
       audio.src = shuffledPlaylist[currentTrackIndex];
       audio.load();
       audio.volume = 0;
@@ -489,7 +455,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       sessionStorage.setItem(MUSIC_STOPPED_SESSION_KEY, 'true');
       fadeOut();
     }
-  }, [isMusicEnabled, isOnHomeScreen, isSplashComplete, shuffledPlaylist, currentTrackIndex, fadeIn, fadeOut]);
+  }, [isMusicEnabled, isOnHomeScreen, isSplashComplete, shuffledPlaylist, currentTrackIndex, setupAnalyser, fadeIn, fadeOut]);
 
   const setOnHomeScreen = useCallback((value: boolean) => {
     setIsOnHomeScreenState(value);
@@ -550,6 +516,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setOnHomeScreen,
         setSplashComplete,
         stopMusicImmediately,
+        tryAutoPlay,
         playClickSound,
         playNotificationSound,
         playSuccessSound,
