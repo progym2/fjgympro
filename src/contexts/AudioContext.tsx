@@ -1,14 +1,9 @@
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 
-// Playlist completa - tocará em ordem aleatória
-const MUSIC_TRACKS = [
-  { path: '/audio/background-80.mp3', name: 'Background 80' },
-  { path: '/audio/background-lento.mp3', name: 'Background Lento' },
-  { path: '/audio/gym-pro-funk1.mp3', name: 'Gym Pro Funk 1' },
-  { path: '/audio/gym-pro-funk2.mp3', name: 'Gym Pro Funk 2' },
-  { path: '/audio/peso-neon-new.mp3', name: 'Peso Neon' },
-  { path: '/audio/peso-do-ritmo-1-new.mp3', name: 'Peso do Ritmo 1' },
-  { path: '/audio/peso-do-ritmo-new.mp3', name: 'Peso do Ritmo' },
+// Playlist de músicas - adicione novas músicas aqui
+const MUSIC_TRACKS: { path: string; name: string }[] = [
+  // Adicione músicas no formato:
+  // { path: '/audio/nome-do-arquivo.mp3', name: 'Nome da Música' },
 ];
 
 const DEFAULT_MUSIC_VOLUME = 0.18;
