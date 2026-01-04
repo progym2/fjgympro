@@ -12,6 +12,7 @@ import AboutDialog from '@/components/AboutDialog';
 import ParticlesBackground from '@/components/ParticlesBackground';
 import AnimatedLogo from '@/components/AnimatedLogo';
 import MusicToggle from '@/components/MusicToggle';
+import AudioVisualizer from '@/components/AudioVisualizer';
 import SportThemeSelector from '@/components/SportThemeSelector';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
@@ -32,7 +33,7 @@ const Home: React.FC = () => {
 
   const navigate = useNavigate();
   const { licenseExpired } = useAuth();
-  const { playClickSound, setOnHomeScreen, setSplashComplete } = useAudio();
+  const { playClickSound, setOnHomeScreen, setSplashComplete, stopMusicImmediately } = useAudio();
 
   // Marcar que está na tela inicial (ativa música se habilitada)
   useEffect(() => {
@@ -71,6 +72,8 @@ const Home: React.FC = () => {
   const handlePanelClick = (panel: 'client' | 'instructor' | 'admin') => {
     playClickSound();
     setSelectedPanel(panel);
+    // Parar música imediatamente ao abrir login
+    stopMusicImmediately();
     setLoginDialogOpen(true);
   };
 
@@ -164,6 +167,9 @@ const Home: React.FC = () => {
 
       {/* Music Toggle Button */}
       <MusicToggle />
+
+      {/* Audio Visualizer */}
+      <AudioVisualizer />
     </div>
   );
 };

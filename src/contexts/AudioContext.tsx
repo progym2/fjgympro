@@ -1,15 +1,20 @@
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 
-// APENAS as 3 músicas enviadas pelo usuário
+// Playlist completa - tocará em ordem aleatória
 const MUSIC_TRACKS = [
-  '/audio/peso-neon.mp3',
-  '/audio/peso-do-ritmo.mp3',
-  '/audio/peso-do-ritmo-1.mp3',
+  '/audio/background-80.mp3',
+  '/audio/background-lento.mp3',
+  '/audio/gym-pro-funk1.mp3',
+  '/audio/gym-pro-funk2.mp3',
+  '/audio/peso-neon-new.mp3',
+  '/audio/peso-do-ritmo-1-new.mp3',
+  '/audio/peso-do-ritmo-new.mp3',
 ];
 
-const MUSIC_VOLUME = 0.15; // Volume baixo
-const FADE_DURATION = 2000; // 2 segundos de fade
-const SFX_VOLUME = 0.5; // Volume para efeitos sonoros (aumentado)
+const MUSIC_VOLUME = 0.18;
+const FADE_DURATION = 2000;
+const SFX_VOLUME = 0.5;
+const AUTO_PLAY_DELAY = 20000; // 20 segundos
 
 interface AudioContextType {
   isMusicPlaying: boolean;
@@ -17,11 +22,12 @@ interface AudioContextType {
   isSfxEnabled: boolean;
   isOnHomeScreen: boolean;
   isSplashComplete: boolean;
+  analyserNode: AnalyserNode | null;
   toggleMusic: () => void;
   toggleSfx: () => void;
   setOnHomeScreen: (value: boolean) => void;
   setSplashComplete: (value: boolean) => void;
-  // Funções de efeitos sonoros - só funcionam fora da tela inicial
+  stopMusicImmediately: () => void;
   playClickSound: () => void;
   playNotificationSound: () => void;
   playSuccessSound: () => void;
@@ -34,8 +40,10 @@ const AudioContextData = createContext<AudioContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'gym_music_enabled';
 const SFX_STORAGE_KEY = 'gym_sfx_enabled';
+const FIRST_VISIT_KEY = 'gym_first_visit_done';
+const MUSIC_STOPPED_SESSION_KEY = 'gym_music_stopped_session';
 
-// Singleton AudioContext para melhor performance e compatibilidade
+// Singleton AudioContext para melhor performance
 let sharedAudioContext: AudioContext | null = null;
 
 const getAudioContext = (): AudioContext | null => {
@@ -43,7 +51,6 @@ const getAudioContext = (): AudioContext | null => {
     if (!sharedAudioContext || sharedAudioContext.state === 'closed') {
       sharedAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
-    // Resume if suspended (browser autoplay policy)
     if (sharedAudioContext.state === 'suspended') {
       sharedAudioContext.resume();
     }
@@ -54,7 +61,17 @@ const getAudioContext = (): AudioContext | null => {
   }
 };
 
-// Criar sons sintetizados em vez de carregar arquivos
+// Embaralhar array (Fisher-Yates)
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+// Sons sintetizados
 const createSinisterClick = () => {
   const audioContext = getAudioContext();
   if (!audioContext) return;
@@ -109,9 +126,9 @@ const createSuccessSound = () => {
   gainNode.connect(audioContext.destination);
   
   oscillator.type = 'sine';
-  oscillator.frequency.setValueAtTime(523, audioContext.currentTime); // C5
-  oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.1); // E5
-  oscillator.frequency.setValueAtTime(784, audioContext.currentTime + 0.2); // G5
+  oscillator.frequency.setValueAtTime(523, audioContext.currentTime);
+  oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.1);
+  oscillator.frequency.setValueAtTime(784, audioContext.currentTime + 0.2);
   
   gainNode.gain.setValueAtTime(SFX_VOLUME, audioContext.currentTime);
   gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
@@ -124,7 +141,6 @@ const createTimerSound = () => {
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
-  // Primeiro beep
   const osc1 = audioContext.createOscillator();
   const gain1 = audioContext.createGain();
   osc1.connect(gain1);
@@ -136,7 +152,6 @@ const createTimerSound = () => {
   osc1.start(audioContext.currentTime);
   osc1.stop(audioContext.currentTime + 0.1);
   
-  // Segundo beep
   const osc2 = audioContext.createOscillator();
   const gain2 = audioContext.createGain();
   osc2.connect(gain2);
@@ -149,7 +164,6 @@ const createTimerSound = () => {
   osc2.stop(audioContext.currentTime + 0.3);
 };
 
-// Som de tick para cronômetro
 const createTickSound = () => {
   const audioContext = getAudioContext();
   if (!audioContext) return;
@@ -170,7 +184,6 @@ const createTickSound = () => {
   oscillator.stop(audioContext.currentTime + 0.05);
 };
 
-// Som de beep para contagem regressiva
 const createCountdownBeep = () => {
   const audioContext = getAudioContext();
   if (!audioContext) return;
@@ -195,12 +208,13 @@ const createCountdownBeep = () => {
 export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const getStoredPreference = (): boolean => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === 'true';
+    // Default true para primeira visita
+    return stored === null ? true : stored === 'true';
   };
 
   const getSfxStoredPreference = (): boolean => {
     const stored = localStorage.getItem(SFX_STORAGE_KEY);
-    return stored !== 'false'; // Default to true
+    return stored !== 'false';
   };
 
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
@@ -208,27 +222,64 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isSfxEnabled, setIsSfxEnabled] = useState(getSfxStoredPreference);
   const [isOnHomeScreen, setIsOnHomeScreenState] = useState(false);
   const [isSplashComplete, setIsSplashCompleteState] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState(0);
+  const [shuffledPlaylist, setShuffledPlaylist] = useState<string[]>([]);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
+  const [hasAutoPlayed, setHasAutoPlayed] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fadeIntervalRef = useRef<number | null>(null);
+  const autoPlayTimerRef = useRef<number | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
 
-  // Inicializar áudio
+  // Embaralhar playlist no início
   useEffect(() => {
-    audioRef.current = new Audio(MUSIC_TRACKS[0]);
-    audioRef.current.loop = false;
-    audioRef.current.volume = 0;
+    setShuffledPlaylist(shuffleArray(MUSIC_TRACKS));
+  }, []);
+
+  // Inicializar áudio e analyser
+  useEffect(() => {
+    if (shuffledPlaylist.length === 0) return;
+
+    const audio = new Audio();
+    audio.crossOrigin = 'anonymous';
+    audio.src = shuffledPlaylist[0];
+    audio.loop = false;
+    audio.volume = 0;
+    audioRef.current = audio;
+
+    // Criar AudioContext e Analyser para visualização
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = ctx;
+      
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 64;
+      analyser.smoothingTimeConstant = 0.8;
+      setAnalyserNode(analyser);
+
+      const source = ctx.createMediaElementSource(audio);
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+      sourceNodeRef.current = source;
+    } catch (e) {
+      console.log('AudioContext for visualizer not available');
+    }
 
     return () => {
       if (fadeIntervalRef.current) {
         clearInterval(fadeIntervalRef.current);
+      }
+      if (autoPlayTimerRef.current) {
+        clearTimeout(autoPlayTimerRef.current);
       }
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
     };
-  }, []);
+  }, [shuffledPlaylist]);
 
   const fadeIn = useCallback(() => {
     const audio = audioRef.current;
@@ -305,17 +356,36 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, stepDuration);
   }, []);
 
-  // Quando a música termina, tocar a próxima
+  // Para música imediatamente (para login)
+  const stopMusicImmediately = useCallback(() => {
+    if (fadeIntervalRef.current) {
+      clearInterval(fadeIntervalRef.current);
+      fadeIntervalRef.current = null;
+    }
+    if (autoPlayTimerRef.current) {
+      clearTimeout(autoPlayTimerRef.current);
+      autoPlayTimerRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.volume = 0;
+    }
+    setIsMusicPlaying(false);
+    // Marcar que música foi parada nesta sessão
+    sessionStorage.setItem(MUSIC_STOPPED_SESSION_KEY, 'true');
+  }, []);
+
+  // Próxima música quando terminar
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || shuffledPlaylist.length === 0) return;
 
     const handleTrackEnd = () => {
-      const nextTrack = (currentTrack + 1) % MUSIC_TRACKS.length;
-      setCurrentTrack(nextTrack);
+      const nextIndex = (currentTrackIndex + 1) % shuffledPlaylist.length;
+      setCurrentTrackIndex(nextIndex);
       
       if (audio && isMusicEnabled && isOnHomeScreen) {
-        audio.src = MUSIC_TRACKS[nextTrack];
+        audio.src = shuffledPlaylist[nextIndex];
         audio.load();
         audio.volume = MUSIC_VOLUME;
         audio.play().catch(console.error);
@@ -324,32 +394,74 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     audio.addEventListener('ended', handleTrackEnd);
     return () => audio.removeEventListener('ended', handleTrackEnd);
-  }, [currentTrack, isMusicEnabled, isOnHomeScreen]);
+  }, [currentTrackIndex, shuffledPlaylist, isMusicEnabled, isOnHomeScreen]);
 
-  // Controlar música baseado em estar na tela inicial, splash completo e preferência do usuário
-  useEffect(() => {
+  // Lógica de autoplay com delay de 20s
+  const startMusicWithDelay = useCallback(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || shuffledPlaylist.length === 0) return;
 
-    // Só toca música se: na home screen + splash completo + música habilitada
-    if (isOnHomeScreen && isSplashComplete && isMusicEnabled) {
-      // Iniciar música com fade in
-      audio.src = MUSIC_TRACKS[currentTrack];
+    // Verificar se música foi parada nesta sessão
+    const wasStoppedThisSession = sessionStorage.getItem(MUSIC_STOPPED_SESSION_KEY) === 'true';
+    if (wasStoppedThisSession) return;
+
+    // Verificar se é primeira visita
+    const isFirstVisit = !localStorage.getItem(FIRST_VISIT_KEY);
+    
+    if (isFirstVisit) {
+      // Primeira visita: aguardar 20 segundos
+      localStorage.setItem(FIRST_VISIT_KEY, 'true');
+      autoPlayTimerRef.current = window.setTimeout(() => {
+        if (audioRef.current && isMusicEnabled && isOnHomeScreen && isSplashComplete) {
+          // Resume audio context se necessário
+          if (audioContextRef.current?.state === 'suspended') {
+            audioContextRef.current.resume();
+          }
+          audioRef.current.src = shuffledPlaylist[currentTrackIndex];
+          audioRef.current.load();
+          audioRef.current.volume = 0;
+          audioRef.current.play().then(() => {
+            setIsMusicPlaying(true);
+            setHasAutoPlayed(true);
+            fadeIn();
+          }).catch(console.error);
+        }
+      }, AUTO_PLAY_DELAY);
+    } else if (!hasAutoPlayed) {
+      // Não é primeira visita mas música não tocou ainda nesta sessão
+      // Iniciar imediatamente após splash
+      if (audioContextRef.current?.state === 'suspended') {
+        audioContextRef.current.resume();
+      }
+      audio.src = shuffledPlaylist[currentTrackIndex];
       audio.load();
       audio.volume = 0;
       audio.play().then(() => {
         setIsMusicPlaying(true);
+        setHasAutoPlayed(true);
         fadeIn();
-      }).catch((error) => {
-        console.log('Autoplay bloqueado:', error);
-      });
+      }).catch(console.error);
+    }
+  }, [shuffledPlaylist, currentTrackIndex, isMusicEnabled, isOnHomeScreen, isSplashComplete, hasAutoPlayed, fadeIn]);
+
+  // Controlar música
+  useEffect(() => {
+    if (!shuffledPlaylist.length) return;
+
+    const wasStoppedThisSession = sessionStorage.getItem(MUSIC_STOPPED_SESSION_KEY) === 'true';
+
+    if (isOnHomeScreen && isSplashComplete && isMusicEnabled && !wasStoppedThisSession) {
+      startMusicWithDelay();
     } else {
-      // Parar música com fade out
+      if (autoPlayTimerRef.current) {
+        clearTimeout(autoPlayTimerRef.current);
+        autoPlayTimerRef.current = null;
+      }
       if (isMusicPlaying) {
         fadeOut();
       }
     }
-  }, [isOnHomeScreen, isSplashComplete, isMusicEnabled]);
+  }, [isOnHomeScreen, isSplashComplete, isMusicEnabled, shuffledPlaylist, startMusicWithDelay, fadeOut, isMusicPlaying]);
 
   const toggleMusic = useCallback(() => {
     const newEnabled = !isMusicEnabled;
@@ -357,10 +469,16 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem(STORAGE_KEY, String(newEnabled));
 
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || !shuffledPlaylist.length) return;
 
     if (newEnabled && isOnHomeScreen && isSplashComplete) {
-      audio.src = MUSIC_TRACKS[currentTrack];
+      // Limpar flag de parado na sessão
+      sessionStorage.removeItem(MUSIC_STOPPED_SESSION_KEY);
+      
+      if (audioContextRef.current?.state === 'suspended') {
+        audioContextRef.current.resume();
+      }
+      audio.src = shuffledPlaylist[currentTrackIndex];
       audio.load();
       audio.volume = 0;
       audio.play().then(() => {
@@ -368,9 +486,10 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         fadeIn();
       }).catch(console.error);
     } else {
+      sessionStorage.setItem(MUSIC_STOPPED_SESSION_KEY, 'true');
       fadeOut();
     }
-  }, [isMusicEnabled, isOnHomeScreen, isSplashComplete, currentTrack, fadeIn, fadeOut]);
+  }, [isMusicEnabled, isOnHomeScreen, isSplashComplete, shuffledPlaylist, currentTrackIndex, fadeIn, fadeOut]);
 
   const setOnHomeScreen = useCallback((value: boolean) => {
     setIsOnHomeScreenState(value);
@@ -380,66 +499,41 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setIsSplashCompleteState(value);
   }, []);
 
-  // Toggle SFX
   const toggleSfx = useCallback(() => {
     const newEnabled = !isSfxEnabled;
     setIsSfxEnabled(newEnabled);
     localStorage.setItem(SFX_STORAGE_KEY, String(newEnabled));
   }, [isSfxEnabled]);
 
-  // Efeitos sonoros - SÓ FUNCIONAM FORA DA TELA INICIAL E SE SFX ESTIVER HABILITADO
+  // Efeitos sonoros
   const playClickSound = useCallback(() => {
     if (isOnHomeScreen || !isSfxEnabled) return;
-    try {
-      createSinisterClick();
-    } catch (e) {
-      console.log('Audio not available');
-    }
+    try { createSinisterClick(); } catch {}
   }, [isOnHomeScreen, isSfxEnabled]);
 
   const playNotificationSound = useCallback(() => {
     if (isOnHomeScreen || !isSfxEnabled) return;
-    try {
-      createNotificationSound();
-    } catch (e) {
-      console.log('Audio not available');
-    }
+    try { createNotificationSound(); } catch {}
   }, [isOnHomeScreen, isSfxEnabled]);
 
   const playSuccessSound = useCallback(() => {
     if (isOnHomeScreen || !isSfxEnabled) return;
-    try {
-      createSuccessSound();
-    } catch (e) {
-      console.log('Audio not available');
-    }
+    try { createSuccessSound(); } catch {}
   }, [isOnHomeScreen, isSfxEnabled]);
 
   const playTimerSound = useCallback(() => {
     if (isOnHomeScreen || !isSfxEnabled) return;
-    try {
-      createTimerSound();
-    } catch (e) {
-      console.log('Audio not available');
-    }
+    try { createTimerSound(); } catch {}
   }, [isOnHomeScreen, isSfxEnabled]);
 
   const playTickSound = useCallback(() => {
     if (isOnHomeScreen || !isSfxEnabled) return;
-    try {
-      createTickSound();
-    } catch (e) {
-      console.log('Audio not available');
-    }
+    try { createTickSound(); } catch {}
   }, [isOnHomeScreen, isSfxEnabled]);
 
   const playCountdownBeep = useCallback(() => {
     if (isOnHomeScreen || !isSfxEnabled) return;
-    try {
-      createCountdownBeep();
-    } catch (e) {
-      console.log('Audio not available');
-    }
+    try { createCountdownBeep(); } catch {}
   }, [isOnHomeScreen, isSfxEnabled]);
 
   return (
@@ -450,10 +544,12 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isSfxEnabled,
         isOnHomeScreen,
         isSplashComplete,
+        analyserNode,
         toggleMusic,
         toggleSfx,
         setOnHomeScreen,
         setSplashComplete,
+        stopMusicImmediately,
         playClickSound,
         playNotificationSound,
         playSuccessSound,
