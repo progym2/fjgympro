@@ -11,7 +11,6 @@ import LoginDialog from '@/components/LoginDialog';
 import AboutDialog from '@/components/AboutDialog';
 import ParticlesBackground from '@/components/ParticlesBackground';
 import AnimatedLogo from '@/components/AnimatedLogo';
-import MusicToggle from '@/components/MusicToggle';
 import AudioVisualizer from '@/components/AudioVisualizer';
 import SportThemeSelector from '@/components/SportThemeSelector';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,12 +19,13 @@ import { useTheme } from '@/contexts/ThemeContext';
 
 import bgHome from '@/assets/bg-home.png';
 
-const SPLASH_SHOWN_KEY = 'francgym_splash_shown';
+// Chave para persistir se é primeira visita (localStorage = permanente)
+const FIRST_VISIT_KEY = 'francgym_first_visit_complete';
 
 const Home: React.FC = () => {
-  // Splash só aparece se ainda não foi mostrada nesta sessão
+  // Splash só aparece na PRIMEIRA visita do dispositivo (localStorage)
   const [showSplash, setShowSplash] = useState(() => {
-    return !sessionStorage.getItem(SPLASH_SHOWN_KEY);
+    return !localStorage.getItem(FIRST_VISIT_KEY);
   });
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false);
@@ -35,7 +35,7 @@ const Home: React.FC = () => {
   const { licenseExpired } = useAuth();
   const { playClickSound, setOnHomeScreen, setSplashComplete, stopMusicImmediately, tryAutoPlay } = useAudio();
 
-  // Marcar que está na tela inicial (ativa música se habilitada)
+  // Marcar que está na tela inicial
   useEffect(() => {
     setOnHomeScreen(true);
     return () => {
@@ -47,8 +47,8 @@ const Home: React.FC = () => {
   const handleSplashComplete = () => {
     setShowSplash(false);
     setSplashComplete(true);
-    // Marca que a splash já foi mostrada nesta sessão
-    sessionStorage.setItem(SPLASH_SHOWN_KEY, 'true');
+    // Marca que a primeira visita foi concluída (permanente)
+    localStorage.setItem(FIRST_VISIT_KEY, 'true');
   };
 
   useEffect(() => {
@@ -167,8 +167,6 @@ const Home: React.FC = () => {
       />
       <AboutDialog isOpen={aboutDialogOpen} onClose={() => setAboutDialogOpen(false)} />
 
-      {/* Music Toggle Button */}
-      <MusicToggle />
 
       {/* Audio Visualizer */}
       <AudioVisualizer />
