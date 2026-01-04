@@ -25,8 +25,8 @@ const panels: PanelOption[] = [
     label: 'CLIENTE',
     icon: User,
     color: 'text-primary',
-    bgColor: 'bg-primary/20 hover:bg-primary/30',
-    borderColor: 'border-primary/50 hover:border-primary',
+    bgColor: 'bg-primary/10',
+    borderColor: 'border-primary/30 hover:border-primary',
     route: '/client',
   },
   {
@@ -34,8 +34,8 @@ const panels: PanelOption[] = [
     label: 'INSTRUTOR',
     icon: Dumbbell,
     color: 'text-green-500',
-    bgColor: 'bg-green-500/20 hover:bg-green-500/30',
-    borderColor: 'border-green-500/50 hover:border-green-500',
+    bgColor: 'bg-green-500/10',
+    borderColor: 'border-green-500/30 hover:border-green-500',
     route: '/instructor',
   },
   {
@@ -43,8 +43,8 @@ const panels: PanelOption[] = [
     label: 'GERENTE',
     icon: Shield,
     color: 'text-blue-500',
-    bgColor: 'bg-blue-500/20 hover:bg-blue-500/30',
-    borderColor: 'border-blue-500/50 hover:border-blue-500',
+    bgColor: 'bg-blue-500/10',
+    borderColor: 'border-blue-500/30 hover:border-blue-500',
     route: '/admin',
   },
 ];
@@ -168,7 +168,7 @@ const PanelSelector: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
-          className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 w-full max-w-3xl"
+          className="mt-8 flex flex-wrap justify-center gap-3 sm:gap-4 w-full max-w-xl px-4"
         >
           {panels.map((panel, index) => {
             const Icon = panel.icon;
@@ -178,27 +178,31 @@ const PanelSelector: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
-                whileHover={{ scale: 1.03, y: -5 }}
+                whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handlePanelSelect(panel)}
                 className={`
-                  flex flex-col items-center gap-4 p-6 sm:p-8 rounded-2xl
-                  ${panel.bgColor} ${panel.borderColor}
-                  border-2 backdrop-blur-md
-                  transition-all duration-300 cursor-pointer
-                  shadow-lg hover:shadow-xl
+                  group relative flex items-center gap-3 px-5 py-3 rounded-xl
+                  bg-card/60 backdrop-blur-sm
+                  ${panel.borderColor}
+                  border transition-all duration-300 cursor-pointer
+                  shadow-md hover:shadow-lg
                 `}
               >
-                <motion.div
-                  className={`p-4 rounded-full ${panel.bgColor} ${panel.color}`}
-                  whileHover={{ rotate: [0, -10, 10, 0] }}
-                  transition={{ duration: 0.5 }}
+                {/* Icon */}
+                <div
+                  className={`p-2 rounded-lg ${panel.bgColor} ${panel.color} transition-colors`}
                 >
-                  <Icon size={40} />
-                </motion.div>
-                <span className={`text-xl font-bebas tracking-wider ${panel.color}`}>
-                  PAINEL {panel.label}
+                  <Icon size={20} strokeWidth={2} />
+                </div>
+                
+                {/* Label */}
+                <span className={`text-sm font-bebas tracking-wider ${panel.color} transition-colors`}>
+                  {panel.label}
                 </span>
+                
+                {/* Hover glow effect */}
+                <div className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${panel.bgColor} -z-10`} />
               </motion.button>
             );
           })}
