@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, Volume1, SkipForward } from 'lucide-react';
+import { Volume2, VolumeX, Volume1, SkipForward, SkipBack } from 'lucide-react';
 import { useAudio } from '@/contexts/AudioContext';
 import { Slider } from '@/components/ui/slider';
 
@@ -13,13 +13,26 @@ const MusicToggle: React.FC = () => {
     musicVolume, 
     setMusicVolume,
     currentTrackName,
-    skipToNextTrack
+    skipToNextTrack,
+    skipToPreviousTrack
   } = useAudio();
   const [showVolume, setShowVolume] = useState(false);
+  const [needsMarquee, setNeedsMarquee] = useState(false);
+  const textRef = useRef<HTMLParagraphElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   if (!isOnHomeScreen) {
     return null;
   }
+
+  // Verificar se precisa de marquee
+  useEffect(() => {
+    if (textRef.current && containerRef.current) {
+      const textWidth = textRef.current.scrollWidth;
+      const containerWidth = containerRef.current.clientWidth;
+      setNeedsMarquee(textWidth > containerWidth);
+    }
+  }, [currentTrackName, showVolume]);
 
   // Converter volume (0-0.5) para porcentagem (0-100)
   const volumePercent = Math.round((musicVolume / 0.5) * 100);
@@ -31,12 +44,12 @@ const MusicToggle: React.FC = () => {
 
   const getVolumeIcon = () => {
     if (!isMusicEnabled || musicVolume === 0) {
-      return <VolumeX className="text-muted-foreground" size={22} />;
+      return <VolumeX className="text-muted-foreground" size={20} />;
     }
     if (musicVolume < 0.15) {
-      return <Volume1 className="text-primary" size={22} />;
+      return <Volume1 className="text-primary" size={20} />;
     }
-    return <Volume2 className="text-primary" size={22} />;
+    return <Volume2 className="text-primary" size={20} />;
   };
 
   return (
@@ -51,11 +64,24 @@ const MusicToggle: React.FC = () => {
             transition={{ duration: 0.2 }}
             className="bg-card/90 backdrop-blur-md border border-border/50 rounded-lg p-3 shadow-lg"
           >
-            {/* Track Name */}
+            {/* Track Name with Marquee */}
             {isMusicPlaying && currentTrackName && (
-              <p className="text-xs text-primary font-medium mb-2 text-center truncate max-w-[160px]">
-                🎵 {currentTrackName}
-              </p>
+              <div 
+                ref={containerRef}
+                className="max-w-[160px] overflow-hidden mb-2"
+              >
+                <p 
+                  ref={textRef}
+                  className={`text-xs text-primary font-medium text-center whitespace-nowrap ${
+                    needsMarquee ? 'animate-marquee' : ''
+                  }`}
+                  style={needsMarquee ? {
+                    animation: 'marquee 8s linear infinite',
+                  } : undefined}
+                >
+                  🎵 {currentTrackName}
+                </p>
+              </div>
             )}
             
             {/* Volume Slider */}
@@ -78,8 +104,8 @@ const MusicToggle: React.FC = () => {
       </AnimatePresence>
 
       {/* Controls Row */}
-      <div className="flex items-center gap-2">
-        {/* Skip Button - only show when music is enabled */}
+      <div className="flex items-center gap-1.5">
+        {/* Previous Button */}
         <AnimatePresence>
           {isMusicEnabled && (
             <motion.button
@@ -87,15 +113,15 @@ const MusicToggle: React.FC = () => {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0 }}
               transition={{ duration: 0.2 }}
-              onClick={skipToNextTrack}
+              onClick={skipToPreviousTrack}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="w-8 h-8 rounded-full bg-card/70 backdrop-blur-md border border-border/40 
+              className="w-7 h-7 rounded-full bg-card/70 backdrop-blur-md border border-border/40 
                 flex items-center justify-center shadow-md hover:border-primary/50 transition-all"
-              aria-label="Próxima música"
-              title="Próxima música"
+              aria-label="Música anterior"
+              title="Música anterior"
             >
-              <SkipForward className="text-muted-foreground hover:text-primary transition-colors" size={14} />
+              <SkipBack className="text-muted-foreground hover:text-primary transition-colors" size={12} />
             </motion.button>
           )}
         </AnimatePresence>
@@ -149,6 +175,27 @@ const MusicToggle: React.FC = () => {
             </motion.div>
           </AnimatePresence>
         </motion.button>
+
+        {/* Next Button */}
+        <AnimatePresence>
+          {isMusicEnabled && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={skipToNextTrack}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="w-7 h-7 rounded-full bg-card/70 backdrop-blur-md border border-border/40 
+                flex items-center justify-center shadow-md hover:border-primary/50 transition-all"
+              aria-label="Próxima música"
+              title="Próxima música"
+            >
+              <SkipForward className="text-muted-foreground hover:text-primary transition-colors" size={12} />
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Help Text */}
@@ -161,6 +208,22 @@ const MusicToggle: React.FC = () => {
           2x clique = volume
         </motion.p>
       )}
+
+      {/* Marquee Animation Styles */}
+      <style>{`
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+          display: inline-block;
+          padding-right: 50px;
+        }
+        .animate-marquee::after {
+          content: attr(data-text);
+          padding-left: 50px;
+        }
+      `}</style>
     </div>
   );
 };
