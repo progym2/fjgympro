@@ -33,7 +33,7 @@ const Home: React.FC = () => {
 
   const navigate = useNavigate();
   const { licenseExpired } = useAuth();
-  const { playClickSound, setOnHomeScreen, setSplashComplete, stopMusicImmediately } = useAudio();
+  const { playClickSound, setOnHomeScreen, setSplashComplete, stopMusicImmediately, tryAutoPlay } = useAudio();
 
   // Marcar que está na tela inicial (ativa música se habilitada)
   useEffect(() => {
@@ -103,6 +103,8 @@ const Home: React.FC = () => {
   return (
     <div
       className="h-screen h-[100dvh] relative overflow-hidden"
+      onClick={tryAutoPlay}
+      onTouchStart={tryAutoPlay}
       style={{
         backgroundImage: `url(${bgHome})`,
         backgroundSize: 'cover',
