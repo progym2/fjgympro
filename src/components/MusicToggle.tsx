@@ -21,7 +21,7 @@ const MusicToggle: React.FC = () => {
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
       className={`
-        fixed bottom-20 right-4 z-40 w-10 h-10 rounded-full 
+        fixed bottom-14 right-4 z-40 w-11 h-11 rounded-full 
         backdrop-blur-md border flex items-center justify-center 
         shadow-lg transition-all duration-300
         ${isMusicEnabled 
@@ -46,10 +46,10 @@ const MusicToggle: React.FC = () => {
                 animate={{ scale: [1, 1.15, 1] }}
                 transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
               >
-                <Volume2 className="text-primary" size={20} />
+                <Volume2 className="text-primary" size={22} />
               </motion.div>
             ) : (
-              <Volume2 className="text-primary/70" size={20} />
+              <Volume2 className="text-primary/70" size={22} />
             )}
           </motion.div>
         ) : (
@@ -60,7 +60,7 @@ const MusicToggle: React.FC = () => {
             exit={{ scale: 0, rotate: -180 }}
             transition={{ duration: 0.2 }}
           >
-            <VolumeX className="text-muted-foreground" size={20} />
+            <VolumeX className="text-muted-foreground" size={22} />
           </motion.div>
         )}
       </AnimatePresence>
