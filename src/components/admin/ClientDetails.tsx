@@ -43,6 +43,7 @@ interface Profile {
   freeze_end_date: string | null;
   monthly_fee: number;
   notes: string | null;
+  avatar_url: string | null;
 }
 
 interface Payment {
@@ -400,8 +401,16 @@ const ClientDetails: React.FC = () => {
       <div className="bg-card/80 backdrop-blur-md rounded-xl p-4 sm:p-6 border border-border/50">
         <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-2xl font-bold text-white">
-              {(profile.full_name || profile.username)[0].toUpperCase()}
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-2xl font-bold text-white overflow-hidden border-2 border-blue-500/30">
+              {profile.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.full_name || profile.username}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                (profile.full_name || profile.username)[0].toUpperCase()
+              )}
             </div>
             <div>
               <h3 className="text-xl font-semibold">{profile.full_name || profile.username}</h3>
