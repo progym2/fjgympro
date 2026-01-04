@@ -116,8 +116,13 @@
 
   /* Fast transitions */
   .transition-fast {
-    transition-duration: 100ms;
-    transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+    transition-duration: 80ms;
+    transition-timing-function: linear;
+  }
+
+  .transition-instant {
+    transition-duration: 50ms;
+    transition-timing-function: linear;
   }
 
   .transition-smooth {
