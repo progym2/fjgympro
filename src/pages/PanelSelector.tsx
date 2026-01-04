@@ -127,101 +127,106 @@ const PanelSelector: React.FC = () => {
   // Master user - show panel selection
   return (
     <div
-      className="min-h-screen flex flex-col"
+      className="min-h-screen h-[100dvh] flex flex-col overflow-hidden"
       style={{
         backgroundImage: `url(${bgHome})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
       <ParticlesBackground />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-4 py-8">
-        {/* Logo */}
+      <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-4">
+        {/* Logo - smaller */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
         >
-          <AnimatedLogo size="lg" showGlow />
+          <AnimatedLogo size="md" showGlow />
         </motion.div>
 
-        {/* Welcome Message */}
+        {/* Welcome Message - compact */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="mt-8 text-center"
+          transition={{ delay: 0.15, duration: 0.4 }}
+          className="mt-6 text-center"
         >
-          <h1 className="text-2xl sm:text-3xl font-bebas text-foreground tracking-wider">
-            Bem-vindo, <span className="text-primary">{profile?.full_name || profile?.username}</span>
+          <h1 className="text-xl sm:text-2xl font-bebas text-foreground tracking-wider">
+            Olá, <span className="text-primary">{profile?.full_name || profile?.username}</span>
           </h1>
-          <p className="mt-2 text-muted-foreground">
-            Como <span className="text-primary font-semibold">Master</span>, você pode acessar qualquer painel
+          <p className="mt-1 text-sm text-muted-foreground">
+            Selecione um painel para acessar
           </p>
         </motion.div>
 
-        {/* Panel Selection */}
+        {/* Panel Selection - refined buttons */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="mt-8 flex flex-wrap justify-center gap-3 sm:gap-4 w-full max-w-xl px-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.25, duration: 0.4 }}
+          className="mt-6 flex flex-wrap justify-center gap-2.5 sm:gap-3"
         >
           {panels.map((panel, index) => {
             const Icon = panel.icon;
             return (
               <motion.button
                 key={panel.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ 
+                  delay: 0.3 + index * 0.08, 
+                  duration: 0.3,
+                  ease: [0.23, 1, 0.32, 1]
+                }}
+                whileHover={{ 
+                  scale: 1.04,
+                  transition: { duration: 0.2 }
+                }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => handlePanelSelect(panel)}
                 className={`
-                  group relative flex items-center gap-3 px-5 py-3 rounded-xl
-                  bg-card/60 backdrop-blur-sm
+                  group relative flex items-center gap-2.5 px-4 py-2.5 rounded-lg
+                  bg-card/70 backdrop-blur-md
                   ${panel.borderColor}
-                  border transition-all duration-300 cursor-pointer
-                  shadow-md hover:shadow-lg
+                  border transition-all duration-200 cursor-pointer
+                  shadow-sm hover:shadow-md
                 `}
               >
                 {/* Icon */}
                 <div
-                  className={`p-2 rounded-lg ${panel.bgColor} ${panel.color} transition-colors`}
+                  className={`p-1.5 rounded-md ${panel.bgColor} ${panel.color} transition-all duration-200 group-hover:scale-110`}
                 >
-                  <Icon size={20} strokeWidth={2} />
+                  <Icon size={18} strokeWidth={2} />
                 </div>
                 
                 {/* Label */}
-                <span className={`text-sm font-bebas tracking-wider ${panel.color} transition-colors`}>
+                <span className={`text-xs sm:text-sm font-bebas tracking-wider ${panel.color}`}>
                   {panel.label}
                 </span>
-                
-                {/* Hover glow effect */}
-                <div className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${panel.bgColor} -z-10`} />
               </motion.button>
             );
           })}
         </motion.div>
 
-        {/* Logout Button */}
+        {/* Logout Button - subtle */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.5 }}
-          className="mt-10"
+          transition={{ delay: 0.6, duration: 0.3 }}
+          className="mt-8"
         >
           <Button
-            variant="outline"
+            variant="ghost"
+            size="sm"
             onClick={handleLogout}
-            className="gap-2 text-muted-foreground hover:text-foreground"
+            className="gap-1.5 text-xs text-muted-foreground/70 hover:text-foreground hover:bg-card/30"
           >
-            <ArrowLeft size={18} />
-            Sair e voltar ao início
+            <ArrowLeft size={14} />
+            Sair
           </Button>
         </motion.div>
       </div>
