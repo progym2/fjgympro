@@ -21,11 +21,7 @@ const MusicToggle: React.FC = () => {
   const textRef = useRef<HTMLParagraphElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  if (!isOnHomeScreen) {
-    return null;
-  }
-
-  // Verificar se precisa de marquee
+  // Verificar se precisa de marquee - DEVE estar antes de qualquer return condicional
   useEffect(() => {
     if (textRef.current && containerRef.current) {
       const textWidth = textRef.current.scrollWidth;
@@ -33,6 +29,11 @@ const MusicToggle: React.FC = () => {
       setNeedsMarquee(textWidth > containerWidth);
     }
   }, [currentTrackName, showVolume]);
+
+  // Retorno condicional DEPOIS de todos os hooks
+  if (!isOnHomeScreen) {
+    return null;
+  }
 
   // Converter volume (0-0.5) para porcentagem (0-100)
   const volumePercent = Math.round((musicVolume / 0.5) * 100);
