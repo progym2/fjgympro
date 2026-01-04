@@ -52,17 +52,17 @@ const PageLoader = () => (
   </div>
 );
 
-// Page transition variants - optimized for speed (reduced motion)
+// Page transition variants - optimized for speed (minimal motion)
 const pageVariants = {
-  initial: { opacity: 0 },
+  initial: { opacity: 0.6 },
   in: { opacity: 1 },
-  out: { opacity: 0 },
+  out: { opacity: 0.6 },
 };
 
 const pageTransition = {
   type: "tween" as const,
-  ease: "easeOut" as const,
-  duration: 0.1,
+  ease: "linear" as const,
+  duration: 0.08,
 };
 
 // Animated Routes component with Suspense

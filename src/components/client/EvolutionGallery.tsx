@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Camera, Plus, Trash2, Calendar, Scale, Percent, 
   X, Loader2, Image as ImageIcon, ChevronLeft, ChevronRight,
-  ZoomIn, MessageSquare
+  ZoomIn, MessageSquare, ArrowLeftRight, TrendingUp, LayoutGrid
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,11 +15,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ClientPageHeader from './ClientPageHeader';
 import FadeScrollList from '@/components/shared/FadeScrollList';
+
+// Lazy load heavy components for faster initial render
+const PhotoComparison = lazy(() => import('./PhotoComparison'));
+const EvolutionCharts = lazy(() => import('./EvolutionCharts'));
+
+const TabLoader = () => (
+  <div className="flex items-center justify-center py-8">
+    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+  </div>
+);
 
 interface EvolutionPhoto {
   id: string;
@@ -242,30 +253,49 @@ const EvolutionGallery: React.FC = () => {
       />
       
       <FadeScrollList className="flex-1 space-y-4 pr-1">
-        {/* Add Photo Button */}
-        <div className="flex justify-between items-center">
-          <p className="text-sm text-muted-foreground">
-            Registre sua evolução física com fotos
-          </p>
-          <Button
-            onClick={() => {
-              playClickSound();
-              fileInputRef.current?.click();
-            }}
-            className="bg-purple-500 hover:bg-purple-600"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Foto
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-        </div>
+        {/* Tabs for Gallery / Compare / Charts */}
+        <Tabs defaultValue="gallery" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger value="gallery" className="text-xs sm:text-sm flex items-center gap-1.5">
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Galeria</span>
+            </TabsTrigger>
+            <TabsTrigger value="compare" className="text-xs sm:text-sm flex items-center gap-1.5">
+              <ArrowLeftRight className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Comparar</span>
+            </TabsTrigger>
+            <TabsTrigger value="charts" className="text-xs sm:text-sm flex items-center gap-1.5">
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Gráficos</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="gallery" className="mt-0">
+            {/* Add Photo Button */}
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-sm text-muted-foreground">
+                Registre sua evolução física
+              </p>
+              <Button
+                onClick={() => {
+                  playClickSound();
+                  fileInputRef.current?.click();
+                }}
+                size="sm"
+                className="bg-purple-500 hover:bg-purple-600"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                <span className="hidden sm:inline">Adicionar</span> Foto
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
 
         {/* Photo Grid */}
         {photos.length === 0 ? (
@@ -338,6 +368,20 @@ const EvolutionGallery: React.FC = () => {
             </div>
           ))
         )}
+          </TabsContent>
+
+          <TabsContent value="compare" className="mt-0">
+            <Suspense fallback={<TabLoader />}>
+              <PhotoComparison photos={photos} />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="charts" className="mt-0">
+            <Suspense fallback={<TabLoader />}>
+              <EvolutionCharts photos={photos} />
+            </Suspense>
+          </TabsContent>
+        </Tabs>
       </FadeScrollList>
 
       {/* Upload Dialog */}
