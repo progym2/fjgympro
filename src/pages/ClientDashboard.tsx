@@ -4,7 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { 
   User, Scale, Droplets, Utensils, Dumbbell, 
   TrendingUp, QrCode, LogOut, Info,
-  Calendar, Award, UserMinus, History, BarChart3, Trophy, Timer, UserPlus, Loader2
+  Calendar, Award, UserMinus, History, BarChart3, Trophy, Timer, UserPlus, Loader2, Camera
 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,6 +50,7 @@ const ExerciseLoadHistory = lazy(() => import('@/components/client/ExerciseLoadH
 const WorkoutHistory = lazy(() => import('@/components/client/WorkoutHistory'));
 const PersonalRecords = lazy(() => import('@/components/client/PersonalRecords'));
 const WorkoutTimerPage = lazy(() => import('@/components/client/WorkoutTimerPage'));
+const EvolutionGallery = lazy(() => import('@/components/client/EvolutionGallery'));
 const PendingLinkRequests = lazy(() => import('@/components/client/PendingLinkRequests'));
 const LinkedInstructorCard = lazy(() => import('@/components/client/LinkedInstructorCard'));
 const FinancialAlerts = lazy(() => import('@/components/client/FinancialAlerts'));
@@ -140,6 +141,7 @@ const ClientDashboard: React.FC = () => {
     { icon: Calendar, label: 'Agenda', path: 'schedule', color: 'text-purple-500' },
     { icon: TrendingUp, label: 'Meu Progresso', path: 'progress', color: 'text-teal-500' },
     { icon: Award, label: 'Metas Alcançadas', path: 'achievements', color: 'text-amber-500' },
+    { icon: Camera, label: 'Galeria Evolução', path: 'gallery', color: 'text-purple-500' },
     { icon: QrCode, label: 'Meu QR Code', path: 'qrcode', color: 'text-pink-500' },
     { icon: UserPlus, label: 'Escanear Instrutor', path: 'scan-instructor', color: 'text-green-500' },
     { icon: UserMinus, label: 'Desvincular Instrutor', path: 'unlink', color: 'text-red-500' },
@@ -251,6 +253,7 @@ const ClientDashboard: React.FC = () => {
               <Route path="schedule" element={<ClientSchedule />} />
               <Route path="progress" element={<Progress />} />
               <Route path="achievements" element={<Achievements />} />
+              <Route path="gallery" element={<EvolutionGallery />} />
               <Route path="qrcode" element={<MyQRCode />} />
               <Route path="scan-instructor" element={<ScanInstructor />} />
               <Route path="unlink" element={<UnlinkInstructor />} />

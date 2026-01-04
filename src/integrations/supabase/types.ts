@@ -100,6 +100,50 @@ export type Database = {
           },
         ]
       }
+      evolution_photos: {
+        Row: {
+          body_fat_percentage: number | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          photo_date: string
+          photo_type: string | null
+          photo_url: string
+          profile_id: string
+          weight_kg: number | null
+        }
+        Insert: {
+          body_fat_percentage?: number | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          photo_date?: string
+          photo_type?: string | null
+          photo_url: string
+          profile_id: string
+          weight_kg?: number | null
+        }
+        Update: {
+          body_fat_percentage?: number | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          photo_date?: string
+          photo_type?: string | null
+          photo_url?: string
+          profile_id?: string
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evolution_photos_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercise_favorites: {
         Row: {
           created_at: string
