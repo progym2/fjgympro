@@ -243,20 +243,18 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
   const isInitializedRef = useRef(false);
 
-  // Embaralhar playlist no início
+// Inicializar áudio e embaralhar playlist
   useEffect(() => {
-    setShuffledPlaylist(shuffleArray(MUSIC_TRACKS));
-  }, []);
-
-  // Inicializar áudio
-  useEffect(() => {
-    if (shuffledPlaylist.length === 0 || isInitializedRef.current) return;
+    if (isInitializedRef.current) return;
     isInitializedRef.current = true;
+
+    const shuffled = shuffleArray(MUSIC_TRACKS);
+    setShuffledPlaylist(shuffled);
 
     const audio = new Audio();
     audio.crossOrigin = 'anonymous';
     audio.preload = 'auto';
-    audio.src = shuffledPlaylist[0].path;
+    audio.src = shuffled[0].path;
     audio.loop = false;
     audio.volume = 0;
     audioRef.current = audio;
@@ -268,7 +266,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         audioRef.current = null;
       }
     };
-  }, [shuffledPlaylist]);
+  }, []);
 
   // Configurar analyser após interação do usuário
   const setupAnalyser = useCallback(() => {
@@ -497,15 +495,18 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Pular para próxima música
   const skipToNextTrack = useCallback(() => {
     const audio = audioRef.current;
-    if (!audio || shuffledPlaylist.length === 0 || !isMusicPlaying) return;
+    if (!audio || shuffledPlaylist.length === 0) return;
 
     const nextIndex = (currentTrackIndex + 1) % shuffledPlaylist.length;
     setCurrentTrackIndex(nextIndex);
     
     audio.src = shuffledPlaylist[nextIndex].path;
     audio.load();
-    audio.volume = musicVolume;
-    audio.play().catch(console.error);
+    
+    if (isMusicPlaying) {
+      audio.volume = musicVolume;
+      audio.play().catch(console.error);
+    }
   }, [shuffledPlaylist, currentTrackIndex, isMusicPlaying, musicVolume]);
 
   // Nome da música atual
