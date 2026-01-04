@@ -11,9 +11,11 @@ const MUSIC_TRACKS = [
   '/audio/peso-do-ritmo-new.mp3',
 ];
 
-const MUSIC_VOLUME = 0.18;
+const DEFAULT_MUSIC_VOLUME = 0.18;
+const MAX_MUSIC_VOLUME = 0.5;
 const FADE_DURATION = 2000;
 const SFX_VOLUME = 0.5;
+const VOLUME_STORAGE_KEY = 'gym_music_volume';
 
 interface AudioContextType {
   isMusicPlaying: boolean;
@@ -22,6 +24,8 @@ interface AudioContextType {
   isOnHomeScreen: boolean;
   isSplashComplete: boolean;
   analyserNode: AnalyserNode | null;
+  musicVolume: number;
+  setMusicVolume: (volume: number) => void;
   toggleMusic: () => void;
   toggleSfx: () => void;
   setOnHomeScreen: (value: boolean) => void;
@@ -215,6 +219,11 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return stored !== 'false';
   };
 
+  const getStoredVolume = (): number => {
+    const stored = localStorage.getItem(VOLUME_STORAGE_KEY);
+    return stored ? parseFloat(stored) : DEFAULT_MUSIC_VOLUME;
+  };
+
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [isMusicEnabled, setIsMusicEnabled] = useState(getStoredPreference);
   const [isSfxEnabled, setIsSfxEnabled] = useState(getSfxStoredPreference);
@@ -224,6 +233,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const [musicVolume, setMusicVolumeState] = useState(getStoredVolume);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fadeIntervalRef = useRef<number | null>(null);
@@ -289,12 +299,12 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     audio.volume = 0;
     const steps = 20;
     const stepDuration = FADE_DURATION / steps;
-    const volumeStep = MUSIC_VOLUME / steps;
+    const volumeStep = musicVolume / steps;
     let currentStep = 0;
 
     fadeIntervalRef.current = window.setInterval(() => {
       currentStep++;
-      const newVolume = Math.min(volumeStep * currentStep, MUSIC_VOLUME);
+      const newVolume = Math.min(volumeStep * currentStep, musicVolume);
       if (audioRef.current) audioRef.current.volume = newVolume;
 
       if (currentStep >= steps && fadeIntervalRef.current) {
@@ -302,7 +312,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         fadeIntervalRef.current = null;
       }
     }, stepDuration);
-  }, []);
+  }, [musicVolume]);
 
   const fadeOut = useCallback((onComplete?: () => void) => {
     const audio = audioRef.current;
@@ -368,14 +378,14 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (audio && isMusicEnabled && isOnHomeScreen) {
         audio.src = shuffledPlaylist[nextIndex];
         audio.load();
-        audio.volume = MUSIC_VOLUME;
+        audio.volume = musicVolume;
         audio.play().catch(console.error);
       }
     };
 
     audio.addEventListener('ended', handleTrackEnd);
     return () => audio.removeEventListener('ended', handleTrackEnd);
-  }, [currentTrackIndex, shuffledPlaylist, isMusicEnabled, isOnHomeScreen]);
+  }, [currentTrackIndex, shuffledPlaylist, isMusicEnabled, isOnHomeScreen, musicVolume]);
 
   // Tentar autoplay após interação
   const tryAutoPlay = useCallback(() => {
@@ -471,6 +481,17 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem(SFX_STORAGE_KEY, String(newEnabled));
   }, [isSfxEnabled]);
 
+  // Atualizar volume da música
+  const setMusicVolume = useCallback((volume: number) => {
+    const clampedVolume = Math.max(0, Math.min(volume, MAX_MUSIC_VOLUME));
+    setMusicVolumeState(clampedVolume);
+    localStorage.setItem(VOLUME_STORAGE_KEY, String(clampedVolume));
+    
+    if (audioRef.current && isMusicPlaying) {
+      audioRef.current.volume = clampedVolume;
+    }
+  }, [isMusicPlaying]);
+
   // Efeitos sonoros
   const playClickSound = useCallback(() => {
     if (isOnHomeScreen || !isSfxEnabled) return;
@@ -511,6 +532,8 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isOnHomeScreen,
         isSplashComplete,
         analyserNode,
+        musicVolume,
+        setMusicVolume,
         toggleMusic,
         toggleSfx,
         setOnHomeScreen,
