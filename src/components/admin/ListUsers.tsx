@@ -478,9 +478,7 @@ const ListUsers: React.FC = () => {
   };
 
   const UserCard = ({ user, type, showRestore = false, showReactivate = false }: { user: Profile; type: 'client' | 'instructor'; showRestore?: boolean; showReactivate?: boolean }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className="bg-card/80 backdrop-blur-md rounded-xl p-4 border border-border/50 hover:border-blue-500/30 transition-all"
     >
       <div className="flex items-center gap-4">
@@ -619,7 +617,7 @@ const ListUsers: React.FC = () => {
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 
   return (
