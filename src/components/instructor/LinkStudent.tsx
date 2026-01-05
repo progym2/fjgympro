@@ -199,13 +199,28 @@ const LinkStudent: React.FC = () => {
   const checkAndSetStudent = async (studentData: ClientProfile) => {
     if (!effectiveInstructorId) return;
 
+    // Check if already linked to this instructor
     const { data: myLinkData } = await supabase
       .from('instructor_clients')
       .select('id, link_status')
       .eq('instructor_id', effectiveInstructorId)
       .eq('client_id', studentData.id)
+      .eq('is_active', true)
       .in('link_status', ['pending', 'accepted'])
       .maybeSingle();
+
+    // If already linked or pending with this instructor, show toast and don't display card
+    if (myLinkData) {
+      if (myLinkData.link_status === 'accepted') {
+        toast.info('Este aluno já está vinculado a você.', {
+          icon: <Check className="h-5 w-5 text-green-500" />,
+        });
+      } else if (myLinkData.link_status === 'pending') {
+        toast.warning('Já existe uma solicitação pendente para este aluno.');
+      }
+      setFoundStudent(null);
+      return;
+    }
 
     const { data: otherLinkData } = await supabase
       .from('instructor_clients')
@@ -219,6 +234,7 @@ const LinkStudent: React.FC = () => {
       `)
       .eq('client_id', studentData.id)
       .eq('link_status', 'accepted')
+      .eq('is_active', true)
       .neq('instructor_id', effectiveInstructorId)
       .maybeSingle();
 
@@ -239,8 +255,8 @@ const LinkStudent: React.FC = () => {
 
     setFoundStudent({
       ...studentData,
-      already_linked: myLinkData?.link_status === 'accepted',
-      pending_link: myLinkData?.link_status === 'pending',
+      already_linked: false,
+      pending_link: false,
       linked_to_other: !!otherLinkData,
       pending_from_other: !!pendingFromOther,
       current_instructor_name: currentInstructorName,
@@ -552,17 +568,7 @@ const LinkStudent: React.FC = () => {
               </div>
             </div>
 
-            {foundStudent.already_linked ? (
-              <div className="flex items-center gap-2 p-3 bg-green-500/20 border border-green-500/50 rounded-lg text-green-500">
-                <Check className="w-4 h-4" />
-                <span className="text-sm">Este aluno já está vinculado a você.</span>
-              </div>
-            ) : foundStudent.pending_link ? (
-              <div className="flex items-center gap-2 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg text-yellow-500">
-                <AlertCircle className="w-4 h-4" />
-                <span className="text-sm">Solicitação pendente. Aguardando confirmação do aluno.</span>
-              </div>
-            ) : foundStudent.linked_to_other ? (
+            {foundStudent.linked_to_other ? (
               <div className="flex flex-col gap-2 p-3 bg-destructive/20 border border-destructive/50 rounded-lg text-destructive">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
