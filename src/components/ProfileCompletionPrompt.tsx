@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, X, User, Calendar, Phone, MapPin, CreditCard, Clock, Shield, Home, Lock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,7 +18,7 @@ interface ProfileCompletionPromptProps {
 
 const MAX_DISMISS_COUNT = 3; // Máximo de vezes que pode fechar antes de bloquear
 
-const ProfileCompletionPrompt: React.FC<ProfileCompletionPromptProps> = ({ 
+const ProfileCompletionPromptInner: React.FC<ProfileCompletionPromptProps> = memo(({ 
   onComplete,
   delaySeconds = 30 
 }) => {
@@ -511,6 +511,15 @@ const ProfileCompletionPrompt: React.FC<ProfileCompletionPromptProps> = ({
       </AlertDialog>
     </>
   );
-};
+});
+
+ProfileCompletionPromptInner.displayName = 'ProfileCompletionPrompt';
+
+// Forward ref wrapper for compatibility
+const ProfileCompletionPrompt = forwardRef<HTMLDivElement, ProfileCompletionPromptProps>((props, ref) => (
+  <ProfileCompletionPromptInner {...props} />
+));
+
+ProfileCompletionPrompt.displayName = 'ProfileCompletionPrompt';
 
 export default ProfileCompletionPrompt;
