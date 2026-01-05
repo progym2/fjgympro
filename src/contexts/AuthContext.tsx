@@ -36,8 +36,9 @@ interface AuthContextType {
   signIn: (
     username: string,
     password: string,
-    panelType?: 'client' | 'instructor' | 'admin'
-  ) => Promise<{ error: string | null; licenseExpired?: boolean; role?: UserRole }>;
+    panelType?: 'client' | 'instructor' | 'admin',
+    forceLogin?: boolean
+  ) => Promise<{ error: string | null; licenseExpired?: boolean; role?: UserRole; sessionActive?: boolean; activeSessionInfo?: { device_info: string; last_activity: string } }>;
   signOut: () => Promise<void>;
   clearDeviceSession: () => Promise<void>;
   checkLicenseStatus: () => Promise<void>;
@@ -424,8 +425,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async (
       username: string,
       password: string,
-      panelType?: 'client' | 'instructor' | 'admin'
-    ): Promise<{ error: string | null; licenseExpired?: boolean; role?: UserRole }> => {
+      panelType?: 'client' | 'instructor' | 'admin',
+      forceLogin?: boolean
+    ): Promise<{ error: string | null; licenseExpired?: boolean; role?: UserRole; sessionActive?: boolean; activeSessionInfo?: { device_info: string; last_activity: string } }> => {
       try {
         setIsLoading(true);
 
@@ -434,6 +436,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             username: (username ?? '').trim(),
             password: (password ?? '').trim(),
             panelType: panelType || 'client',
+            forceLogin: forceLogin === true,
           },
         });
 
@@ -444,6 +447,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         if (!data?.success) {
+          // Check for active session error
+          if (data?.errorCode === 'SESSION_ACTIVE') {
+            return { 
+              error: data?.error ?? 'Conta em uso em outro dispositivo', 
+              sessionActive: true,
+              activeSessionInfo: data?.activeSession
+            };
+          }
+          
           if (data?.license?.status === 'expired' || data?.license?.status === 'blocked') {
             setLicenseExpired(true);
             return { error: data?.error ?? 'Licença expirada', licenseExpired: true };

@@ -72,6 +72,11 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
   // Clear credentials confirmation dialog
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [lockoutTimeRemaining, setLockoutTimeRemaining] = useState(0);
+  
+  // Active session state - for handling concurrent login attempts
+  const [showSessionConflict, setShowSessionConflict] = useState(false);
+  const [activeSessionInfo, setActiveSessionInfo] = useState<{ device_info: string; last_activity: string } | null>(null);
+  const [pendingCredentials, setPendingCredentials] = useState<{ username: string; password: string } | null>(null);
 
   const { signIn, clearDeviceSession } = useAuth();
   const { playClickSound, playNotificationSound } = useAudio();
@@ -553,6 +558,15 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
     const result = await signIn(username.trim(), password.trim(), panelType);
 
     if (result.error) {
+      // Check if it's a session conflict - offer to force login
+      if (result.sessionActive && result.activeSessionInfo) {
+        setActiveSessionInfo(result.activeSessionInfo);
+        setPendingCredentials({ username: username.trim(), password: password.trim() });
+        setShowSessionConflict(true);
+        setIsLoading(false);
+        return;
+      }
+      
       // Mensagens de erro amigáveis para o usuário (sem termos técnicos)
       let errorMessage = '';
       const errorLower = result.error.toLowerCase();
@@ -579,6 +593,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
         errorMessage = '🚫 Você não tem permissão para acessar este painel. Tente outro painel.';
       } else if (errorLower.includes('bloqueado')) {
         errorMessage = '🔒 Sua conta está temporariamente bloqueada. Aguarde alguns minutos.';
+      } else if (errorLower.includes('em uso') || errorLower.includes('outro dispositivo')) {
+        errorMessage = '📱 Esta conta já está em uso em outro dispositivo.';
       } else {
         // Mensagem genérica amigável para qualquer outro erro
         errorMessage = '❌ Não foi possível entrar. Verifique seus dados e tente novamente.';
@@ -671,13 +687,65 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
     }
   };
 
+  // Handle force login when session conflict occurs
+  const handleForceLogin = async () => {
+    if (!pendingCredentials) return;
+    
+    setShowSessionConflict(false);
+    setIsLoading(true);
+    setError('');
+    
+    const result = await signIn(
+      pendingCredentials.username, 
+      pendingCredentials.password, 
+      panelType, 
+      true // forceLogin = true
+    );
+    
+    if (result.error) {
+      setError('❌ Não foi possível forçar o login. Tente novamente.');
+      triggerErrorFeedback();
+      setIsLoading(false);
+      setPendingCredentials(null);
+      return;
+    }
+    
+    // Success - continue with normal flow
+    resetLockout();
+    
+    if (rememberCredentials) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ 
+          username: pendingCredentials.username, 
+          password: pendingCredentials.password 
+        }));
+        setHasSavedCredentials(true);
+      } catch (e) {
+        // Ignore storage errors
+      }
+    }
+    
+    playNotificationSound();
+    toast({
+      title: '✅ Login Forçado',
+      description: 'A sessão anterior foi encerrada. Você está conectado.',
+    });
+    
+    setIsLoading(false);
+    setPendingCredentials(null);
+    onSuccess(result.role || 'client');
+  };
+
   const handleClose = () => {
     playClickSound();
     setError('');
+    setShowSessionConflict(false);
+    setPendingCredentials(null);
     onClose();
   };
 
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <MotionOverlay
@@ -1059,6 +1127,45 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
         </MotionOverlay>
       )}
     </AnimatePresence>
+    
+    {/* Session Conflict Dialog */}
+    <AlertDialog open={showSessionConflict} onOpenChange={setShowSessionConflict}>
+      <AlertDialogContent className="bg-card border-destructive/50">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+            <AlertCircle className="h-5 w-5" />
+            Conta em Uso
+          </AlertDialogTitle>
+          <AlertDialogDescription className="space-y-2">
+            <p>Esta conta já está conectada em outro dispositivo:</p>
+            {activeSessionInfo && (
+              <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
+                <p><strong>Dispositivo:</strong> {activeSessionInfo.device_info}</p>
+                <p><strong>Última atividade:</strong> {new Date(activeSessionInfo.last_activity).toLocaleString('pt-BR')}</p>
+              </div>
+            )}
+            <p className="text-destructive font-medium">
+              Se você forçar o login, a outra sessão será encerrada imediatamente.
+            </p>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => {
+            setShowSessionConflict(false);
+            setPendingCredentials(null);
+          }}>
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleForceLogin}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Forçar Login
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };
 
