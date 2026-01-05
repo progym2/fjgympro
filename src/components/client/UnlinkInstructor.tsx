@@ -7,6 +7,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +37,7 @@ const UnlinkInstructor: React.FC = () => {
   const [unlinking, setUnlinking] = useState(false);
   const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [unlinkReason, setUnlinkReason] = useState('');
 
   useEffect(() => {
     if (profile) {
@@ -94,11 +97,16 @@ const UnlinkInstructor: React.FC = () => {
 
       if (error) throw error;
 
+      // Build notification message with reason if provided
+      const reasonText = unlinkReason.trim() 
+        ? `\n\nMotivo informado: "${unlinkReason.trim()}"` 
+        : '';
+
       // Notify the instructor about the unlink
       await supabase.from('notifications').insert({
         profile_id: selectedInstructor.id,
         title: 'Aluno Desvinculado',
-        message: `O aluno ${profile?.full_name || profile?.username} se desvinculou da sua conta.`,
+        message: `O aluno ${profile?.full_name || profile?.username} se desvinculou da sua conta.${reasonText}`,
         type: 'unlink'
       });
 
@@ -106,6 +114,7 @@ const UnlinkInstructor: React.FC = () => {
       setInstructors(instructors.filter(i => i.link_id !== selectedInstructor.link_id));
       setShowConfirm(false);
       setSelectedInstructor(null);
+      setUnlinkReason('');
     } catch (error) {
       console.error('Error unlinking:', error);
       toast.error('Erro ao desvincular');
@@ -190,15 +199,37 @@ const UnlinkInstructor: React.FC = () => {
       )}
 
       {/* Confirmation Dialog */}
-      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+      <AlertDialog open={showConfirm} onOpenChange={(open) => { setShowConfirm(open); if (!open) setUnlinkReason(''); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Desvinculação</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja desvincular o instrutor{' '}
-              <strong>{selectedInstructor?.full_name}</strong>?
-              <br /><br />
-              Você perderá acesso aos planos de treino e alimentação criados por este instrutor.
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <p>
+                  Tem certeza que deseja desvincular o instrutor{' '}
+                  <strong>{selectedInstructor?.full_name}</strong>?
+                </p>
+                <p>
+                  Você perderá acesso aos planos de treino e alimentação criados por este instrutor.
+                </p>
+                
+                <div className="space-y-2 pt-2">
+                  <Label htmlFor="unlink-reason" className="text-foreground">
+                    Motivo da desvinculação (opcional)
+                  </Label>
+                  <Textarea
+                    id="unlink-reason"
+                    placeholder="Informe o motivo para ajudar o instrutor a melhorar..."
+                    value={unlinkReason}
+                    onChange={(e) => setUnlinkReason(e.target.value)}
+                    className="min-h-[80px]"
+                    maxLength={500}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    O instrutor será notificado sobre a desvinculação{unlinkReason.trim() ? ' com o motivo informado' : ''}.
+                  </p>
+                </div>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
