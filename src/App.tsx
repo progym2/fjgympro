@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useAutoNightMode } from "@/hooks/useAutoNightMode";
 import { motion, AnimatePresence } from "framer-motion";
 import { clearExpiredCache } from "@/hooks/useOfflineStorage";
+import { initializeCache } from "@/hooks/useIndexedDBCache";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import InstallBanner from "@/components/InstallBanner";
 import { Loader2 } from "lucide-react";
@@ -36,8 +37,9 @@ const queryClient = new QueryClient({
   },
 });
 
-// Clear expired cache on app start
+// Clear expired cache on app start (localStorage + IndexedDB)
 clearExpiredCache();
+initializeCache();
 
 // Component to handle auto night mode (night after 20h/8pm)
 const NightModeHandler = () => {
