@@ -303,9 +303,14 @@ const FloatingLinkRequests: React.FC = () => {
           : 'Vínculo rejeitado.'
       );
 
+      // Remove immediately from local state
       setRequests((prev) => prev.filter((r) => r.id !== request.id));
-      setHasCurrentInstructor(action === 'accept');
-      fetchPendingRequests();
+      
+      if (action === 'accept') {
+        setHasCurrentInstructor(true);
+        // Remove from known IDs so it won't trigger sound if re-fetched
+        knownRequestIds.current.delete(request.id);
+      }
     } catch (err) {
       console.error('Error processing request:', err);
       toast.error('Erro ao processar solicitação.');
