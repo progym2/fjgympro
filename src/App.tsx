@@ -23,6 +23,7 @@ const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
 const InstructorDashboard = lazy(() => import("./pages/InstructorDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const LicenseExpired = lazy(() => import("./pages/LicenseExpired"));
+const StudentLookup = lazy(() => import("./pages/StudentLookup"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -85,6 +86,7 @@ const AnimatedRoutes = () => {
             <Route path="/" element={<Home />} />
             <Route path="/install" element={<Install />} />
             <Route path="/select-panel" element={<PanelSelector />} />
+            <Route path="/consulta-aluno" element={<StudentLookup />} />
             <Route path="/client/*" element={<ClientDashboard />} />
             <Route path="/instructor/*" element={<InstructorDashboard />} />
             <Route path="/admin/*" element={<AdminDashboard />} />

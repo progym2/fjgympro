@@ -183,10 +183,10 @@ const RegisterInstructor: React.FC = () => {
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">Nome Completo *</label>
             <Input
-              placeholder="Nome do instrutor"
+              placeholder="NOME DO INSTRUTOR"
               value={formData.full_name}
-              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              className="bg-background/50"
+              onChange={(e) => setFormData({ ...formData, full_name: e.target.value.toUpperCase() })}
+              className="bg-background/50 uppercase"
             />
           </div>
           <div>
@@ -222,8 +222,8 @@ const RegisterInstructor: React.FC = () => {
               <Input
                 placeholder="000000-G/UF"
                 value={formData.cref}
-                onChange={(e) => setFormData({ ...formData, cref: e.target.value })}
-                className="pl-10 bg-background/50"
+                onChange={(e) => setFormData({ ...formData, cref: e.target.value.toUpperCase() })}
+                className="pl-10 bg-background/50 uppercase"
               />
             </div>
           </div>
@@ -235,10 +235,10 @@ const RegisterInstructor: React.FC = () => {
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Cidade do instrutor"
+                placeholder="CIDADE DO INSTRUTOR"
                 value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                className="pl-10 bg-background/50"
+                onChange={(e) => setFormData({ ...formData, city: e.target.value.toUpperCase() })}
+                className="pl-10 bg-background/50 uppercase"
               />
             </div>
           </div>

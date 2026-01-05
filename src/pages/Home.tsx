@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Dumbbell, Shield, Info } from 'lucide-react';
+import { User, Dumbbell, Shield, Info, Search } from 'lucide-react';
 
 import SplashScreen from '@/components/SplashScreen';
 import DigitalClock from '@/components/DigitalClock';
@@ -137,6 +137,16 @@ const Home: React.FC = () => {
         <div className="fixed top-3 left-3 sm:top-4 sm:left-4 z-50">
           <SportThemeSelector compact />
         </div>
+
+        {/* Consulta Aluno Button - bottom left */}
+        <button
+          onClick={() => { playClickSound(); navigate('/consulta-aluno'); }}
+          className="fixed bottom-20 left-3 sm:bottom-24 sm:left-4 z-50 p-2 sm:p-2.5 rounded-full bg-card/40 backdrop-blur-md border border-border/50 text-muted-foreground hover:text-green-500 hover:border-green-500/50 transition-all shadow-md hover:scale-105 active:scale-95"
+          aria-label="Consultar aluno"
+        >
+          <Search size={16} className="sm:w-[18px] sm:h-[18px]" />
+          <span className="sr-only">Consultar Aluno</span>
+        </button>
 
         {/* About Button - discreet corner */}
         <button

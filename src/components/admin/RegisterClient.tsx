@@ -5,7 +5,7 @@ import {
   UserPlus, User, Mail, Phone, Calendar, Save, Loader2, 
   CreditCard, Printer, CheckCircle, DollarSign, Banknote, 
   Smartphone, ArrowRight, X, FileText, IdCard, MapPin,
-  CheckCircle2, AlertCircle
+  CheckCircle2, AlertCircle, Receipt
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
@@ -41,6 +41,8 @@ const RegisterClient: React.FC = () => {
   const { profile: currentProfile } = useAuth();
   const [saving, setSaving] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [showCarneDialog, setShowCarneDialog] = useState(false);
+  const [carneInstallments, setCarneInstallments] = useState(3);
   const [enrollmentResult, setEnrollmentResult] = useState<EnrollmentResult | null>(null);
   const [processingPayment, setProcessingPayment] = useState(false);
 
@@ -320,10 +322,10 @@ const RegisterClient: React.FC = () => {
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">Nome Completo *</label>
             <Input
-              placeholder="Nome do cliente"
+              placeholder="NOME DO CLIENTE"
               value={formData.full_name}
-              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              className="bg-background/50"
+              onChange={(e) => setFormData({ ...formData, full_name: e.target.value.toUpperCase() })}
+              className="bg-background/50 uppercase"
             />
           </div>
           <div>
@@ -360,10 +362,10 @@ const RegisterClient: React.FC = () => {
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Cidade do cliente"
+                placeholder="CIDADE DO CLIENTE"
                 value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                className="pl-10 bg-background/50"
+                onChange={(e) => setFormData({ ...formData, city: e.target.value.toUpperCase() })}
+                className="pl-10 bg-background/50 uppercase"
               />
             </div>
           </div>
@@ -603,7 +605,7 @@ const RegisterClient: React.FC = () => {
               {/* Boleto/Invoice Generation */}
               <div className="border-t pt-4">
                 <p className="text-sm font-medium mb-2">Gerar Documentos:</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -620,6 +622,7 @@ const RegisterClient: React.FC = () => {
 =======================================
 
 Cliente: ${enrollmentResult.fullName}
+ID: ${enrollmentResult.studentId}
 Usuário: @${enrollmentResult.username}
 
 Valor: ${formatCurrency(valor)}
@@ -657,18 +660,26 @@ Data de emissão: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                       }
                       toast.success('Boleto gerado!');
                     }}
-                    className="flex items-center gap-2 border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
+                    className="flex flex-col items-center gap-1 h-auto py-3 border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
                   >
                     <FileText className="w-4 h-4" />
-                    Gerar Boleto
+                    <span className="text-xs">Boleto</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCarneDialog(true)}
+                    className="flex flex-col items-center gap-1 h-auto py-3 border-purple-500/50 text-purple-500 hover:bg-purple-500/10"
+                  >
+                    <Receipt className="w-4 h-4" />
+                    <span className="text-xs">Carnê</span>
                   </Button>
                   <Button
                     variant="outline"
                     onClick={handlePrintEnrollment}
-                    className="flex items-center gap-2"
+                    className="flex flex-col items-center gap-1 h-auto py-3"
                   >
                     <Printer className="w-4 h-4" />
-                    Imprimir Matrícula
+                    <span className="text-xs">Matrícula</span>
                   </Button>
                 </div>
               </div>
@@ -689,6 +700,135 @@ Data de emissão: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
               >
                 <X className="w-4 h-4 mr-2" />
                 Fechar sem registrar pagamento
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Carnê Dialog */}
+      <Dialog open={showCarneDialog} onOpenChange={setShowCarneDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-bebas text-purple-500 text-2xl flex items-center gap-2">
+              <Receipt className="w-6 h-6" />
+              GERAR CARNÊ DE PAGAMENTO
+            </DialogTitle>
+            <DialogDescription>
+              Gere um carnê com várias parcelas para o cliente
+            </DialogDescription>
+          </DialogHeader>
+
+          {enrollmentResult && (
+            <div className="space-y-4">
+              <div className="bg-muted/30 rounded-lg p-4 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Cliente:</span>
+                  <span className="font-medium">{enrollmentResult.fullName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">ID:</span>
+                  <span className="font-mono text-primary">{enrollmentResult.studentId}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Mensalidade:</span>
+                  <span className="font-bold text-green-500">{formatCurrency(enrollmentResult.monthlyFee)}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">Número de Parcelas</label>
+                <div className="flex gap-2">
+                  {[3, 6, 12].map((num) => (
+                    <Button
+                      key={num}
+                      variant={carneInstallments === num ? "default" : "outline"}
+                      onClick={() => setCarneInstallments(num)}
+                      className={`flex-1 ${carneInstallments === num ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+                    >
+                      {num}x
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  Total: {formatCurrency(enrollmentResult.monthlyFee * carneInstallments)}
+                </p>
+              </div>
+
+              <Button
+                onClick={() => {
+                  if (!enrollmentResult) return;
+                  
+                  let carneContent = `
+===============================================
+                CARNÊ DE PAGAMENTO
+===============================================
+
+Cliente: ${enrollmentResult.fullName}
+ID: ${enrollmentResult.studentId}
+Usuário: @${enrollmentResult.username}
+
+Valor por Parcela: ${formatCurrency(enrollmentResult.monthlyFee)}
+Total de Parcelas: ${carneInstallments}
+Valor Total: ${formatCurrency(enrollmentResult.monthlyFee * carneInstallments)}
+
+Data de Emissão: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+
+===============================================
+                  PARCELAS
+===============================================
+`;
+                  
+                  for (let i = 1; i <= carneInstallments; i++) {
+                    const vencimento = new Date();
+                    vencimento.setMonth(vencimento.getMonth() + i);
+                    
+                    carneContent += `
+┌─────────────────────────────────────────────┐
+│  PARCELA ${String(i).padStart(2, '0')}/${String(carneInstallments).padStart(2, '0')}                              │
+│                                             │
+│  Cliente: ${enrollmentResult.fullName.substring(0, 30).padEnd(30)}│
+│  ID: ${enrollmentResult.studentId.padEnd(35)}│
+│  Valor: ${formatCurrency(enrollmentResult.monthlyFee).padEnd(32)}│
+│  Vencimento: ${format(vencimento, 'dd/MM/yyyy', { locale: ptBR }).padEnd(28)}│
+│                                             │
+│  ☐ PAGO    Data: ___/___/____              │
+└─────────────────────────────────────────────┘
+`;
+                  }
+
+                  const printWindow = window.open('', '_blank');
+                  if (printWindow) {
+                    printWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>Carnê - ${enrollmentResult.fullName}</title>
+                          <style>
+                            body { font-family: monospace; white-space: pre-wrap; padding: 20px; font-size: 12px; }
+                            @media print { body { margin: 0; } }
+                          </style>
+                        </head>
+                        <body>${carneContent}</body>
+                      </html>
+                    `);
+                    printWindow.document.close();
+                    printWindow.print();
+                  }
+                  toast.success(`Carnê de ${carneInstallments} parcelas gerado!`);
+                  setShowCarneDialog(false);
+                }}
+                className="w-full bg-purple-600 hover:bg-purple-700"
+              >
+                <Printer className="w-4 h-4 mr-2" />
+                Gerar e Imprimir Carnê
+              </Button>
+
+              <Button
+                variant="ghost"
+                onClick={() => setShowCarneDialog(false)}
+                className="w-full text-muted-foreground text-sm"
+              >
+                Cancelar
               </Button>
             </div>
           )}
