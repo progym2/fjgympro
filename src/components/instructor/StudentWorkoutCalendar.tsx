@@ -20,6 +20,7 @@ import { format, startOfMonth, endOfMonth, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import InstructorPageHeader from './InstructorPageHeader';
 import WorkoutDayLog from '@/components/shared/WorkoutDayLog';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 
 interface Student {
   id: string;
@@ -49,6 +50,9 @@ const StudentWorkoutCalendar: React.FC = () => {
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
+
+  // ESC volta para /instructor
+  useEscapeBack({ to: '/instructor' });
 
   useEffect(() => {
     if (profile?.profile_id) {
