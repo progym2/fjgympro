@@ -63,18 +63,37 @@ serve(async (req: Request): Promise<Response> => {
 
     const cleanupResults: string[] = [];
 
+    // Get the caller's profile_id for deleted_by
+    const { data: callerProfile } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("user_id", userData.user.id)
+      .maybeSingle();
+
+    const callerProfileId = callerProfile?.id || null;
+
     // Helper to save item to trash before deleting
     const saveToTrash = async (table: string, originalId: string, itemData: any) => {
-      if (skipTrash) return;
+      if (skipTrash) {
+        console.log(`Skipping trash for ${table}/${originalId} (skipTrash=true)`);
+        return;
+      }
       try {
-        await admin.from("deleted_items_trash").insert({
+        console.log(`Saving ${table}/${originalId} to trash...`);
+        const { data, error } = await admin.from("deleted_items_trash").insert({
           original_table: table,
           original_id: originalId,
           item_data: itemData,
-          deleted_by: userData.user.id,
-        });
+          deleted_by: callerProfileId,
+        }).select();
+        
+        if (error) {
+          console.error(`Failed to save ${table}/${originalId} to trash:`, error);
+        } else {
+          console.log(`Saved ${table}/${originalId} to trash successfully:`, data);
+        }
       } catch (e) {
-        console.error(`Failed to save ${table}/${originalId} to trash:`, e);
+        console.error(`Exception saving ${table}/${originalId} to trash:`, e);
       }
     };
 
