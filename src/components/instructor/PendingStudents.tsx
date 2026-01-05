@@ -103,6 +103,9 @@ const PendingStudents: React.FC = () => {
             
             // Check if status changed from pending to accepted/rejected
             if (newData.link_status === 'accepted' || newData.link_status === 'rejected') {
+              // Remove immediately from local state
+              setPendingStudents((prev) => prev.filter((s) => s.id !== newData.id));
+              
               // Find the student info for notification
               const { data: clientData } = await supabase
                 .from('profiles')
@@ -113,10 +116,21 @@ const PendingStudents: React.FC = () => {
               if (clientData) {
                 const clientName = clientData.full_name || clientData.username;
                 sendLinkResponseNotification(clientName, newData.link_status === 'accepted');
+                
+                // Show toast notification
+                if (newData.link_status === 'accepted') {
+                  toast.success(`${clientName} aceitou seu pedido de vínculo!`, {
+                    icon: <CheckCircle className="h-5 w-5 text-green-500" />,
+                  });
+                } else {
+                  toast.info(`${clientName} rejeitou seu pedido de vínculo.`, {
+                    icon: <XCircle className="h-5 w-5 text-red-500" />,
+                  });
+                }
               }
+            } else {
+              fetchPendingStudents();
             }
-            
-            fetchPendingStudents();
           }
         )
         .on(
