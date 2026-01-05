@@ -55,23 +55,27 @@
     <link rel="dns-prefetch" href="https://bnbibezhgpztqvlhvkum.supabase.co" />
     
     <style>
-      /* Critical CSS for faster FCP */
-      html, body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-        overflow: hidden;
-        background: #0a0a0a;
+      /* Critical CSS - prevent FOUC and scroll issues */
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { 
+        height: 100%; 
+        height: 100dvh;
+        overflow: hidden; 
+        background: #0a0a0a; 
         color: #fafafa;
-      }
-      #root {
-        height: 100%;
-        overflow: hidden;
-      }
-      /* Prevent overscroll bounce on iOS */
-      body {
         overscroll-behavior: none;
         -webkit-overflow-scrolling: touch;
+      }
+      body {
+        position: fixed;
+        width: 100%;
+        top: 0;
+        left: 0;
+      }
+      #root { 
+        height: 100%; 
+        height: 100dvh;
+        overflow: hidden; 
       }
     </style>
   </head>

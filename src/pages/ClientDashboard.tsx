@@ -195,17 +195,16 @@ const ClientDashboard: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen min-h-[100dvh] relative"
+      className="h-[100dvh] relative overflow-hidden"
       style={{
         backgroundImage: `url(${bgPanels})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
       }}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background/90" />
 
-      <div className="relative z-10 min-h-screen min-h-[100dvh] flex flex-col pb-14 panel-scroll hide-scrollbar-mobile">
+      <div className="relative z-10 h-full flex flex-col pb-14 overflow-y-auto overflow-x-hidden overscroll-contain">
         <div className="h-14 sm:h-16" />
         
         <ThemedHeader>

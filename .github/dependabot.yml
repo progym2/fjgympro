@@ -1,0 +1,4 @@
+# Disable Dependabot security updates
+# This prevents automatic security notifications from being sent to GitHub
+version: 2
+updates: []
