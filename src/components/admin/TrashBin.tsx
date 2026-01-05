@@ -334,3 +334,5 @@ export function TrashBin() {
     </Card>
   );
 }
+
+export default TrashBin;

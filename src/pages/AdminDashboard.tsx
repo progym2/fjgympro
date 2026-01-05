@@ -4,7 +4,7 @@ import {
   Users, UserPlus, Dumbbell, CreditCard, 
   FileText, Settings, Key, Bell, LogOut, 
   Info, Shield, BarChart3, QrCode,
-  AlertTriangle, FlaskConical, DollarSign, Activity, Loader2
+  AlertTriangle, FlaskConical, DollarSign, Activity, Loader2, Trash2
 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -57,6 +57,7 @@ const TrialPasswords = lazy(() => import('@/components/admin/TrialPasswords'));
 const ProfileCompletionPrompt = lazy(() => import('@/components/ProfileCompletionPrompt'));
 const UserCPFSearch = lazy(() => import('@/components/admin/UserCPFSearch'));
 const AccessLogs = lazy(() => import('@/components/admin/AccessLogs'));
+const TrashBin = lazy(() => import('@/components/admin/TrashBin'));
 
 // Loading fallback for lazy components
 const ComponentLoader = () => (
@@ -121,6 +122,7 @@ const AdminDashboard: React.FC = () => {
   ], []);
 
   const masterItems = useMemo(() => [
+    { icon: Trash2, label: 'Lixeira', path: 'trash', color: 'text-red-500' },
     { icon: Activity, label: 'Logs de Acesso', path: 'access-logs', color: 'text-cyan-500' },
     { icon: Dumbbell, label: 'Ver Instrutores', path: 'view-instructors', color: 'text-green-500' },
     { icon: DollarSign, label: 'Financeiro Instrutores', path: 'instructor-finance', color: 'text-emerald-500' },
@@ -247,6 +249,7 @@ const AdminDashboard: React.FC = () => {
               <Route path="trial-passwords" element={<TrialPasswords />} />
               <Route path="master" element={<MasterPanel />} />
               <Route path="access-logs" element={<AccessLogs />} />
+              <Route path="trash" element={<TrashBin />} />
               <Route path="licenses" element={<PreGeneratedAccounts />} />
               <Route path="instructor-finance" element={<InstructorFinance />} />
               <Route path="*" element={
