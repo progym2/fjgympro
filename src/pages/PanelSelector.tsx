@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { User, Dumbbell, Shield, Loader2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
 import AnimatedLogo from '@/components/AnimatedLogo';
-import ParticlesBackground from '@/components/ParticlesBackground';
 import { Button } from '@/components/ui/button';
 import bgHome from '@/assets/bg-home.png';
 
@@ -91,35 +89,9 @@ const PanelSelector: React.FC = () => {
 
   // Loading state
   if (isLoading || redirecting) {
-    const roleLabel = role === 'admin' ? 'Gerente' : role === 'instructor' ? 'Instrutor' : 'Cliente';
-    
     return (
-      <div
-        className="min-h-screen flex flex-col items-center justify-center"
-        style={{
-          backgroundImage: `url(${bgHome})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
-        <ParticlesBackground />
-        
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative z-10 flex flex-col items-center gap-6 p-8"
-        >
-          <AnimatedLogo size="lg" showGlow />
-          <div className="flex items-center gap-3 text-foreground">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <span className="text-lg font-medium">
-              {redirecting 
-                ? `Redirecionando para o Painel de ${roleLabel}...`
-                : 'Carregando...'}
-            </span>
-          </div>
-        </motion.div>
+      <div className="h-[100dvh] flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -127,108 +99,49 @@ const PanelSelector: React.FC = () => {
   // Master user - show panel selection
   return (
     <div
-      className="h-[100dvh] flex flex-col overflow-hidden touch-pan-y"
+      className="h-[100dvh] flex flex-col items-center justify-center overflow-hidden bg-background"
       style={{
         backgroundImage: `url(${bgHome})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
-      <ParticlesBackground />
+      <div className="absolute inset-0 bg-black/70" />
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-4">
-        {/* Logo - smaller */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-        >
-          <AnimatedLogo size="md" showGlow />
-        </motion.div>
+      {/* Content - compact */}
+      <div className="relative z-10 flex flex-col items-center px-4">
+        <AnimatedLogo size="md" showGlow />
 
-        {/* Welcome Message - compact */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.4 }}
-          className="mt-6 text-center"
-        >
-          <h1 className="text-xl sm:text-2xl font-bebas text-foreground tracking-wider">
-            Olá, <span className="text-primary">{profile?.full_name || profile?.username}</span>
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Selecione um painel para acessar
-          </p>
-        </motion.div>
+        <h1 className="mt-4 text-lg font-bebas text-foreground">
+          Olá, <span className="text-primary">{profile?.full_name || profile?.username}</span>
+        </h1>
 
-        {/* Panel Selection - refined buttons */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.25, duration: 0.4 }}
-          className="mt-6 flex flex-wrap justify-center gap-2.5 sm:gap-3"
-        >
-          {panels.map((panel, index) => {
+        {/* Panel buttons */}
+        <div className="mt-4 flex gap-2">
+          {panels.map((panel) => {
             const Icon = panel.icon;
             return (
-              <motion.button
+              <button
                 key={panel.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ 
-                  delay: 0.3 + index * 0.08, 
-                  duration: 0.3,
-                  ease: [0.23, 1, 0.32, 1]
-                }}
-                whileHover={{ 
-                  scale: 1.04,
-                  transition: { duration: 0.2 }
-                }}
-                whileTap={{ scale: 0.97 }}
                 onClick={() => handlePanelSelect(panel)}
-                className={`
-                  group relative flex items-center gap-2.5 px-4 py-2.5 rounded-lg
-                  bg-card/70 backdrop-blur-md
-                  ${panel.borderColor}
-                  border transition-all duration-200 cursor-pointer
-                  shadow-sm hover:shadow-md
-                `}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-card/80 border ${panel.borderColor}`}
               >
-                {/* Icon */}
-                <div
-                  className={`p-1.5 rounded-md ${panel.bgColor} ${panel.color} transition-all duration-200 group-hover:scale-110`}
-                >
-                  <Icon size={18} strokeWidth={2} />
-                </div>
-                
-                {/* Label */}
-                <span className={`text-xs sm:text-sm font-bebas tracking-wider ${panel.color}`}>
-                  {panel.label}
-                </span>
-              </motion.button>
+                <Icon size={16} className={panel.color} />
+                <span className={`text-xs font-bebas ${panel.color}`}>{panel.label}</span>
+              </button>
             );
           })}
-        </motion.div>
+        </div>
 
-        {/* Logout Button - subtle */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.3 }}
-          className="mt-8"
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleLogout}
+          className="mt-6 text-xs text-muted-foreground"
         >
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            className="gap-1.5 text-xs text-muted-foreground/70 hover:text-foreground hover:bg-card/30"
-          >
-            <ArrowLeft size={14} />
-            Sair
-          </Button>
-        </motion.div>
+          <ArrowLeft size={14} className="mr-1" />
+          Sair
+        </Button>
       </div>
     </div>
   );

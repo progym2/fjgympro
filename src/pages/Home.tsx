@@ -12,7 +12,6 @@ import AnimatedLogo from '@/components/AnimatedLogo';
 import AudioVisualizer from '@/components/AudioVisualizer';
 import SportThemeSelector from '@/components/SportThemeSelector';
 import MiniMusicPlayer from '@/components/MiniMusicPlayer';
-import HoverEffectsToggle from '@/components/HoverEffectsToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
 
@@ -78,7 +77,7 @@ const Home: React.FC = () => {
 
   return (
     <div
-      className="h-[100dvh] relative overflow-hidden touch-pan-y"
+      className="h-[100dvh] relative overflow-hidden"
       onClick={tryAutoPlay}
       onTouchStart={tryAutoPlay}
       style={{
@@ -88,73 +87,57 @@ const Home: React.FC = () => {
       }}
     >
       {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+      <div className="absolute inset-0 bg-black/60" />
 
-      {/* Animated Particles */}
+      {/* Particles - reduced */}
       <ParticlesBackground />
 
-      {/* Content */}
-      <div className="relative z-10 h-full flex flex-col px-3 sm:px-4 overflow-hidden">
-        {/* Safe area top padding */}
-        <div className="pt-safe" />
-        
-        {/* Header with Logo */}
-        <header className="pt-3 sm:pt-4 md:pt-6 flex-shrink-0">
-          <div className="flex justify-center">
-            <AnimatedLogo size="xl" showGlow />
-          </div>
-        </header>
+      {/* Content - centered and compact */}
+      <div className="relative z-10 h-full flex flex-col items-center justify-center px-4">
+        {/* Logo */}
+        <AnimatedLogo size="lg" showGlow />
 
-        {/* Main Content */}
-        <main className="flex-1 flex flex-col items-center justify-center gap-4 sm:gap-6 md:gap-8 py-2 sm:py-4 min-h-0">
-          {/* Digital Clock */}
+        {/* Clock */}
+        <div className="mt-4">
           <DigitalClock />
-
-          {/* Panel Buttons */}
-          <div className="flex flex-wrap justify-center items-end gap-3 sm:gap-5 md:gap-8 mt-2 sm:mt-4">
-            <GymButton onClick={() => handlePanelClick('client')} icon={User} label="CLIENTE" color="primary" />
-            <GymButton onClick={() => handlePanelClick('instructor')} icon={Dumbbell} label="INSTRUTOR" color="secondary" />
-            <GymButton onClick={() => handlePanelClick('admin')} icon={Shield} label="GERENTE" color="accent" />
-          </div>
-        </main>
-
-        {/* Theme Selector - top left */}
-        <div className="fixed top-3 left-3 sm:top-4 sm:left-4 z-50 pt-safe pl-safe">
-          <SportThemeSelector compact />
         </div>
 
-        {/* Consulta Aluno Button - bottom left */}
-        <button
-          onClick={() => { playClickSound(); navigate('/consulta-aluno'); }}
-          className="fixed bottom-20 left-3 sm:bottom-24 sm:left-4 z-50 p-2 sm:p-2.5 rounded-full bg-card/40 backdrop-blur-md border border-border/50 text-muted-foreground hover:text-green-500 hover:border-green-500/50 transition-all shadow-md"
-          aria-label="Consultar aluno"
-        >
-          <Search size={16} className="sm:w-[18px] sm:h-[18px]" />
-          <span className="sr-only">Consultar Aluno</span>
-        </button>
+        {/* Panel Buttons - compact row */}
+        <div className="mt-6 flex gap-3 sm:gap-4">
+          <GymButton onClick={() => handlePanelClick('client')} icon={User} label="CLIENTE" color="primary" />
+          <GymButton onClick={() => handlePanelClick('instructor')} icon={Dumbbell} label="INSTRUTOR" color="secondary" />
+          <GymButton onClick={() => handlePanelClick('admin')} icon={Shield} label="GERENTE" color="accent" />
+        </div>
 
-        {/* About Button - discreet corner */}
-        <button
-          onClick={() => setAboutDialogOpen(true)}
-          className="fixed top-3 right-3 sm:top-4 sm:right-4 z-50 p-2 sm:p-2.5 rounded-full bg-card/40 backdrop-blur-md border border-border/50 text-muted-foreground hover:text-primary hover:border-primary/50 transition-all shadow-md pt-safe pr-safe"
-          aria-label="Sobre o aplicativo"
-        >
-          <Info size={16} className="sm:w-[18px] sm:h-[18px]" />
-          <span className="sr-only">Sobre o Aplicativo</span>
-        </button>
-
-        {/* Hover Effects Toggle - bottom left */}
-        <HoverEffectsToggle />
-
-        {/* Mini Music Player - above footer */}
-        <MiniMusicPlayer />
-
-        {/* Footer */}
-        <AppFooter />
-        
-        {/* Safe area bottom padding */}
-        <div className="pb-safe" />
+        {/* Footer inline */}
+        <div className="mt-8">
+          <AppFooter />
+        </div>
       </div>
+
+      {/* Fixed buttons - minimal */}
+      <div className="fixed top-3 left-3 z-50">
+        <SportThemeSelector compact />
+      </div>
+
+      <button
+        onClick={() => setAboutDialogOpen(true)}
+        className="fixed top-3 right-3 z-50 p-2 rounded-full bg-black/40 text-white/70 hover:text-white"
+        aria-label="Sobre"
+      >
+        <Info size={16} />
+      </button>
+
+      <button
+        onClick={() => { playClickSound(); navigate('/consulta-aluno'); }}
+        className="fixed bottom-16 left-3 z-50 p-2 rounded-full bg-black/40 text-white/70 hover:text-green-400"
+        aria-label="Consultar aluno"
+      >
+        <Search size={16} />
+      </button>
+
+      {/* Mini Music Player */}
+      <MiniMusicPlayer />
 
       {/* Dialogs */}
       <LoginDialog
