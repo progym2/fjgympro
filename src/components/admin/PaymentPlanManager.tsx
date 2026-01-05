@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   ArrowLeft, FileText, Plus, User, Search,
   Loader2, Printer, CheckCircle, Clock, XCircle,
@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { formatCurrency, printPaymentPlan, generateReceiptNumber, printPaymentReceipt } from '@/lib/printUtils';
 import { format, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { filterDecimalOnly } from '@/lib/inputValidation';
 
 interface Client {
   id: string;
@@ -55,6 +56,7 @@ interface Payment {
 
 const PaymentPlanManager: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { playClickSound } = useAudio();
   const { profile } = useAuth();
   
@@ -62,6 +64,7 @@ const PaymentPlanManager: React.FC = () => {
   const [plans, setPlans] = useState<PaymentPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [clientSearchTerm, setClientSearchTerm] = useState('');
   
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
@@ -86,15 +89,34 @@ const PaymentPlanManager: React.FC = () => {
     loadData();
   }, []);
 
+  // Pre-select client from URL params
+  useEffect(() => {
+    const clientId = searchParams.get('client');
+    if (clientId && clients.length > 0) {
+      const client = clients.find(c => c.id === clientId);
+      if (client) {
+        setFormData(prev => ({ ...prev, clientId }));
+        setShowCreateDialog(true);
+      }
+    }
+  }, [searchParams, clients]);
+
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load clients created by this admin
+      // Load all clients (role = 'client') from the same tenant
+      const { data: clientRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'client');
+
+      const clientUserIds = clientRoles?.map(r => r.user_id) || [];
+
+      // Get profiles that are clients
       const { data: clientsData } = await supabase
         .from('profiles')
-        .select('id, username, full_name')
-        .eq('created_by_admin', profile?.profile_id)
-        .is('cref', null)
+        .select('id, username, full_name, user_id')
+        .in('user_id', clientUserIds)
         .order('full_name');
       
       if (clientsData) setClients(clientsData);
@@ -131,12 +153,26 @@ const PaymentPlanManager: React.FC = () => {
   };
 
   const calculateInstallmentAmount = () => {
-    const total = parseFloat(formData.totalAmount) || 0;
-    const discount = parseFloat(formData.discount) || 0;
+    const total = parseFloat(formData.totalAmount.replace(',', '.')) || 0;
+    const discount = parseFloat(formData.discount.replace(',', '.')) || 0;
     const installments = parseInt(formData.installments) || 1;
     const discountedTotal = total * (1 - discount / 100);
     return discountedTotal / installments;
   };
+
+  // Handle decimal input with comma or period
+  const handleDecimalChange = (field: 'totalAmount' | 'discount') => (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Allow comma as decimal separator
+    const value = e.target.value.replace(',', '.');
+    const filtered = filterDecimalOnly(value);
+    setFormData({ ...formData, [field]: filtered });
+  };
+
+  // Filter clients by search term
+  const filteredClients = clients.filter(client => {
+    const name = client.full_name || client.username || '';
+    return name.toLowerCase().includes(clientSearchTerm.toLowerCase());
+  });
 
   const handleCreatePlan = async () => {
     if (!formData.clientId || !formData.totalAmount) {
@@ -144,8 +180,8 @@ const PaymentPlanManager: React.FC = () => {
       return;
     }
 
-    const totalAmount = parseFloat(formData.totalAmount);
-    const discount = parseFloat(formData.discount) || 0;
+    const totalAmount = parseFloat(formData.totalAmount.replace(',', '.'));
+    const discount = parseFloat(formData.discount.replace(',', '.')) || 0;
     const installments = parseInt(formData.installments);
     const discountedTotal = totalAmount * (1 - discount / 100);
     const installmentAmount = discountedTotal / installments;
@@ -470,28 +506,42 @@ const PaymentPlanManager: React.FC = () => {
           <div className="space-y-4">
             <div>
               <label className="text-sm text-muted-foreground">Cliente *</label>
-              <Select value={formData.clientId} onValueChange={(v) => setFormData({ ...formData, clientId: v })}>
-                <SelectTrigger className="bg-background/50">
-                  <SelectValue placeholder="Selecione o cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.full_name || client.username}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Input
+                  placeholder="Buscar cliente por nome..."
+                  value={clientSearchTerm}
+                  onChange={(e) => setClientSearchTerm(e.target.value)}
+                  className="bg-background/50"
+                />
+                <Select value={formData.clientId} onValueChange={(v) => setFormData({ ...formData, clientId: v })}>
+                  <SelectTrigger className="bg-background/50">
+                    <SelectValue placeholder="Selecione o cliente" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {filteredClients.length === 0 ? (
+                      <div className="p-2 text-sm text-muted-foreground text-center">
+                        {clients.length === 0 ? 'Nenhum cliente cadastrado' : 'Nenhum cliente encontrado'}
+                      </div>
+                    ) : (
+                      filteredClients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.full_name || client.username}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div>
               <label className="text-sm text-muted-foreground">Valor Total (R$) *</label>
               <Input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
+                type="text"
+                inputMode="decimal"
+                placeholder="0,00"
                 value={formData.totalAmount}
-                onChange={(e) => setFormData({ ...formData, totalAmount: e.target.value })}
-                className="bg-background/50"
+                onChange={handleDecimalChange('totalAmount')}
+                className="bg-background/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -511,12 +561,12 @@ const PaymentPlanManager: React.FC = () => {
               <div>
                 <label className="text-sm text-muted-foreground">Desconto (%)</label>
                 <Input
-                  type="number"
-                  min="0"
-                  max="100"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0"
                   value={formData.discount}
-                  onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
-                  className="bg-background/50"
+                  onChange={handleDecimalChange('discount')}
+                  className="bg-background/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
             </div>
