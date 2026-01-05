@@ -60,7 +60,7 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
             </div>
           )}
 
-          {/* Video - scaled up slightly to crop watermarks at edges */}
+          {/* Video (sem zoom) + corte inferior para esconder marca d'água */}
           <video
             ref={videoRef}
             autoPlay
@@ -70,7 +70,9 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
             onEnded={handleVideoEnd}
             onError={handleVideoError}
             onCanPlay={handleCanPlay}
-            className={`w-[110%] h-[110%] object-cover transition-opacity duration-300 ${
+            // Ajuste a % se ainda aparecer a marca (ex.: 12% / 15%)
+            style={{ clipPath: 'inset(0 0 10% 0)' }}
+            className={`w-full h-full object-contain transition-opacity duration-300 ${
               isLoaded ? 'opacity-100' : 'opacity-0'
             }`}
           >
