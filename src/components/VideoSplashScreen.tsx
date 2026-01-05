@@ -29,14 +29,14 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
   }, [onComplete]);
 
   const handleVideoEnd = () => {
-    // Show logo animation after video ends
+    // Immediately show logo - no delay
     setShowLogo(true);
   };
 
   const handleLogoAnimationComplete = () => {
     sessionStorage.setItem('splashShown', 'true');
     setIsVisible(false);
-    setTimeout(onComplete, 100);
+    onComplete();
   };
 
   const handleVideoError = () => {
@@ -74,15 +74,15 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
             }}
           />
 
-          {/* Video phase */}
+          {/* Video phase - fast fade out */}
           <AnimatePresence mode="wait">
             {!showLogo && (
               <motion.div
                 key="video"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: isLoaded ? 1 : 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.4 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
                 className="relative w-full h-full flex items-center justify-center"
               >
                 {/* Loading indicator while video loads */}
