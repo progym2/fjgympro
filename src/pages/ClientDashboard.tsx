@@ -120,7 +120,6 @@ const ClientDashboard: React.FC = () => {
   const { playClickSound } = useAudio();
   const [aboutOpen, setAboutOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
-  const [widgetsReady, setWidgetsReady] = useState(false);
   
   // Widget visibility state
   const [hydrationVisible, setHydrationVisible] = useState(() => {
@@ -131,14 +130,8 @@ const ClientDashboard: React.FC = () => {
   });
   
   const isOnHome = location.pathname === '/client';
-  const showHydrationWidget = isOnHome && !location.pathname.includes('/hydration') && hydrationVisible && widgetsReady;
+  const showHydrationWidget = isOnHome && !location.pathname.includes('/hydration') && hydrationVisible;
   const isMaster = role === 'master';
-
-  // Delay widgets to prioritize menu rendering
-  useEffect(() => {
-    const t = window.setTimeout(() => setWidgetsReady(true), 500);
-    return () => window.clearTimeout(t);
-  }, []);
 
   const handleHydrationVisibility = useCallback((visible: boolean) => {
     setHydrationVisible(visible);
@@ -292,31 +285,29 @@ const ClientDashboard: React.FC = () => {
           </Suspense>
         </main>
 
-        {/* Widgets load after delay */}
-        {widgetsReady && (
-          <Suspense fallback={null}>
-            <RealtimeNotifications 
-              isVisible={notificationsVisible} 
-              onVisibilityChange={handleNotificationsVisibility}
+        {/* Widgets */}
+        <Suspense fallback={null}>
+          <RealtimeNotifications 
+            isVisible={notificationsVisible} 
+            onVisibilityChange={handleNotificationsVisibility}
+          />
+          
+          {profile && <ProfileCompletionPrompt />}
+          
+          {showHydrationWidget && profile && (
+            <HydrationWidget 
+              isVisible={hydrationVisible}
+              onVisibilityChange={handleHydrationVisibility}
             />
-            
-            {profile && <ProfileCompletionPrompt />}
-            
-            {showHydrationWidget && profile && (
-              <HydrationWidget 
-                isVisible={hydrationVisible}
-                onVisibilityChange={handleHydrationVisibility}
-              />
-            )}
-            
-            <WidgetRestoreButton
-              hydrationHidden={!hydrationVisible}
-              notificationsHidden={!notificationsVisible}
-              onRestoreHydration={() => handleHydrationVisibility(true)}
-              onRestoreNotifications={() => handleNotificationsVisibility(true)}
-            />
-          </Suspense>
-        )}
+          )}
+          
+          <WidgetRestoreButton
+            hydrationHidden={!hydrationVisible}
+            notificationsHidden={!notificationsVisible}
+            onRestoreHydration={() => handleHydrationVisibility(true)}
+            onRestoreNotifications={() => handleNotificationsVisibility(true)}
+          />
+        </Suspense>
         
         <MusicToggle />
         <div className="px-4">
