@@ -375,9 +375,9 @@ const Profile: React.FC = () => {
                   <SelectContent>
                     <SelectItem value="weight_loss">Perder Peso</SelectItem>
                     <SelectItem value="muscle_gain">Ganhar Massa</SelectItem>
+                    <SelectItem value="hypertrophy">Hipertrofia</SelectItem>
+                    <SelectItem value="conditioning">Condicionamento</SelectItem>
                     <SelectItem value="maintenance">Manutenção</SelectItem>
-                    <SelectItem value="endurance">Resistência</SelectItem>
-                    <SelectItem value="flexibility">Flexibilidade</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
