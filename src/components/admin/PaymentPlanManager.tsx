@@ -4,7 +4,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   ArrowLeft, FileText, Plus, User, Search,
   Loader2, Printer, CheckCircle, Clock, XCircle,
-  DollarSign, Calendar, Share2, MessageCircle, Mail
+  DollarSign, Calendar, Share2, MessageCircle, Mail,
+  Eye, Pause, Play, History
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
@@ -21,6 +22,8 @@ import { formatCurrency, printPaymentPlan, generateReceiptNumber, printPaymentRe
 import { format, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { filterDecimalOnly } from '@/lib/inputValidation';
+import CarnePreviewDialog from './CarnePreviewDialog';
+import ClientHistoryDialog from './ClientHistoryDialog';
 
 interface Client {
   id: string;
@@ -74,8 +77,12 @@ const PaymentPlanManager: React.FC = () => {
   
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [selectedClientForHistory, setSelectedClientForHistory] = useState<string | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<PaymentPlan | null>(null);
+  const [saving, setSaving] = useState(false);
   
   const [formData, setFormData] = useState({
     clientId: '',
@@ -90,7 +97,7 @@ const PaymentPlanManager: React.FC = () => {
   const [payMethod, setPayMethod] = useState<'cash' | 'pix' | 'card'>('cash');
 
   // ESC para voltar ao menu admin (desabilitado quando há dialogs abertos)
-  useEscapeBack({ to: '/admin', disableWhen: [showCreateDialog, showPayDialog] });
+  useEscapeBack({ to: '/admin', disableWhen: [showCreateDialog, showPayDialog, showPreviewDialog, showHistoryDialog] });
 
   useEffect(() => {
     loadData();
@@ -209,12 +216,48 @@ const PaymentPlanManager: React.FC = () => {
     return name.toLowerCase().includes(clientSearchTerm.toLowerCase());
   });
 
-  const handleCreatePlan = async () => {
+  // Calculate installment amount for preview
+  const getPreviewData = () => {
+    if (!formData.clientId || !formData.totalAmount) return null;
+    
+    const client = clients.find(c => c.id === formData.clientId);
+    if (!client) return null;
+
+    const totalAmount = parseFloat(formData.totalAmount.replace(',', '.'));
+    const discount = parseFloat(formData.discount.replace(',', '.')) || 0;
+    const installments = parseInt(formData.installments);
+    const discountedTotal = totalAmount * (1 - discount / 100);
+    const installmentAmount = discountedTotal / installments;
+
+    return {
+      clientName: client.full_name || client.username,
+      studentId: client.student_id || undefined,
+      totalAmount: discountedTotal,
+      installments,
+      installmentAmount,
+      discount,
+      startDate: formData.startDate,
+      description: formData.description || `Carnê ${installments}x`,
+      pixKey: formData.pixKey || undefined,
+    };
+  };
+
+  const handleOpenPreview = () => {
+    if (!formData.clientId || !formData.totalAmount) {
+      toast.error('Selecione um cliente e informe o valor');
+      return;
+    }
+    setShowCreateDialog(false);
+    setShowPreviewDialog(true);
+  };
+
+  const handleCreatePlan = async (shouldPrint: boolean = false) => {
     if (!formData.clientId || !formData.totalAmount) {
       toast.error('Selecione um cliente e informe o valor');
       return;
     }
 
+    setSaving(true);
     const totalAmount = parseFloat(formData.totalAmount.replace(',', '.'));
     const discount = parseFloat(formData.discount.replace(',', '.')) || 0;
     const installments = parseInt(formData.installments);
@@ -265,25 +308,28 @@ const PaymentPlanManager: React.FC = () => {
 
       const client = clients.find(c => c.id === formData.clientId);
       
-      toast.success('Carnê criado com sucesso!');
+      toast.success('Carnê salvo com sucesso!');
       
-      // Print the payment plan
-      printPaymentPlan({
-        clientName: client?.full_name || client?.username || '',
-        studentId: client?.student_id || undefined,
-        totalAmount: discountedTotal,
-        installments,
-        installmentAmount,
-        discount,
-        startDate: format(new Date(formData.startDate), 'dd/MM/yyyy'),
-        payments: payments.map(p => ({
-          number: p.installment_number,
-          dueDate: format(new Date(p.due_date), 'dd/MM/yyyy'),
-          status: 'pending',
-        })),
-        pixKey: formData.pixKey || undefined,
-      });
+      // Only print if requested
+      if (shouldPrint) {
+        printPaymentPlan({
+          clientName: client?.full_name || client?.username || '',
+          studentId: client?.student_id || undefined,
+          totalAmount: discountedTotal,
+          installments,
+          installmentAmount,
+          discount,
+          startDate: format(new Date(formData.startDate), 'dd/MM/yyyy'),
+          payments: payments.map(p => ({
+            number: p.installment_number,
+            dueDate: format(new Date(p.due_date), 'dd/MM/yyyy'),
+            status: 'pending',
+          })),
+          pixKey: formData.pixKey || undefined,
+        });
+      }
 
+      setShowPreviewDialog(false);
       setShowCreateDialog(false);
       setFormData({
         clientId: '',
@@ -298,6 +344,8 @@ const PaymentPlanManager: React.FC = () => {
     } catch (err) {
       console.error('Error:', err);
       toast.error('Erro ao criar carnê');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -439,9 +487,30 @@ const PaymentPlanManager: React.FC = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <User size={16} className="text-primary" />
-                      <span className="font-semibold">{plan.client?.full_name || plan.client?.username}</span>
+                      <button
+                        onClick={() => {
+                          playClickSound();
+                          setSelectedClientForHistory(plan.client_id);
+                          setShowHistoryDialog(true);
+                        }}
+                        className="flex items-center gap-1 hover:text-primary transition-colors"
+                      >
+                        <User size={16} className="text-primary" />
+                        <span className="font-semibold hover:underline">{plan.client?.full_name || plan.client?.username}</span>
+                      </button>
                       {getStatusBadge(plan.status)}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0"
+                        onClick={() => {
+                          playClickSound();
+                          setSelectedClientForHistory(plan.client_id);
+                          setShowHistoryDialog(true);
+                        }}
+                      >
+                        <History size={14} className="text-muted-foreground hover:text-primary" />
+                      </Button>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
                   </div>
@@ -727,8 +796,8 @@ const PaymentPlanManager: React.FC = () => {
           </div>
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancelar</Button>
-            <Button onClick={handleCreatePlan} className="bg-blue-600 hover:bg-blue-700">
-              <Printer size={16} className="mr-1" /> Criar e Imprimir
+            <Button onClick={handleOpenPreview} className="bg-blue-600 hover:bg-blue-700">
+              <Eye size={16} className="mr-1" /> Visualizar
             </Button>
           </div>
         </DialogContent>
@@ -784,6 +853,24 @@ const PaymentPlanManager: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Preview Dialog */}
+      <CarnePreviewDialog
+        open={showPreviewDialog}
+        onOpenChange={setShowPreviewDialog}
+        data={getPreviewData()}
+        onSave={() => handleCreatePlan(false)}
+        onPrint={() => handleCreatePlan(true)}
+        saving={saving}
+      />
+
+      {/* Client History Dialog */}
+      <ClientHistoryDialog
+        open={showHistoryDialog}
+        onOpenChange={setShowHistoryDialog}
+        clientId={selectedClientForHistory}
+        onEnrollmentChange={loadData}
+      />
     </motion.div>
   );
 };
