@@ -17,18 +17,17 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "audio/*", "videos/*"],
+      includeAssets: ["favicon.ico", "audio/*", "pwa-*.png", "manifest.json"],
       manifest: {
-        name: "FrancGymPro - Sistema de Academia",
-        short_name: "FrancGymPro",
-        description: "Sistema completo de gerenciamento de academia - Clientes, Instrutores e Administração",
+        name: "FrancGymPro",
+        short_name: "GymPro",
+        description: "Sistema de Academia",
         theme_color: "#dc2626",
         background_color: "#0a0a0a",
         display: "standalone",
         orientation: "portrait-primary",
         scope: "/",
         start_url: "/",
-        categories: ["fitness", "health", "sports"],
         icons: [
           {
             src: "/pwa-192x192.png",
@@ -48,37 +47,26 @@ export default defineConfig(({ mode }) => ({
             type: "image/png",
             purpose: "maskable"
           }
-        ],
-        screenshots: [
-          {
-            src: "/screenshot-wide.png",
-            sizes: "1280x720",
-            type: "image/png",
-            form_factor: "wide"
-          },
-          {
-            src: "/screenshot-mobile.png",
-            sizes: "720x1280",
-            type: "image/png",
-            form_factor: "narrow"
-          }
         ]
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
-        globPatterns: ["**/*.{js,css,html,ico,svg,woff2,woff,ttf,mp3}"],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        globPatterns: ["**/*.{js,css,html,ico,svg,woff2,png,jpg,webp}"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api/],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
             handler: "NetworkFirst",
             options: {
-              cacheName: "supabase-api-cache",
-              networkTimeoutSeconds: 5,
+              cacheName: "api-cache",
+              networkTimeoutSeconds: 3,
               expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 60 * 60 * 24 * 7
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -87,51 +75,37 @@ export default defineConfig(({ mode }) => ({
           },
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/auth\/.*/i,
-            handler: "NetworkOnly",
-            options: {
-              cacheName: "supabase-auth"
-            }
+            handler: "NetworkOnly"
           },
           {
             urlPattern: /\.(?:png|jpg|jpeg|webp|gif|svg)$/i,
             handler: "CacheFirst",
             options: {
-              cacheName: "image-cache",
+              cacheName: "images",
               expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 7
               }
             }
           },
           {
-            urlPattern: /\.(?:mp3|wav|ogg)$/i,
+            urlPattern: /\.(?:mp3|wav)$/i,
             handler: "CacheFirst",
             options: {
-              cacheName: "audio-cache",
-              expiration: {
-                maxEntries: 20,
-                maxAgeSeconds: 60 * 60 * 24 * 30
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "google-fonts-stylesheets",
+              cacheName: "audio",
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365
+                maxAgeSeconds: 60 * 60 * 24 * 30
               }
             }
           },
           {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
             handler: "CacheFirst",
             options: {
-              cacheName: "google-fonts-webfonts",
+              cacheName: "fonts",
               expiration: {
-                maxEntries: 30,
+                maxEntries: 20,
                 maxAgeSeconds: 60 * 60 * 24 * 365
               }
             }
