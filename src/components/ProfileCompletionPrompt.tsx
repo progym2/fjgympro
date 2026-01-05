@@ -259,8 +259,8 @@ const ProfileCompletionPromptInner: React.FC<ProfileCompletionPromptProps> = mem
     phone: { label: 'Celular', icon: <Phone className="w-4 h-4" /> }
   };
 
-  // Não exibir se não há campos faltando ou se está na página de perfil
-  if (missingFields.length === 0 || isOnProfilePage) return null;
+  // Não exibir se não há campos faltando, se está na página de perfil, ou se é usuário master
+  if (missingFields.length === 0 || isOnProfilePage || role === 'master') return null;
 
   const remainingDismisses = MAX_DISMISS_COUNT - dismissCount;
 
