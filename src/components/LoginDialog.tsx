@@ -195,11 +195,12 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
   }, [isOpen, loadLockoutData]);
 
   // Auto-trigger biometric login when dialog opens and biometric is enabled
+  // Only if biometric is supported on this device
   useEffect(() => {
-    if (isOpen && biometricEnabled && hasSavedCredentials && !isLoading) {
+    if (isOpen && biometricEnabled && biometricSupported && hasSavedCredentials && !isLoading) {
       handleBiometricLogin();
     }
-  }, [isOpen, biometricEnabled, hasSavedCredentials]);
+  }, [isOpen, biometricEnabled, biometricSupported, hasSavedCredentials]);
 
   const handleBiometricLogin = async () => {
     if (!hasSavedCredentials) {
@@ -259,9 +260,11 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
         // User cancelled or biometric failed
         setError('Autenticação biométrica cancelada ou falhou. Use usuário e senha.');
       } else if (err.name === 'NotSupportedError') {
-        setError('Biometria não suportada neste dispositivo.');
+        // Silently disable biometric without showing error toast
+        console.log('Biometrics not supported on this device, disabling silently');
         setBiometricEnabled(false);
         localStorage.removeItem(BIOMETRIC_KEY);
+        // Don't set error - just let user use password
       } else {
         // Fall back to regular login
         setError('Erro na biometria. Use usuário e senha.');
@@ -802,49 +805,56 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
               </div>
 
               {/* Biometric Login Option */}
-              {biometricSupported && (
-                <div className="space-y-2">
-                  {biometricEnabled ? (
-                    <div className="flex items-center justify-between p-3 bg-primary/10 border border-primary/30 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Fingerprint size={20} className="text-primary" />
-                        <span className="text-sm text-primary">Biometria ativada</span>
+              <div className="space-y-2">
+                {biometricSupported ? (
+                  <>
+                    {biometricEnabled ? (
+                      <div className="flex items-center justify-between p-3 bg-primary/10 border border-primary/30 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Fingerprint size={20} className="text-primary" />
+                          <span className="text-sm text-primary">Biometria ativada</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={handleBiometricLogin}
+                            disabled={isLoading}
+                            className="bg-primary hover:bg-primary/90 h-8"
+                          >
+                            <Fingerprint size={14} className="mr-1" />
+                            Usar
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={disableBiometric}
+                            className="text-destructive hover:text-destructive h-8"
+                          >
+                            <X size={14} />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={handleBiometricLogin}
-                          disabled={isLoading}
-                          className="bg-primary hover:bg-primary/90 h-8"
-                        >
-                          <Fingerprint size={14} className="mr-1" />
-                          Usar
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={disableBiometric}
-                          className="text-destructive hover:text-destructive h-8"
-                        >
-                          <X size={14} />
-                        </Button>
-                      </div>
-                    </div>
-                  ) : hasSavedCredentials && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={enableBiometric}
-                      className="w-full border-primary/30 text-primary hover:bg-primary/10"
-                    >
-                      <Fingerprint size={18} className="mr-2" />
-                      Ativar Login Biométrico
-                    </Button>
-                  )}
-                </div>
-              )}
+                    ) : hasSavedCredentials && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={enableBiometric}
+                        className="w-full border-primary/30 text-primary hover:bg-primary/10"
+                      >
+                        <Fingerprint size={18} className="mr-2" />
+                        Ativar Login Biométrico
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 p-2 text-xs text-muted-foreground bg-muted/30 rounded-md">
+                    <Fingerprint size={14} className="opacity-50" />
+                    <span>Biometria não disponível neste dispositivo</span>
+                  </div>
+                )}
+              </div>
 
               {/* Submit Button */}
               <motion.button
