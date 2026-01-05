@@ -58,6 +58,7 @@ const ProfileCompletionPrompt = lazy(() => import('@/components/ProfileCompletio
 const UserCPFSearch = lazy(() => import('@/components/admin/UserCPFSearch'));
 const AccessLogs = lazy(() => import('@/components/admin/AccessLogs'));
 const TrashBin = lazy(() => import('@/components/admin/TrashBin'));
+const FinanceDashboard = lazy(() => import('@/components/admin/FinanceDashboard'));
 
 // Loading fallback for lazy components
 const ComponentLoader = () => (
@@ -113,7 +114,7 @@ const AdminDashboard: React.FC = () => {
     { icon: Users, label: 'Consultar Cadastros', path: 'list-users', color: 'text-purple-500' },
     { icon: DollarSign, label: 'Receber Mensalidade', path: 'receive-payment', color: 'text-emerald-500' },
     { icon: FileText, label: 'Gerar Carnês', path: 'payment-plans', color: 'text-cyan-500' },
-    { icon: BarChart3, label: 'Relatórios', path: 'reports', color: 'text-indigo-500' },
+    { icon: BarChart3, label: 'Dashboard Financeiro', path: 'dashboard', color: 'text-indigo-500' },
     { icon: CreditCard, label: 'Financeiro', path: 'finance', color: 'text-teal-500' },
     { icon: AlertTriangle, label: 'Inadimplentes', path: 'defaulters', color: 'text-red-500' },
     { icon: Bell, label: 'Enviar Alertas', path: 'alerts', color: 'text-pink-500' },
@@ -236,6 +237,7 @@ const AdminDashboard: React.FC = () => {
               <Route path="receive-payment" element={<ReceivePayment />} />
               <Route path="payment-plans" element={<PaymentPlanManager />} />
               <Route path="reports" element={<PaymentReports />} />
+              <Route path="dashboard" element={<FinanceDashboard />} />
               <Route path="finance" element={<AdminFinance />} />
               <Route path="defaulters" element={<Defaulters />} />
               <Route path="alerts" element={<SendAlerts />} />
