@@ -196,22 +196,45 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
 
   // Track if auto-login was already attempted this session
   const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
+  const [credentialsLoaded, setCredentialsLoaded] = useState(false);
 
-  // Auto-login ONLY ONCE when dialog opens and credentials are saved
-  // Priority: biometric > auto-login with saved credentials
+  // Load saved credentials FIRST
   useEffect(() => {
     if (!isOpen) {
-      // Reset when dialog closes
       setAutoLoginAttempted(false);
+      setCredentialsLoaded(false);
       return;
     }
+
+    // Load saved credentials
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.username && parsed.password) {
+          setUsername(parsed.username);
+          setPassword(parsed.password);
+          setHasSavedCredentials(true);
+        }
+      }
+    } catch (e) {
+      // Ignore parse errors
+    }
     
-    if (isLoading || autoLoginAttempted) return;
+    // Mark credentials as loaded (even if empty)
+    setCredentialsLoaded(true);
+  }, [isOpen]);
+
+  // Auto-login ONLY AFTER credentials are loaded
+  useEffect(() => {
+    if (!isOpen || !credentialsLoaded || isLoading || autoLoginAttempted) return;
+    if (!hasSavedCredentials) return;
     
-    // Mark as attempted so it doesn't run again while typing
-    if (hasSavedCredentials) {
-      setAutoLoginAttempted(true);
-      
+    // Mark as attempted BEFORE running
+    setAutoLoginAttempted(true);
+    
+    // Small delay to ensure state is settled
+    const timer = setTimeout(() => {
       // If biometric is enabled and supported, try biometric first
       if (biometricEnabled && biometricSupported) {
         handleBiometricLogin();
@@ -222,8 +245,10 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
       if (username && password) {
         handleAutoLogin();
       }
-    }
-  }, [isOpen]);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [isOpen, credentialsLoaded, hasSavedCredentials, autoLoginAttempted]);
 
   // Auto-login with saved credentials (no user interaction needed)
   const handleAutoLogin = async () => {
@@ -236,18 +261,26 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
       const result = await signIn(username.trim(), password.trim(), panelType);
 
       if (result.error) {
-        // If auto-login fails, just show error and let user retry manually
+        // If auto-login fails, clear saved credentials and let user retry manually
         const errorLower = result.error.toLowerCase();
-        if (errorLower.includes('senha') && (errorLower.includes('incorreta') || errorLower.includes('inválid'))) {
-          setError('🔐 Credenciais salvas incorretas. Digite novamente.');
-          // Clear saved credentials since they're wrong
-          localStorage.removeItem(STORAGE_KEY);
-          setHasSavedCredentials(false);
+        
+        // Clear saved credentials on any login error
+        localStorage.removeItem(STORAGE_KEY);
+        setHasSavedCredentials(false);
+        
+        if (errorLower.includes('licença') || errorLower.includes('license')) {
+          setError('🔐 Credenciais salvas inválidas. Digite novamente.');
         } else if (errorLower.includes('expirou') || errorLower.includes('expirada')) {
           setError('⏰ Sua licença expirou. Entre em contato para renovar.');
+        } else if (errorLower.includes('painel') || errorLower.includes('acesso negado')) {
+          setError('🚫 Use o painel correto para suas credenciais.');
         } else {
-          setError('❌ Erro ao entrar automaticamente. Tente manualmente.');
+          setError('🔐 Credenciais salvas não funcionaram. Digite novamente.');
         }
+        
+        // Clear fields so user can type fresh
+        setUsername('');
+        setPassword('');
         setIsLoading(false);
         return;
       }
@@ -263,6 +296,11 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
       onSuccess(result.role ?? panelType);
     } catch (err) {
       console.error('Auto-login error:', err);
+      // Clear saved credentials on error
+      localStorage.removeItem(STORAGE_KEY);
+      setHasSavedCredentials(false);
+      setUsername('');
+      setPassword('');
       setError('❌ Erro ao entrar. Tente manualmente.');
       setIsLoading(false);
     }
