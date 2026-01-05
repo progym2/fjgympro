@@ -127,7 +127,7 @@ const PanelSelector: React.FC = () => {
   // Master user - show panel selection
   return (
     <div
-      className="min-h-screen h-[100dvh] flex flex-col overflow-hidden"
+      className="h-[100dvh] flex flex-col overflow-hidden touch-pan-y"
       style={{
         backgroundImage: `url(${bgHome})`,
         backgroundSize: 'cover',
