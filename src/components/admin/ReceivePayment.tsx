@@ -194,16 +194,35 @@ const ReceivePayment: React.FC = () => {
   };
 
   const handleCreateNewPayment = async () => {
-    if (!selectedClient || !newPaymentData.amount) {
-      toast.error('Informe o valor do pagamento');
+    if (!selectedClient || !newPaymentData.amount || processing) {
+      if (!newPaymentData.amount) toast.error('Informe o valor do pagamento');
       return;
     }
 
     setProcessing(true);
     const receiptNumber = generateReceiptNumber();
     const amount = parseFloat(newPaymentData.amount);
+    const today = new Date().toISOString().split('T')[0];
 
     try {
+      // Check for duplicate payment (same client, description, amount, same day)
+      const { data: existingPayment } = await supabase
+        .from('payments')
+        .select('id')
+        .eq('client_id', selectedClient.id)
+        .eq('description', newPaymentData.description || 'Mensalidade')
+        .eq('amount', amount)
+        .gte('paid_at', `${today}T00:00:00`)
+        .lte('paid_at', `${today}T23:59:59`)
+        .eq('status', 'paid')
+        .maybeSingle();
+
+      if (existingPayment) {
+        toast.info('Este pagamento já foi registrado hoje!');
+        setProcessing(false);
+        return;
+      }
+
       // Create and immediately mark as paid
       const { error } = await supabase
         .from('payments')
@@ -215,7 +234,7 @@ const ReceivePayment: React.FC = () => {
           paid_at: new Date().toISOString(),
           payment_method: payMethod,
           receipt_number: receiptNumber,
-          due_date: new Date().toISOString().split('T')[0],
+          due_date: today,
         });
 
       if (error) throw error;
