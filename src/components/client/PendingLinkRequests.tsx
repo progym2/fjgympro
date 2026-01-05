@@ -135,12 +135,32 @@ const PendingLinkRequests: React.FC = () => {
 
   const confirmAction = async () => {
     const { action, request } = confirmDialog;
-    if (!request) return;
+    if (!request || !profile?.profile_id) return;
 
     setProcessing(request.id);
     setConfirmDialog({ open: false, action: 'accept', request: null });
 
     try {
+      // If accepting, check if user already has an instructor
+      if (action === 'accept') {
+        const { data: existingLink, error: checkError } = await supabase
+          .from('instructor_clients')
+          .select('id, instructor:profiles!instructor_clients_instructor_id_fkey(full_name, username)')
+          .eq('client_id', profile.profile_id)
+          .eq('link_status', 'accepted')
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (checkError) throw checkError;
+
+        if (existingLink) {
+          const instructorName = (existingLink.instructor as any)?.full_name || (existingLink.instructor as any)?.username || 'outro instrutor';
+          toast.error(`Você já está vinculado a ${instructorName}. Só é permitido um instrutor por aluno. Desvincule-se primeiro para aceitar um novo.`);
+          setProcessing(null);
+          return;
+        }
+      }
+
       const newStatus = action === 'accept' ? 'accepted' : 'rejected';
       
       const { error } = await supabase

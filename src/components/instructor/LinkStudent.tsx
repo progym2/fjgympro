@@ -36,6 +36,7 @@ interface FoundStudent extends ClientProfile {
   already_linked: boolean;
   pending_link: boolean;
   linked_to_other: boolean;
+  pending_from_other: boolean;
 }
 
 const LinkStudent: React.FC = () => {
@@ -213,11 +214,22 @@ const LinkStudent: React.FC = () => {
       .neq('instructor_id', effectiveInstructorId)
       .maybeSingle();
 
+    // Check for pending requests from other instructors
+    const { data: pendingFromOther } = await supabase
+      .from('instructor_clients')
+      .select('id')
+      .eq('client_id', studentData.id)
+      .eq('link_status', 'pending')
+      .eq('is_active', true)
+      .neq('instructor_id', effectiveInstructorId)
+      .maybeSingle();
+
     setFoundStudent({
       ...studentData,
       already_linked: myLinkData?.link_status === 'accepted',
       pending_link: myLinkData?.link_status === 'pending',
       linked_to_other: !!otherLinkData,
+      pending_from_other: !!pendingFromOther,
     });
   };
 
@@ -231,8 +243,48 @@ const LinkStudent: React.FC = () => {
   const handleLink = async () => {
     if (!foundStudent || !effectiveInstructorId) return;
 
+    // Double-check if student is already linked to another instructor
+    if (foundStudent.linked_to_other) {
+      toast.error('Este aluno já está vinculado a outro instrutor. Cada aluno pode ter apenas um instrutor.');
+      return;
+    }
+
     setLinking(true);
     try {
+      // Server-side check: verify again before inserting
+      const { data: existingLink, error: checkError } = await supabase
+        .from('instructor_clients')
+        .select('id, instructor_id')
+        .eq('client_id', foundStudent.id)
+        .eq('link_status', 'accepted')
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existingLink) {
+        toast.error('Este aluno já está vinculado a outro instrutor. Cada aluno pode ter apenas um instrutor.');
+        setFoundStudent(prev => prev ? { ...prev, linked_to_other: true } : null);
+        setLinking(false);
+        return;
+      }
+
+      // Also check for pending requests from other instructors
+      const { data: pendingFromOther } = await supabase
+        .from('instructor_clients')
+        .select('id')
+        .eq('client_id', foundStudent.id)
+        .eq('link_status', 'pending')
+        .eq('is_active', true)
+        .neq('instructor_id', effectiveInstructorId)
+        .maybeSingle();
+
+      if (pendingFromOther) {
+        toast.warning('Este aluno já tem uma solicitação pendente de outro instrutor. Aguarde a resposta dele.');
+        setLinking(false);
+        return;
+      }
+
       const { error: linkError } = await supabase
         .from('instructor_clients')
         .insert({
@@ -497,9 +549,26 @@ const LinkStudent: React.FC = () => {
                 <span className="text-sm">Solicitação pendente. Aguardando confirmação do aluno.</span>
               </div>
             ) : foundStudent.linked_to_other ? (
-              <div className="flex items-center gap-2 p-3 bg-destructive/20 border border-destructive/50 rounded-lg text-destructive">
-                <AlertCircle className="w-4 h-4" />
-                <span className="text-sm">Este aluno já está vinculado a outro instrutor.</span>
+              <div className="flex flex-col gap-2 p-3 bg-destructive/20 border border-destructive/50 rounded-lg text-destructive">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-sm font-medium">Aluno já vinculado!</span>
+                </div>
+                <span className="text-xs opacity-80">
+                  Este aluno já está vinculado a outro instrutor. Cada aluno pode ter apenas um instrutor ativo. 
+                  O aluno precisa se desvincular primeiro para poder aceitar um novo vínculo.
+                </span>
+              </div>
+            ) : foundStudent.pending_from_other ? (
+              <div className="flex flex-col gap-2 p-3 bg-orange-500/20 border border-orange-500/50 rounded-lg text-orange-500">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-sm font-medium">Solicitação pendente de outro instrutor</span>
+                </div>
+                <span className="text-xs opacity-80">
+                  Este aluno já tem uma solicitação de vínculo pendente de outro instrutor. 
+                  Aguarde a resposta dele antes de enviar uma nova solicitação.
+                </span>
               </div>
             ) : (
               <Button
