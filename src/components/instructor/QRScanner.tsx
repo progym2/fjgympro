@@ -156,7 +156,22 @@ const QRScanner: React.FC = () => {
     if (!profile?.profile_id) return;
 
     try {
-      // Check if already linked or pending
+      // Check if client is already linked to ANOTHER instructor
+      const { data: existingWithOther } = await supabase
+        .from('instructor_clients')
+        .select('id, instructor_id, is_active, link_status')
+        .eq('client_id', user.id)
+        .eq('is_active', true)
+        .eq('link_status', 'accepted')
+        .neq('instructor_id', profile.profile_id)
+        .maybeSingle();
+
+      if (existingWithOther) {
+        toast.error('⚠️ Este aluno já está vinculado a outro instrutor! Não é possível enviar solicitação.');
+        return;
+      }
+
+      // Check if already linked or pending with this instructor
       const { data: existing } = await supabase
         .from('instructor_clients')
         .select('id, is_active, link_status')
