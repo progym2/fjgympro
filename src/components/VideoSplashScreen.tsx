@@ -5,24 +5,30 @@ interface VideoSplashScreenProps {
   onComplete: () => void;
 }
 
+// Preload video on module load
+const videoPreloadLink = document.createElement('link');
+videoPreloadLink.rel = 'preload';
+videoPreloadLink.as = 'video';
+videoPreloadLink.href = '/video/splash.mp4';
+document.head.appendChild(videoPreloadLink);
+
 const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [showSkip, setShowSkip] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hasShownRef = useRef(false);
 
   // Check if splash was already shown in this session
   useEffect(() => {
     const splashShown = sessionStorage.getItem('splashShown');
     if (splashShown === 'true') {
-      hasShownRef.current = true;
       setIsVisible(false);
       onComplete();
       return;
     }
 
-    // Show skip button after 2 seconds
-    const skipTimer = setTimeout(() => setShowSkip(true), 2000);
+    // Show skip button after 1.5 seconds
+    const skipTimer = setTimeout(() => setShowSkip(true), 1500);
 
     return () => clearTimeout(skipTimer);
   }, [onComplete]);
@@ -43,13 +49,15 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
   };
 
   const handleVideoError = () => {
-    // If video fails to load, skip splash
     sessionStorage.setItem('splashShown', 'true');
     setIsVisible(false);
     onComplete();
   };
 
-  // If already shown this session, don't render
+  const handleCanPlay = () => {
+    setIsLoaded(true);
+  };
+
   if (!isVisible) return null;
 
   return (
@@ -61,22 +69,29 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
           transition={{ duration: 0.3 }}
           className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
         >
-          {/* Video Container */}
+          {/* Loading indicator while video loads */}
+          {!isLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+
+          {/* Video - object-contain to avoid zoom */}
           <video
             ref={videoRef}
             autoPlay
             muted
             playsInline
+            preload="auto"
             onEnded={handleVideoEnd}
             onError={handleVideoError}
-            className="absolute inset-0 w-full h-full object-cover"
-            poster="/placeholder.svg"
+            onCanPlay={handleCanPlay}
+            className={`w-full h-full object-contain transition-opacity duration-300 ${
+              isLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
           >
             <source src="/video/splash.mp4" type="video/mp4" />
           </video>
-
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/40 pointer-events-none" />
 
           {/* Skip Button */}
           <AnimatePresence>
@@ -86,7 +101,7 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 onClick={handleSkip}
-                className="absolute bottom-8 right-6 px-4 py-2 bg-white/10 backdrop-blur-sm 
+                className="absolute bottom-6 right-4 px-4 py-2 bg-white/10 backdrop-blur-sm 
                            border border-white/20 rounded-full text-white/90 text-sm font-medium
                            hover:bg-white/20 transition-colors active:scale-95"
               >
@@ -94,16 +109,6 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
               </motion.button>
             )}
           </AnimatePresence>
-
-          {/* Loading Indicator */}
-          <div className="absolute bottom-8 left-6">
-            <motion.div
-              className="h-1 bg-primary/80 rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: 80 }}
-              transition={{ duration: 8, ease: 'linear' }}
-            />
-          </div>
         </motion.div>
       )}
     </AnimatePresence>
