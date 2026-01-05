@@ -33,14 +33,11 @@ const Profile: React.FC = () => {
     cpf: '',
     city: ''
   });
-  const [originalUsername, setOriginalUsername] = useState('');
-  const [previousUsernames, setPreviousUsernames] = useState<string[]>([]);
   const [licenseKey, setLicenseKey] = useState<string | null>(null);
   const [imc, setImc] = useState<number | null>(null);
   const [imcClassification, setImcClassification] = useState('');
   const [instructorLevel, setInstructorLevel] = useState<string | null>(null);
   const [instructorName, setInstructorName] = useState<string | null>(null);
-  const [usernameError, setUsernameError] = useState('');
 
   // ESC volta para /client
   useEscapeBack({ to: '/client' });
@@ -69,7 +66,6 @@ const Profile: React.FC = () => {
           cpf: (data as any).cpf || '',
           city: (data as any).city || ''
         });
-        setOriginalUsername(data.username || '');
       }
 
       // Fetch license key for display
@@ -135,112 +131,15 @@ const Profile: React.FC = () => {
     }
   };
 
-  const validateUsername = (username: string): boolean => {
-    if (!username.trim()) {
-      setUsernameError('Nome de usuário é obrigatório');
-      return false;
-    }
-    if (username.length < 3) {
-      setUsernameError('Nome de usuário deve ter pelo menos 3 caracteres');
-      return false;
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      setUsernameError('Use apenas letras, números e underline');
-      return false;
-    }
-    setUsernameError('');
-    return true;
-  };
-
-  const checkUsernameAvailable = async (username: string): Promise<boolean> => {
-    if (username.toLowerCase() === originalUsername.toLowerCase()) return true;
-    
-    // Check if trying to revert to a previous username
-    if (previousUsernames.some(prev => prev.toLowerCase() === username.toLowerCase())) {
-      setUsernameError('Não é permitido voltar a um nome de usuário anterior');
-      return false;
-    }
-    
-    const { data } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('username', username)
-      .neq('id', profile?.profile_id || '')
-      .maybeSingle();
-    
-    return !data;
-  };
-
-  // Notify master admins about username change
-  const notifyMasterAdmins = async (oldUsername: string, newUsername: string) => {
-    try {
-      // Get all master admin user_ids
-      const { data: masterRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'master');
-
-      if (!masterRoles || masterRoles.length === 0) return;
-
-      // Get profile_ids for master admins
-      const { data: masterProfiles } = await supabase
-        .from('profiles')
-        .select('id')
-        .in('user_id', masterRoles.map(r => r.user_id));
-
-      if (!masterProfiles || masterProfiles.length === 0) return;
-
-      // Create notifications for all master admins
-      const notifications = masterProfiles.map(mp => ({
-        profile_id: mp.id,
-        title: 'Alteração de Nome de Usuário',
-        message: `O usuário "${oldUsername.toUpperCase()}" alterou seu nome para "${newUsername.toUpperCase()}". Nome completo: ${formData.full_name || 'Não informado'}`,
-        type: 'username_change'
-      }));
-
-      await supabase.from('notifications').insert(notifications);
-    } catch (error) {
-      console.error('Error notifying master admins:', error);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile?.profile_id) return;
 
-    // Validate username
-    if (!validateUsername(formData.username)) {
-      return;
-    }
-
-    const newUsername = formData.username.toLowerCase().trim();
-    const usernameChanged = newUsername !== originalUsername.toLowerCase();
-
     setLoading(true);
     try {
-      // Check if username is available (if changed)
-      if (usernameChanged) {
-        // Check if trying to revert to a previous username
-        if (previousUsernames.some(prev => prev.toLowerCase() === newUsername)) {
-          setUsernameError('Não é permitido voltar a um nome de usuário anterior');
-          setLoading(false);
-          return;
-        }
-
-        const isAvailable = await checkUsernameAvailable(newUsername);
-        if (!isAvailable) {
-          if (!usernameError) {
-            setUsernameError('Este nome de usuário já está em uso');
-          }
-          setLoading(false);
-          return;
-        }
-      }
-
       const { error } = await supabase
         .from('profiles')
         .update({
-          username: newUsername,
           full_name: formData.full_name,
           phone: formData.phone,
           birth_date: formData.birth_date || null,
@@ -256,15 +155,7 @@ const Profile: React.FC = () => {
 
       if (error) throw error;
 
-      // If username changed, notify master admins and track previous username
-      if (usernameChanged) {
-        await notifyMasterAdmins(originalUsername, newUsername);
-        setPreviousUsernames(prev => [...prev, originalUsername]);
-        setOriginalUsername(newUsername);
-        toast.success('Perfil atualizado! Agora você pode fazer login com o novo nome de usuário. Os administradores foram notificados.');
-      } else {
-        toast.success('Perfil atualizado com sucesso!');
-      }
+      toast.success('Perfil atualizado com sucesso!');
     } catch (error: any) {
       console.error('Error updating profile:', error);
       toast.error('Erro ao atualizar perfil');
@@ -304,34 +195,22 @@ const Profile: React.FC = () => {
               <h3 className="font-bebas text-xl tracking-wider text-primary">DADOS DE ACESSO</h3>
             </div>
             
-            <Alert className="bg-primary/10 border-primary/30">
+            <Alert className="bg-muted/50 border-border">
               <Info className="h-4 w-4" />
               <AlertDescription>
-                Você pode alterar seu nome de usuário. Após salvar, use o novo nome para fazer login. 
-                <strong className="text-amber-500"> Atenção: não será possível voltar ao nome anterior.</strong> Os administradores serão notificados sobre a alteração.
+                O nome de usuário é definido no cadastro e não pode ser alterado. Use-o junto com sua chave de licença para fazer login.
               </AlertDescription>
             </Alert>
 
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Nome de Usuário (Login)</Label>
-                <Input
-                  value={formData.username}
-                  onChange={(e) => {
-                    setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/\s/g, '') });
-                    setUsernameError('');
-                  }}
-                  placeholder="seu_usuario"
-                  className={usernameError ? 'border-destructive' : ''}
-                />
-                {usernameError && (
-                  <p className="text-xs text-destructive">{usernameError}</p>
-                )}
-                {formData.username !== originalUsername && formData.username && !usernameError && (
-                  <p className="text-xs text-amber-500">
-                    Após salvar, faça login com: <strong>{formData.username}</strong>
-                  </p>
-                )}
+                <div className="p-3 bg-muted/50 border border-border rounded-lg font-mono text-sm uppercase">
+                  {formData.username || '—'}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Este é seu identificador único de acesso
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Sua Senha (Chave de Licença)</Label>
@@ -501,7 +380,7 @@ const Profile: React.FC = () => {
             </div>
           </div>
 
-          <Button type="submit" disabled={loading || !!usernameError} className="w-full">
+          <Button type="submit" disabled={loading} className="w-full">
             <Save size={18} className="mr-2" />
             {loading ? 'Salvando...' : 'Salvar Alterações'}
           </Button>
