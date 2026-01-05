@@ -249,14 +249,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
 
-        // Keep strict license validation (blocked/expired)
-        if (data.license.status === 'blocked' || data.license.status === 'expired') {
-          await forceSignOut();
-          return;
-        }
-
-        // Final fallback check (ensures timers/expiration stay consistent)
-        await checkLicenseStatusForProfile(data.user.profile_id);
+        // License state already applied above
       } finally {
         setIsLoading(false);
       }
