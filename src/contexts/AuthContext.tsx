@@ -195,7 +195,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userId = activeSession.user.id;
 
         // Hydrate via backend to avoid RLS dead-ends when profile isn't linked yet.
-        const { data, error } = await supabase.functions.invoke('auth-hydrate');
+        // IMPORTANT: send the access token explicitly to avoid races where the client still uses the anon token.
+        const { data, error } = await supabase.functions.invoke('auth-hydrate', {
+          headers: { Authorization: `Bearer ${activeSession.access_token}` },
+        });
 
         if (error) {
           console.error('Error hydrating user (auth-hydrate):', error);
