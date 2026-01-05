@@ -479,27 +479,37 @@ const PreGeneratedAccounts: React.FC = () => {
     setSelectedAccounts(new Set());
   };
   
-  // Batch delete accounts
+  // Batch delete accounts (using backend cleanup so it also goes to Lixeira)
   const handleBatchDelete = async () => {
     if (selectedAccounts.size === 0) return;
-    
+
     setIsBatchDeleting(true);
     try {
       const idsToDelete = Array.from(selectedAccounts);
-      const { error } = await supabase
-        .from('pre_generated_accounts')
-        .delete()
-        .in('id', idsToDelete);
+      const { data: { session } } = await supabase.auth.getSession();
 
-      if (error) throw error;
+      let successCount = 0;
+      for (const id of idsToDelete) {
+        const { data, error } = await supabase.functions.invoke("admin-cleanup-user", {
+          body: { type: "pre_generated_account", id },
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+        });
 
-      toast.success(`${idsToDelete.length} contas excluídas com sucesso!`);
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || "Erro desconhecido");
+        successCount += 1;
+      }
+
+      toast.success(`${successCount} contas excluídas com sucesso!`);
       setShowBatchDeleteDialog(false);
       setSelectedAccounts(new Set());
       fetchAccounts();
-    } catch (error) {
+      fetchActiveAccounts();
+    } catch (error: any) {
       console.error('Error batch deleting accounts:', error);
-      toast.error('Erro ao excluir contas em lote');
+      toast.error(error?.message || 'Erro ao excluir contas em lote');
     } finally {
       setIsBatchDeleting(false);
     }
@@ -560,24 +570,30 @@ const PreGeneratedAccounts: React.FC = () => {
 
   const handleDeleteAccount = async () => {
     if (!selectedAccount) return;
-    
+
     setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from('pre_generated_accounts')
-        .delete()
-        .eq('id', selectedAccount.id);
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const { data, error } = await supabase.functions.invoke("admin-cleanup-user", {
+        body: { type: "pre_generated_account", id: selectedAccount.id },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
 
       if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Erro desconhecido");
 
       toast.success('Conta excluída com sucesso!');
       setShowDeleteDialog(false);
       setShowDetailsDialog(false);
       setSelectedAccount(null);
       fetchAccounts();
-    } catch (error) {
+      fetchActiveAccounts();
+    } catch (error: any) {
       console.error('Error deleting account:', error);
-      toast.error('Erro ao excluir conta');
+      toast.error(error?.message || 'Erro ao excluir conta');
     } finally {
       setIsDeleting(false);
     }
