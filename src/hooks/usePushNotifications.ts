@@ -268,6 +268,26 @@ export const usePushNotifications = () => {
     });
   }, [permission, sendNotification]);
 
+  // Send new workout notification (for clients when instructor creates workout)
+  const sendNewWorkoutNotification = useCallback((workoutName: string, instructorName: string) => {
+    if (permission !== 'granted') return;
+
+    sendNotification(
+      '🏋️ Novo Treino Criado!',
+      `Seu instrutor ${instructorName} criou um novo plano de treino para você: "${workoutName}". Confira agora!`,
+      { tag: 'new-workout', requireInteraction: true }
+    );
+
+    toast('🏋️ Novo Treino!', {
+      description: `${instructorName} criou o treino "${workoutName}" para você.`,
+      duration: 10000,
+      action: {
+        label: 'Ver',
+        onClick: () => window.location.href = '/client/workouts'
+      }
+    });
+  }, [permission, sendNotification]);
+
   return {
     isSupported,
     permission,
@@ -280,6 +300,7 @@ export const usePushNotifications = () => {
     getNextReminderTime,
     sendWorkoutAvailableNotification,
     sendLinkRequestNotification,
-    sendLinkResponseNotification
+    sendLinkResponseNotification,
+    sendNewWorkoutNotification
   };
 };

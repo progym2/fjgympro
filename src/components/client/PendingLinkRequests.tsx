@@ -39,6 +39,10 @@ interface CurrentInstructor {
   };
 }
 
+// Delay in milliseconds before showing the component (2 minutes = 120000ms)
+const SHOW_DELAY_MS = 2 * 60 * 1000;
+const FIRST_VISIT_KEY = 'pending_links_first_visit';
+
 const PendingLinkRequests: React.FC = () => {
   const { profile } = useAuth();
   const { playClickSound } = useAudio();
@@ -48,6 +52,7 @@ const PendingLinkRequests: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
   const [unlinking, setUnlinking] = useState(false);
+  const [showComponent, setShowComponent] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     action: 'accept' | 'reject' | 'unlink';
@@ -56,6 +61,34 @@ const PendingLinkRequests: React.FC = () => {
   
   // Track known request IDs to detect new ones
   const knownRequestIds = useRef<Set<string>>(new Set());
+  
+  // Handle 2-minute delay for first-time users
+  useEffect(() => {
+    const firstVisit = localStorage.getItem(FIRST_VISIT_KEY);
+    
+    if (!firstVisit) {
+      // First visit - set timestamp and start delay
+      localStorage.setItem(FIRST_VISIT_KEY, Date.now().toString());
+      const timer = setTimeout(() => {
+        setShowComponent(true);
+      }, SHOW_DELAY_MS);
+      return () => clearTimeout(timer);
+    } else {
+      // Check if 2 minutes have passed since first visit
+      const firstVisitTime = parseInt(firstVisit, 10);
+      const elapsed = Date.now() - firstVisitTime;
+      
+      if (elapsed >= SHOW_DELAY_MS) {
+        setShowComponent(true);
+      } else {
+        const remaining = SHOW_DELAY_MS - elapsed;
+        const timer = setTimeout(() => {
+          setShowComponent(true);
+        }, remaining);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, []);
 
   const fetchPendingRequests = async () => {
     if (!profile?.profile_id) return;
@@ -291,6 +324,11 @@ const PendingLinkRequests: React.FC = () => {
       setProcessing(null);
     }
   };
+
+  // Don't show until delay has passed
+  if (!showComponent) {
+    return null;
+  }
 
   if (loading) {
     return (
