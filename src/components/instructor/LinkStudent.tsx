@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Search, Loader2, Check, AlertCircle, Hash, CreditCard, Users } from 'lucide-react';
+import { UserPlus, Search, Loader2, Check, AlertCircle, Hash, CreditCard, Users, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstructorContext } from '@/hooks/useInstructorContext';
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import StudentProfileModal from './StudentProfileModal';
 
 interface ClientProfile {
   id: string;
@@ -19,6 +20,16 @@ interface ClientProfile {
   full_name: string | null;
   email: string | null;
   cpf: string | null;
+  phone?: string | null;
+  birth_date?: string | null;
+  city?: string | null;
+  height_cm?: number | null;
+  weight_kg?: number | null;
+  fitness_goal?: string | null;
+  fitness_level?: string | null;
+  created_at?: string | null;
+  enrollment_status?: string | null;
+  link_status?: string;
 }
 
 interface FoundStudent extends ClientProfile {
@@ -45,6 +56,10 @@ const LinkStudent: React.FC = () => {
   // My linked students list (only show students linked by this instructor)
   const [myLinkedStudents, setMyLinkedStudents] = useState<ClientProfile[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
+  
+  // Profile modal state
+  const [selectedStudentProfile, setSelectedStudentProfile] = useState<ClientProfile | null>(null);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   useEscapeBack({ to: '/instructor' });
 
@@ -66,7 +81,16 @@ const LinkStudent: React.FC = () => {
               username,
               full_name,
               email,
-              cpf
+              cpf,
+              phone,
+              birth_date,
+              city,
+              height_cm,
+              weight_kg,
+              fitness_goal,
+              fitness_level,
+              created_at,
+              enrollment_status
             )
           `)
           .eq('instructor_id', effectiveInstructorId)
@@ -323,7 +347,12 @@ const LinkStudent: React.FC = () => {
                   {myLinkedStudents.map((student: any) => (
                     <div
                       key={student.id}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-accent/30 text-left"
+                      onClick={() => {
+                        playClickSound();
+                        setSelectedStudentProfile(student);
+                        setProfileModalOpen(true);
+                      }}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-accent/30 text-left cursor-pointer hover:bg-accent/50 transition-colors"
                     >
                       <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center justify-center flex-shrink-0">
                         <span className="text-sm font-bebas text-green-500">
@@ -338,6 +367,7 @@ const LinkStudent: React.FC = () => {
                           @{student.username} {student.cpf && `• ${student.cpf}`}
                         </p>
                       </div>
+                      <Eye className="w-4 h-4 text-muted-foreground" />
                       {getStatusBadge(student)}
                     </div>
                   ))}
@@ -493,6 +523,16 @@ const LinkStudent: React.FC = () => {
           </motion.div>
         )}
       </div>
+      
+      {/* Student Profile Modal */}
+      <StudentProfileModal
+        student={selectedStudentProfile}
+        isOpen={profileModalOpen}
+        onClose={() => {
+          setProfileModalOpen(false);
+          setSelectedStudentProfile(null);
+        }}
+      />
     </motion.div>
   );
 };

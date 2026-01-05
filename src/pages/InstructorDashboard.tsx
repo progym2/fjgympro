@@ -5,6 +5,7 @@ import {
   CreditCard, FileText, QrCode, LogOut, 
   Info, Bell, TrendingUp, UserPlus, ClipboardList, UserMinus, Library, History, CalendarDays, UserCog, Loader2, Camera
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
@@ -69,6 +70,7 @@ const InstructorDashboard: React.FC = () => {
   const { playClickSound } = useAudio();
   const [aboutOpen, setAboutOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [linkedStudentsCount, setLinkedStudentsCount] = useState(0);
   
   const [notificationsVisible, setNotificationsVisible] = useState(() => {
     return localStorage.getItem('widget_instructor_notifications_visible') !== 'false';
@@ -78,6 +80,30 @@ const InstructorDashboard: React.FC = () => {
     setNotificationsVisible(visible);
     localStorage.setItem('widget_instructor_notifications_visible', String(visible));
   };
+
+  // Fetch linked students count
+  useEffect(() => {
+    const fetchLinkedStudentsCount = async () => {
+      if (!profile?.profile_id) return;
+      
+      try {
+        const { count, error } = await supabase
+          .from('instructor_clients')
+          .select('*', { count: 'exact', head: true })
+          .eq('instructor_id', profile.profile_id)
+          .eq('link_status', 'accepted')
+          .eq('is_active', true);
+        
+        if (!error && count !== null) {
+          setLinkedStudentsCount(count);
+        }
+      } catch (err) {
+        console.error('Error fetching students count:', err);
+      }
+    };
+    
+    fetchLinkedStudentsCount();
+  }, [profile?.profile_id]);
 
   // ESC volta para a seleção de painel
   useEffect(() => {
@@ -164,9 +190,17 @@ const InstructorDashboard: React.FC = () => {
                     </h1>
                     <LicenseTimer />
                   </div>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                    {profile?.full_name || profile?.username || 'Instrutor'}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                      {profile?.full_name || profile?.username || 'Instrutor'}
+                    </p>
+                    {linkedStudentsCount > 0 && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-green-500/20 text-green-500 border border-green-500/50">
+                        <Users className="w-3 h-3" />
+                        {linkedStudentsCount} {linkedStudentsCount === 1 ? 'aluno' : 'alunos'}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
