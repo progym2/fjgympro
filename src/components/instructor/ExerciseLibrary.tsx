@@ -74,26 +74,26 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.05,
-      delayChildren: 0.1
+      staggerChildren: 0.03,
+      delayChildren: 0.05
     }
   }
 };
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  hidden: { opacity: 0, y: 15, scale: 0.98 },
   visible: { 
     opacity: 1, 
     y: 0, 
     scale: 1,
-    transition: { type: "spring" as const, stiffness: 300, damping: 24 }
+    transition: { type: "spring" as const, stiffness: 400, damping: 28 }
   },
   hover: { 
-    y: -4, 
+    y: -3, 
     scale: 1.01,
-    transition: { type: "spring" as const, stiffness: 400, damping: 20 }
+    transition: { type: "spring" as const, stiffness: 500, damping: 25 }
   },
-  tap: { scale: 0.98 }
+  tap: { scale: 0.97 }
 };
 
 const statCardVariants = {
@@ -298,7 +298,12 @@ const ExerciseLibrary: React.FC = () => {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full">
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      transition={{ duration: 0.2 }}
+      className="flex flex-col h-full min-h-0"
+    >
       <InstructorPageHeader 
         title="BIBLIOTECA DE EXERCÍCIOS"
         icon={<Dumbbell className="w-6 h-6" />}
@@ -307,7 +312,7 @@ const ExerciseLibrary: React.FC = () => {
           <Button 
             onClick={() => { playClickSound(); setCreateDialog(true); }}
             size="sm"
-            className="gap-2"
+            className="gap-2 transition-transform active:scale-95"
           >
             <Plus size={16} />
             <span className="hidden sm:inline">Novo Exercício</span>
@@ -315,7 +320,7 @@ const ExerciseLibrary: React.FC = () => {
         }
       />
       
-      <FadeScrollList className="flex-1 space-y-4 pr-1">
+      <FadeScrollList className="flex-1 space-y-4 pr-1 overscroll-contain">
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">

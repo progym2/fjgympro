@@ -147,7 +147,7 @@ const InstructorDashboard: React.FC = () => {
     >
       <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background/90" />
 
-      <div className="relative z-10 min-h-screen min-h-[100dvh] flex flex-col pb-14 pt-14 sm:pt-16 panel-scroll hide-scrollbar-mobile">
+      <div className="relative z-10 min-h-screen min-h-[100dvh] flex flex-col pb-14 pt-14 sm:pt-16 panel-scroll hide-scrollbar-mobile stable-scroll">
         <ThemedHeader>
           <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
             <div className="flex items-center justify-between gap-2">
@@ -201,26 +201,31 @@ const InstructorDashboard: React.FC = () => {
           </div>
         </ThemedHeader>
 
-        <main className="flex-1 container mx-auto px-2 sm:px-4 py-3 sm:py-4 md:py-6 momentum-scroll">
+        <main className="flex-1 container mx-auto px-2 sm:px-4 py-3 sm:py-4 md:py-6 momentum-scroll overflow-y-auto overscroll-contain">
           <Suspense fallback={<ComponentLoader />}>
             <Routes>
               <Route path="/" element={
-                <div className="space-y-4">
+                <div className="space-y-4 animate-fade-in">
                   {isMaster && <InstructorSelector />}
                   
                   <Suspense fallback={null}>
                     <PendingStudents />
                   </Suspense>
                   
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
-                    {menuItems.map((item) => (
-                      <ThemedMenuButton
+                  <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
+                    {menuItems.map((item, index) => (
+                      <div 
                         key={item.path}
-                        icon={item.icon}
-                        label={item.label}
-                        color={item.color}
-                        onClick={() => { playClickSound(); navigate(item.path); }}
-                      />
+                        className="transform transition-all duration-150 hover:scale-[1.02] active:scale-[0.97]"
+                        style={{ animationDelay: `${index * 25}ms` }}
+                      >
+                        <ThemedMenuButton
+                          icon={item.icon}
+                          label={item.label}
+                          color={item.color}
+                          onClick={() => { playClickSound(); navigate(item.path); }}
+                        />
+                      </div>
                     ))}
                   </div>
                 </div>
