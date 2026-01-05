@@ -147,7 +147,7 @@ const InstructorDashboard: React.FC = () => {
     >
       <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background/90" />
 
-      <div className="relative z-10 min-h-screen min-h-[100dvh] flex flex-col pb-14 pt-14 sm:pt-16">
+      <div className="relative z-10 min-h-screen min-h-[100dvh] flex flex-col pb-14 pt-14 sm:pt-16 panel-scroll hide-scrollbar-mobile">
         <ThemedHeader>
           <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
             <div className="flex items-center justify-between gap-2">
@@ -201,7 +201,7 @@ const InstructorDashboard: React.FC = () => {
           </div>
         </ThemedHeader>
 
-        <main className="flex-1 container mx-auto px-2 sm:px-4 py-3 sm:py-4 md:py-6">
+        <main className="flex-1 container mx-auto px-2 sm:px-4 py-3 sm:py-4 md:py-6 momentum-scroll">
           <Suspense fallback={<ComponentLoader />}>
             <Routes>
               <Route path="/" element={
