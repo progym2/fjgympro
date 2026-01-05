@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { QrCode, Search, CheckCircle, XCircle, User, Loader2, Camera, RefreshCw } from 'lucide-react';
+import { QrCode, Search, CheckCircle, XCircle, User, Loader2, Camera, RefreshCw, DoorOpen, Link2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,13 +24,16 @@ interface ProfileResult {
   licenseType: string | null;
   expiresAt: string | null;
   role?: string;
+  student_id?: string | null;
 }
 
 const QRScanner: React.FC = () => {
   const navigate = useNavigate();
   const { playClickSound } = useAudio();
+  const { profile } = useAuth();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [registeringAccess, setRegisteringAccess] = useState(false);
   const [result, setResult] = useState<ProfileResult | null>(null);
   const [showCamera, setShowCamera] = useState(false);
   const [recentScans, setRecentScans] = useState<ProfileResult[]>([]);
@@ -50,15 +54,15 @@ const QRScanner: React.FC = () => {
     setResult(null);
 
     try {
-      // Search by profile ID, username, or license key
+      // Search by profile ID, username, student_id, or license key
       let profileData = null;
       let licenseData = null;
 
-      // Try to find by profile ID or username first
+      // Try to find by profile ID, username, or student_id first
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('id, username, full_name, email, phone')
-        .or(`id.eq.${searchTerm.trim()},username.ilike.${searchTerm.trim()}`)
+        .select('id, username, full_name, email, phone, student_id')
+        .or(`id.eq.${searchTerm.trim()},username.ilike.${searchTerm.trim()},student_id.ilike.${searchTerm.trim()}`)
         .maybeSingle();
 
       if (profile) {
@@ -88,6 +92,7 @@ const QRScanner: React.FC = () => {
           full_name: profile.full_name,
           email: profile.email,
           phone: profile.phone,
+          student_id: profile.student_id,
           licenseStatus: licenseData?.status || 'not_found',
           licenseType: licenseData?.license_type || null,
           expiresAt: licenseData?.expires_at || null,
@@ -109,7 +114,7 @@ const QRScanner: React.FC = () => {
           .from('licenses')
           .select(`
             status, license_type, expires_at, profile_id,
-            profiles!licenses_profile_id_fkey (id, username, full_name, email, phone)
+            profiles!licenses_profile_id_fkey (id, username, full_name, email, phone, student_id)
           `)
           .eq('license_key', searchTerm.trim())
           .maybeSingle();
@@ -123,6 +128,7 @@ const QRScanner: React.FC = () => {
             full_name: profileInfo.full_name,
             email: profileInfo.email,
             phone: profileInfo.phone,
+            student_id: profileInfo.student_id,
             licenseStatus: license.status as any,
             licenseType: license.license_type,
             expiresAt: license.expires_at
@@ -143,6 +149,31 @@ const QRScanner: React.FC = () => {
       toast.error('Erro ao buscar');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRegisterAccess = async () => {
+    if (!result) return;
+    
+    setRegisteringAccess(true);
+    try {
+      const { error } = await supabase
+        .from('access_logs')
+        .insert({
+          profile_id: result.id,
+          access_method: 'qrcode',
+          registered_by: profile?.profile_id || null,
+          notes: `Entrada via QR Code`,
+        });
+
+      if (error) throw error;
+      
+      toast.success(`Entrada registrada para ${result.full_name || result.username}!`);
+    } catch (err: any) {
+      console.error('Error:', err);
+      toast.error('Erro ao registrar entrada: ' + err.message);
+    } finally {
+      setRegisteringAccess(false);
     }
   };
 
@@ -204,7 +235,7 @@ const QRScanner: React.FC = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Username, ID ou chave de licença..."
+                placeholder="Username, matrícula, ID ou chave..."
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -217,7 +248,7 @@ const QRScanner: React.FC = () => {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Digite o username, ID do perfil ou chave de licença para buscar
+            Digite o username, matrícula (ID do aluno), ID do perfil ou chave de licença
           </p>
         </div>
 
@@ -280,6 +311,9 @@ const QRScanner: React.FC = () => {
             <div className="flex-1 min-w-0">
               <h3 className="text-xl font-bebas truncate">{result.full_name || result.username}</h3>
               <p className="text-muted-foreground">@{result.username}</p>
+              {result.student_id && (
+                <p className="text-sm text-primary font-medium">Matrícula: {result.student_id}</p>
+              )}
               {result.email && <p className="text-sm text-muted-foreground truncate">{result.email}</p>}
               {result.phone && <p className="text-sm text-muted-foreground">{result.phone}</p>}
               
@@ -302,6 +336,31 @@ const QRScanner: React.FC = () => {
               })}
             </div>
           </div>
+
+          {/* Action Buttons */}
+          {result.licenseStatus === 'active' && (
+            <div className="flex gap-2 mt-4 pt-4 border-t border-border/50">
+              <Button
+                onClick={handleRegisterAccess}
+                disabled={registeringAccess}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                {registeringAccess ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <DoorOpen className="w-4 h-4 mr-2" />
+                )}
+                Registrar Entrada
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/admin/edit-user/${result.id}`)}
+              >
+                <Link2 className="w-4 h-4 mr-2" />
+                Editar
+              </Button>
+            </div>
+          )}
         </motion.div>
       )}
 
@@ -323,7 +382,9 @@ const QRScanner: React.FC = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{user.full_name || user.username}</p>
-                  <p className="text-xs text-muted-foreground">@{user.username}</p>
+                  <p className="text-xs text-muted-foreground">
+                    @{user.username} {user.student_id && `• Mat: ${user.student_id}`}
+                  </p>
                 </div>
                 <Badge className={`${getStatusDisplay(user.licenseStatus).bg} ${getStatusDisplay(user.licenseStatus).color} text-xs`}>
                   {getStatusDisplay(user.licenseStatus).text}
