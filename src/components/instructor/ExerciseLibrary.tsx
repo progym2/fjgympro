@@ -155,14 +155,31 @@ const ExerciseLibrary: React.FC = () => {
     }
   };
 
-  // Extract YouTube video ID for embedding
-  const getYoutubeEmbedUrl = (url: string) => {
+  // Extract YouTube video ID for embedding - handles all YouTube URL formats
+  const getYoutubeEmbedUrl = (url: string): string => {
     if (!url) return '';
-    const videoIdMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
-    if (videoIdMatch) {
-      return `https://www.youtube.com/embed/${videoIdMatch[1]}`;
+    
+    // Match various YouTube URL formats
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=)([^"&?\/\s]{11})/,
+      /(?:youtube\.com\/embed\/)([^"&?\/\s]{11})/,
+      /(?:youtu\.be\/)([^"&?\/\s]{11})/,
+      /(?:youtube\.com\/v\/)([^"&?\/\s]{11})/,
+      /(?:youtube\.com\/shorts\/)([^"&?\/\s]{11})/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        return `https://www.youtube.com/embed/${match[1]}?rel=0&modestbranding=1`;
+      }
     }
+    
     return url;
+  };
+
+  const isYoutubeUrl = (url: string): boolean => {
+    return url.includes('youtube.com') || url.includes('youtu.be');
   };
 
   const handleCreateExercise = async () => {
@@ -473,16 +490,23 @@ const ExerciseLibrary: React.FC = () => {
             <div className="space-y-4">
               {/* Video */}
               {selectedExercise.video_url && (
-                <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                  {selectedExercise.video_url.includes('youtube') || selectedExercise.video_url.includes('youtu.be') ? (
+                <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg">
+                  {isYoutubeUrl(selectedExercise.video_url) ? (
                     <iframe
-                      src={selectedExercise.video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                      src={getYoutubeEmbedUrl(selectedExercise.video_url)}
                       className="w-full h-full"
                       allowFullScreen
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      title={selectedExercise.name}
+                      loading="lazy"
                     />
                   ) : (
-                    <video src={selectedExercise.video_url} controls className="w-full h-full" />
+                    <video 
+                      src={selectedExercise.video_url} 
+                      controls 
+                      className="w-full h-full"
+                      playsInline
+                    />
                   )}
                 </div>
               )}

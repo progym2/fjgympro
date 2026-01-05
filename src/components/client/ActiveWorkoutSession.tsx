@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import IntegratedTimer from './IntegratedTimer';
+import YouTubePlayer from '@/components/shared/YouTubePlayer';
 
 interface Exercise {
   id: string;
@@ -698,20 +699,10 @@ const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
       <Dialog open={!!videoUrl} onOpenChange={() => setVideoUrl(null)}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>{videoUrl?.title}</DialogTitle>
+            <DialogTitle className="font-bebas text-primary">{videoUrl?.title}</DialogTitle>
           </DialogHeader>
           {videoUrl && (
-            <div className="aspect-video bg-black rounded-lg overflow-hidden">
-              {videoUrl.url.includes('youtube') || videoUrl.url.includes('youtu.be') ? (
-                <iframe
-                  src={videoUrl.url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                  className="w-full h-full"
-                  allowFullScreen
-                />
-              ) : (
-                <video src={videoUrl.url} controls className="w-full h-full" />
-              )}
-            </div>
+            <YouTubePlayer url={videoUrl.url} title={videoUrl.title} showThumbnail={false} />
           )}
         </DialogContent>
       </Dialog>
