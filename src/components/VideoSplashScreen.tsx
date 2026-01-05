@@ -60,7 +60,7 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
             </div>
           )}
 
-          {/* Video - object-contain to avoid zoom */}
+          {/* Video - scaled up slightly to crop watermarks at edges */}
           <video
             ref={videoRef}
             autoPlay
@@ -70,7 +70,7 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
             onEnded={handleVideoEnd}
             onError={handleVideoError}
             onCanPlay={handleCanPlay}
-            className={`w-full h-full object-contain transition-opacity duration-300 ${
+            className={`w-[110%] h-[110%] object-cover transition-opacity duration-300 ${
               isLoaded ? 'opacity-100' : 'opacity-0'
             }`}
           >
