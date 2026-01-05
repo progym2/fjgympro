@@ -4,7 +4,7 @@ import {
   Users, UserPlus, Dumbbell, CreditCard, 
   FileText, Settings, Key, Bell, LogOut, 
   Info, Shield, BarChart3, QrCode,
-  AlertTriangle, FlaskConical, DollarSign, Activity, Loader2, Trash2
+  AlertTriangle, FlaskConical, DollarSign, Activity, Loader2, Trash2, HardDrive
 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -59,6 +59,7 @@ const UserCPFSearch = lazy(() => import('@/components/admin/UserCPFSearch'));
 const AccessLogs = lazy(() => import('@/components/admin/AccessLogs'));
 const TrashBin = lazy(() => import('@/components/admin/TrashBin'));
 const FinanceDashboard = lazy(() => import('@/components/admin/FinanceDashboard'));
+const BackupRestorePanel = lazy(() => import('@/components/shared/BackupRestorePanel'));
 
 // Loading fallback for lazy components
 const ComponentLoader = () => (
@@ -119,6 +120,7 @@ const AdminDashboard: React.FC = () => {
     { icon: AlertTriangle, label: 'Inadimplentes', path: 'defaulters', color: 'text-red-500' },
     { icon: Bell, label: 'Enviar Alertas', path: 'alerts', color: 'text-pink-500' },
     { icon: QrCode, label: 'Leitor QR Code', path: 'qr-scanner', color: 'text-amber-500' },
+    { icon: HardDrive, label: 'Backup & Sync', path: 'backup', color: 'text-slate-500' },
     { icon: Settings, label: 'Configurações', path: 'settings', color: 'text-gray-500' },
   ], []);
 
@@ -253,6 +255,7 @@ const AdminDashboard: React.FC = () => {
               <Route path="trash" element={<TrashBin />} />
               <Route path="licenses" element={<PreGeneratedAccounts />} />
               <Route path="instructor-finance" element={<InstructorFinance />} />
+              <Route path="backup" element={<BackupRestorePanel />} />
               <Route path="*" element={
                 <div className="bg-card/80 backdrop-blur-md rounded-xl p-6 border border-border/50 text-center">
                   <p className="text-muted-foreground">Em desenvolvimento...</p>
