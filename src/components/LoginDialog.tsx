@@ -474,14 +474,9 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
       if (result.licenseExpired || isLicenseExpired) {
         toast({
           title: '⏰ Licença Expirada',
-          description: 'Seu período de uso terminou. Entre em contato para renovar.',
+          description: 'Entre em contato para renovar.',
           variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Não foi possível entrar',
-          description: errorMessage,
-          variant: 'destructive',
+          duration: 3000,
         });
       }
       return;
@@ -504,14 +499,11 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
     }
 
     toast({
-      title: 'Login realizado com sucesso!',
-      description: 'Bem-vindo ao FrancGymPro',
-      duration: 2000,
+      title: '✓ Login realizado',
+      duration: 1500,
     });
 
     setIsLoading(false);
-
-    // Navigate by REAL role (music will start inside dashboards only)
     onSuccess(result.role ?? panelType);
   };
 
@@ -579,10 +571,10 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
           }}
         >
           <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            transition={{ type: 'spring', damping: 25 }}
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ duration: 0.15 }}
             className="relative w-full max-w-md bg-card rounded-2xl border border-primary/30 shadow-2xl shadow-primary/20 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
