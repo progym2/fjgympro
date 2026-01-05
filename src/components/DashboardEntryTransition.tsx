@@ -43,10 +43,10 @@ const DashboardEntryTransition: React.FC<DashboardEntryTransitionProps> = ({
   }, [onComplete]);
 
   useEffect(() => {
-    // Timings are fixed and run ONCE to avoid being reset by re-renders.
-    const showTimer = window.setTimeout(() => setPhase('show'), 250);
-    const exitTimer = window.setTimeout(() => setPhase('exit'), 1400);
-    const completeTimer = window.setTimeout(() => onCompleteRef.current(), 1750);
+    // Timings reduced for faster entry - total ~800ms instead of 1750ms
+    const showTimer = window.setTimeout(() => setPhase('show'), 100);
+    const exitTimer = window.setTimeout(() => setPhase('exit'), 550);
+    const completeTimer = window.setTimeout(() => onCompleteRef.current(), 750);
 
     return () => {
       window.clearTimeout(showTimer);
