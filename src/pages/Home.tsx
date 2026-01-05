@@ -12,6 +12,7 @@ import ParticlesBackground from '@/components/ParticlesBackground';
 import AnimatedLogo from '@/components/AnimatedLogo';
 import AudioVisualizer from '@/components/AudioVisualizer';
 import SportThemeSelector from '@/components/SportThemeSelector';
+import MiniMusicPlayer from '@/components/MiniMusicPlayer';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
 
@@ -157,6 +158,9 @@ const Home: React.FC = () => {
           <Info size={16} className="sm:w-[18px] sm:h-[18px]" />
           <span className="sr-only">Sobre o Aplicativo</span>
         </button>
+
+        {/* Mini Music Player - above footer */}
+        <MiniMusicPlayer />
 
         {/* Footer */}
         <AppFooter />
