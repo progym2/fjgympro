@@ -24,6 +24,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import UnsavedChangesDialog from '@/components/UnsavedChangesDialog';
+import YouTubePlayer from '@/components/shared/YouTubePlayer';
 
 interface Exercise {
   id: string;
@@ -877,20 +878,9 @@ const CreateClientWorkout: React.FC<CreateClientWorkoutProps> = ({ onBack, onSuc
               {videoDialog?.title}
             </DialogTitle>
           </DialogHeader>
-          <div className="aspect-video bg-black rounded-lg overflow-hidden">
-            {videoDialog?.url && (
-              videoDialog.url.includes('youtube') || videoDialog.url.includes('youtu.be') ? (
-                <iframe
-                  src={videoDialog.url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                  className="w-full h-full"
-                  allowFullScreen
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                />
-              ) : (
-                <video src={videoDialog.url} controls className="w-full h-full" />
-              )
-            )}
-          </div>
+          {videoDialog?.url && (
+            <YouTubePlayer url={videoDialog.url} title={videoDialog.title} showThumbnail={false} />
+          )}
         </DialogContent>
       </Dialog>
 

@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import YouTubePlayer from '@/components/shared/YouTubePlayer';
 
 interface Exercise {
   id: string;
@@ -573,20 +574,9 @@ const MuscleGroupDashboard: React.FC<MuscleGroupDashboardProps> = ({ onSelectExe
           </DialogHeader>
           
           <div className="space-y-4">
-            <div className="aspect-video bg-black rounded-xl overflow-hidden">
-              {videoDialog?.url && (
-                videoDialog.url.includes('youtube') || videoDialog.url.includes('youtu.be') ? (
-                  <iframe
-                    src={videoDialog.url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                    className="w-full h-full"
-                    allowFullScreen
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  />
-                ) : (
-                  <video src={videoDialog.url} controls className="w-full h-full" />
-                )
-              )}
-            </div>
+            {videoDialog?.url && (
+              <YouTubePlayer url={videoDialog.url} title={videoDialog.title} showThumbnail={false} />
+            )}
 
             {videoDialog?.description && (
               <div className="p-3 rounded-lg bg-muted/50">

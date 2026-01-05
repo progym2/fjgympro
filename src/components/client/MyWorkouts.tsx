@@ -7,6 +7,7 @@ import {
   Trash2, Edit2, LayoutGrid, Heart, Zap, Target, Flame, Trophy, Pause, Square, StopCircle, Copy,
   Volume2, VolumeX, FileDown, Bell
 } from 'lucide-react';
+import YouTubePlayer from '@/components/shared/YouTubePlayer';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -1738,20 +1739,9 @@ const MyWorkouts: React.FC = () => {
               {videoDialog?.title}
             </DialogTitle>
           </DialogHeader>
-          <div className="aspect-video bg-black rounded-lg overflow-hidden">
-            {videoDialog?.url && (
-              videoDialog.url.includes('youtube') || videoDialog.url.includes('youtu.be') ? (
-                <iframe
-                  src={videoDialog.url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                  className="w-full h-full"
-                  allowFullScreen
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                />
-              ) : (
-                <video src={videoDialog.url} controls className="w-full h-full" />
-              )
-            )}
-          </div>
+          {videoDialog?.url && (
+            <YouTubePlayer url={videoDialog.url} title={videoDialog.title} showThumbnail={false} />
+          )}
         </DialogContent>
       </Dialog>
 
