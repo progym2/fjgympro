@@ -639,7 +639,9 @@ serve(async (req: Request): Promise<Response> => {
 
       // VALIDATE PANEL ACCESS for pre-generated accounts
       // Each credential type can only access its own panel
-      if (requestedPanel !== role) {
+      // Trial accounts are treated as clients
+      const effectiveRole = role === 'client' ? 'client' : role;
+      if (requestedPanel !== effectiveRole) {
         const panelLabels: Record<string, string> = {
           client: 'Cliente',
           instructor: 'Instrutor', 
@@ -649,7 +651,7 @@ serve(async (req: Request): Promise<Response> => {
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: `Acesso negado. Suas credenciais são válidas apenas para o painel de ${panelLabels[role]}. Cada credencial só pode acessar seu próprio painel.`
+            error: `Acesso negado. Suas credenciais são válidas apenas para o painel de ${panelLabels[effectiveRole]}. Cada credencial só pode acessar seu próprio painel.`
           } as LoginResponse),
           { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
