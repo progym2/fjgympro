@@ -58,6 +58,29 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+// Validates color values to prevent CSS injection attacks
+const isValidCSSColor = (color: string): boolean => {
+  if (!color || typeof color !== 'string') return false;
+  // Allow hex colors, rgb/rgba, hsl/hsla, and CSS color keywords
+  const validPatterns = [
+    /^#[0-9A-Fa-f]{3,8}$/, // Hex colors (#RGB, #RRGGBB, #RRGGBBAA)
+    /^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$/i, // rgb()
+    /^rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*[\d.]+\s*\)$/i, // rgba()
+    /^hsl\(\s*[\d.]+\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*\)$/i, // hsl()
+    /^hsla\(\s*[\d.]+\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*,\s*[\d.]+\s*\)$/i, // hsla()
+    /^hsl\(\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?\s*\)$/i, // hsl() modern syntax
+    /^hsl\(\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?\s*\/\s*[\d.]+%?\s*\)$/i, // hsla() modern syntax
+    /^var\(--[a-zA-Z0-9-]+\)$/, // CSS variables
+  ];
+  return validPatterns.some(pattern => pattern.test(color.trim()));
+};
+
+// Sanitizes CSS key names to prevent injection
+const sanitizeCSSKey = (key: string): string => {
+  // Only allow alphanumeric, hyphens, and underscores
+  return key.replace(/[^a-zA-Z0-9-_]/g, '');
+};
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
 
@@ -65,18 +88,27 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  // Sanitize the chart ID to prevent CSS injection
+  const sanitizedId = id.replace(/[^a-zA-Z0-9-_]/g, '');
+
   return (
     <style
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(
             ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
+${prefix} [data-chart=${sanitizedId}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
     const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
+    const sanitizedKey = sanitizeCSSKey(key);
+    // Only include valid colors to prevent CSS injection
+    if (color && isValidCSSColor(color)) {
+      return `  --color-${sanitizedKey}: ${color};`;
+    }
+    return null;
   })
+  .filter(Boolean)
   .join("\n")}
 }
 `,
