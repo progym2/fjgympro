@@ -40,13 +40,23 @@ const LinkStudent: React.FC = () => {
     const term = searchType === 'username' ? searchTerm.trim() : searchById.trim();
     if (!term || !effectiveInstructorId) return;
 
+    const isUuid = (value: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+
+    // Avoid 400 errors when user types a username in the ID tab
+    if (searchType === 'id' && !isUuid(term)) {
+      setError('ID inválido. Cole o UUID completo do aluno (com hífens).');
+      setFoundStudent(null);
+      return;
+    }
+
     setSearching(true);
     setError('');
     setFoundStudent(null);
 
     try {
       let studentData;
-      
+
       if (searchType === 'id') {
         // Search by ID (exact match)
         const { data, error: studentError } = await supabase
@@ -54,25 +64,25 @@ const LinkStudent: React.FC = () => {
           .select('id, username, full_name, email')
           .eq('id', term)
           .maybeSingle();
-        
+
         if (studentError) throw studentError;
         studentData = data;
-        
+
         if (!studentData) {
           setError('Aluno não encontrado. Verifique o ID informado.');
           return;
         }
       } else {
-        // Search by username
+        // Search by username (case-insensitive)
         const { data, error: studentError } = await supabase
           .from('profiles')
           .select('id, username, full_name, email')
-          .eq('username', term)
+          .ilike('username', term)
           .maybeSingle();
 
         if (studentError) throw studentError;
         studentData = data;
-        
+
         if (!studentData) {
           setError('Aluno não encontrado. Verifique o nome de usuário.');
           return;
