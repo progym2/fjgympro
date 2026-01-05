@@ -9,6 +9,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -48,6 +49,9 @@ const PaymentReports: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<PaymentData[]>([]);
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
+
+  // ESC para voltar ao menu admin
+  useEscapeBack({ to: '/admin' });
   const [selectedPeriod, setSelectedPeriod] = useState('3');
   const [sendingReminders, setSendingReminders] = useState(false);
 

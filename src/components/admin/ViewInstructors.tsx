@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Search, Users, Loader2, Award, Phone, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Input } from '@/components/ui/input';
 
 interface Instructor {
@@ -22,6 +23,9 @@ const ViewInstructors: React.FC = () => {
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // ESC para voltar ao menu admin
+  useEscapeBack({ to: '/admin' });
 
   useEffect(() => {
     loadInstructors();

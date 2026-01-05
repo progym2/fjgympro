@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { QrCode, Search, CheckCircle, XCircle, User, Loader2, Camera, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,9 @@ const QRScanner: React.FC = () => {
   const [result, setResult] = useState<ProfileResult | null>(null);
   const [showCamera, setShowCamera] = useState(false);
   const [recentScans, setRecentScans] = useState<ProfileResult[]>([]);
+
+  // ESC para voltar ao menu admin
+  useEscapeBack({ to: '/admin', disableWhen: [showCamera] });
 
   const handleSearch = async (searchCode?: string) => {
     const searchTerm = searchCode || code;

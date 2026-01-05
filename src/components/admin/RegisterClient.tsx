@@ -10,6 +10,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -41,6 +42,9 @@ const RegisterClient: React.FC = () => {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [enrollmentResult, setEnrollmentResult] = useState<EnrollmentResult | null>(null);
   const [processingPayment, setProcessingPayment] = useState(false);
+
+  // ESC para voltar ao menu admin (desabilitado quando há dialog aberto)
+  useEscapeBack({ to: '/admin', disableWhen: [showPaymentDialog] });
   
   const [formData, setFormData] = useState({
     username: '',

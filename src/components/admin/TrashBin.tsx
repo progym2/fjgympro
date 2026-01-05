@@ -11,6 +11,7 @@ import { Trash2, RotateCcw, Clock, RefreshCw, AlertTriangle, Database, User, Key
 import { formatDistanceToNow, format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAudio } from "@/contexts/AudioContext";
+import { useEscapeBack } from "@/hooks/useEscapeBack";
 
 interface TrashItem {
   id: string;
@@ -39,18 +40,11 @@ export function TrashBin() {
   const [deleteConfirm, setDeleteConfirm] = useState<TrashItem | null>(null);
   const [purgeAllConfirm, setPurgeAllConfirm] = useState(false);
 
-  // Handle Escape key to go back
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Only navigate if no dialogs are open
-      if (e.key === 'Escape' && !restoreConfirm && !deleteConfirm && !purgeAllConfirm) {
-        playClickSound();
-        navigate('/admin');
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigate, playClickSound, restoreConfirm, deleteConfirm, purgeAllConfirm]);
+  // ESC para voltar ao menu admin (desabilitado quando há dialogs abertos)
+  useEscapeBack({ 
+    to: '/admin', 
+    disableWhen: [restoreConfirm !== null, deleteConfirm !== null, purgeAllConfirm] 
+  });
 
   const fetchTrashItems = async () => {
     setLoading(true);

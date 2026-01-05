@@ -9,6 +9,8 @@ import {
   UserPlus, Download, Printer, Loader2, Palette
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAudio } from '@/contexts/AudioContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -91,6 +93,7 @@ interface PreGenAccount {
 const MasterPanel: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { playClickSound } = useAudio();
   const [loading, setLoading] = useState(true);
   const [licenses, setLicenses] = useState<License[]>([]);
   const [stats, setStats] = useState<LicenseStats>({ total: 0, active: 0, expired: 0, blocked: 0, demo: 0, trial: 0, full: 0 });
@@ -139,6 +142,16 @@ const MasterPanel: React.FC = () => {
   
   // Delete pre-gen account confirmation
   const [deletePreGenConfirm, setDeletePreGenConfirm] = useState<PreGenAccount | null>(null);
+
+  // ESC para voltar ao menu admin (desabilitado quando há dialogs abertos)
+  useEscapeBack({ 
+    to: '/admin', 
+    disableWhen: [
+      createDialogOpen, editDialogOpen, deleteDialogOpen, 
+      renewDialogOpen, batchDialogOpen, resetExpiredDialogOpen,
+      deletePreGenConfirm !== null
+    ] 
+  });
 
   useEffect(() => {
     if (profile?.profile_id) {

@@ -5,6 +5,7 @@ import { CreditCard, DollarSign, TrendingUp, Users, Loader2, CheckCircle, Clock,
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 
 interface PaymentStats {
@@ -33,6 +34,9 @@ const AdminFinance: React.FC = () => {
   const [stats, setStats] = useState<PaymentStats>({ total: 0, paid: 0, pending: 0, overdue: 0, clientCount: 0, instructorCount: 0 });
   const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // ESC para voltar ao menu admin
+  useEscapeBack({ to: '/admin' });
 
   const isMaster = role === 'master';
 

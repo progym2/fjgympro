@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Settings, Building, Clock, Save, Loader2, AlertTriangle, Shield } from 'lucide-react';
 import { useAudio } from '@/contexts/AudioContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -12,6 +13,9 @@ const AdminSettings: React.FC = () => {
   const navigate = useNavigate();
   const { playClickSound } = useAudio();
   const [saving, setSaving] = useState(false);
+
+  // ESC para voltar ao menu admin
+  useEscapeBack({ to: '/admin' });
 
   const [settings, setSettings] = useState({
     gymName: 'FrancGymPro',

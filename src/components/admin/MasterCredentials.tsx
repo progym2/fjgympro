@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Key, User, Eye, EyeOff, RefreshCw, Shield } from "lucide-react";
+import { Plus, Pencil, Trash2, Key, User, Eye, EyeOff, RefreshCw, Shield, ArrowLeft } from "lucide-react";
+import { useEscapeBack } from "@/hooks/useEscapeBack";
+import { useAudio } from "@/contexts/AudioContext";
 
 interface MasterCredential {
   id: string;
@@ -23,12 +26,17 @@ interface MasterCredential {
 }
 
 export function MasterCredentials() {
+  const navigate = useNavigate();
+  const { playClickSound } = useAudio();
   const [credentials, setCredentials] = useState<MasterCredential[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCredential, setEditingCredential] = useState<MasterCredential | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
+
+  // ESC para voltar ao menu admin (desabilitado quando há dialog aberto)
+  useEscapeBack({ to: '/admin', disableWhen: [isDialogOpen, deleteConfirm !== null] });
   
   const [formData, setFormData] = useState({
     username: "",

@@ -5,6 +5,7 @@ import { Dumbbell, User, Mail, Phone, Save, Loader2, Award, IdCard, MapPin, Chec
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -17,6 +18,9 @@ const RegisterInstructor: React.FC = () => {
   const { playClickSound } = useAudio();
   const { profile: currentProfile } = useAuth();
   const [saving, setSaving] = useState(false);
+
+  // ESC para voltar ao menu admin
+  useEscapeBack({ to: '/admin' });
   
   const [formData, setFormData] = useState({
     username: '',
