@@ -258,13 +258,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [applyLicenseState, checkLicenseStatusForProfile, forceSignOut]
   );
 
+  // Track if we just completed signIn (to skip immediate license re-check)
+  const justSignedInRef = useRef(false);
+
   // Keep license status in sync while user is logged in
   useEffect(() => {
     if (!profile?.profile_id) return;
     if (role === 'master') return;
 
-    // Check immediately
-    checkLicenseStatusForProfile(profile.profile_id);
+    // Skip immediate check if we just signed in (license already loaded from auth-login)
+    if (justSignedInRef.current) {
+      justSignedInRef.current = false;
+    } else {
+      // Only check immediately on page refresh (existing session)
+      checkLicenseStatusForProfile(profile.profile_id);
+    }
 
     // Subscribe to realtime changes on the licenses table
     const channel = supabase
@@ -495,8 +503,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { error: 'Licença não encontrada. Procure o Master para ativar.' };
         }
 
+        // Mark that we just signed in - skip the immediate license re-check in useEffect
+        justSignedInRef.current = true;
+
         // Trigger background preload immediately (non-blocking)
         triggerDataPreload(data.user.profile_id, userRole);
+
+        // Done loading immediately - don't wait
+        setIsLoading(false);
 
         return { error: null, role: userRole };
       } catch (error) {
