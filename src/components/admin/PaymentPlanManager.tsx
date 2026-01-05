@@ -265,6 +265,22 @@ const PaymentPlanManager: React.FC = () => {
     const installmentAmount = discountedTotal / installments;
 
     try {
+      // Check for duplicate plan (same client, same amount, same installments, within last 5 minutes)
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const { data: existingPlans } = await supabase
+        .from('payment_plans')
+        .select('id, created_at')
+        .eq('client_id', formData.clientId)
+        .eq('total_amount', discountedTotal)
+        .eq('installments', installments)
+        .gte('created_at', fiveMinutesAgo);
+
+      if (existingPlans && existingPlans.length > 0) {
+        toast.error('Um carnê idêntico foi criado recentemente. Aguarde alguns minutos ou altere os valores.');
+        setSaving(false);
+        return;
+      }
+
       // Create payment plan
       const { data: plan, error: planError } = await supabase
         .from('payment_plans')
@@ -283,7 +299,7 @@ const PaymentPlanManager: React.FC = () => {
 
       if (planError) throw planError;
 
-      // Create individual payments
+      // Create individual payments (with duplicate check for each)
       const payments = [];
       for (let i = 1; i <= installments; i++) {
         const dueDate = addMonths(new Date(formData.startDate), i - 1);

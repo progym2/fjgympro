@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { toast } from 'sonner';
 
 interface WorkoutNotificationSettings {
@@ -21,6 +21,29 @@ export const usePushNotifications = () => {
     minutesBefore: 30
   });
   const [isSupported, setIsSupported] = useState(false);
+  const [serviceWorkerReady, setServiceWorkerReady] = useState(false);
+  const swRegistration = useRef<ServiceWorkerRegistration | null>(null);
+
+  // Register service worker for background push notifications
+  useEffect(() => {
+    const registerServiceWorker = async () => {
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+          // Register push service worker
+          const registration = await navigator.serviceWorker.register('/sw-push.js', {
+            scope: '/'
+          });
+          swRegistration.current = registration;
+          setServiceWorkerReady(true);
+          console.log('Push SW registered:', registration.scope);
+        } catch (error) {
+          console.log('Push SW registration failed:', error);
+        }
+      }
+    };
+
+    registerServiceWorker();
+  }, []);
 
   // Check support and load settings on mount
   useEffect(() => {
@@ -73,7 +96,7 @@ export const usePushNotifications = () => {
     }
   }, [isSupported]);
 
-  // Send notification
+  // Send notification (tries Service Worker first for background support)
   const sendNotification = useCallback((title: string, body: string, options?: NotificationOptions) => {
     if (!isSupported || permission !== 'granted') {
       console.log('Notifications not available');
@@ -81,6 +104,20 @@ export const usePushNotifications = () => {
     }
 
     try {
+      // Try Service Worker notification first (works in background)
+      if (swRegistration.current && serviceWorkerReady) {
+        swRegistration.current.showNotification(title, {
+          body,
+          icon: '/pwa-192x192.png',
+          badge: '/pwa-192x192.png',
+          tag: 'gym-notification',
+          requireInteraction: true,
+          ...options
+        });
+        return;
+      }
+
+      // Fallback to regular Notification API
       const notification = new Notification(title, {
         body,
         icon: '/pwa-192x192.png',
@@ -99,7 +136,7 @@ export const usePushNotifications = () => {
     } catch (error) {
       console.error('Error sending notification:', error);
     }
-  }, [isSupported, permission]);
+  }, [isSupported, permission, serviceWorkerReady]);
 
   // Check and send workout reminder
   const checkWorkoutReminder = useCallback(() => {
@@ -228,7 +265,7 @@ export const usePushNotifications = () => {
     return null;
   }, [settings]);
 
-  // Send link request notification (for clients)
+  // Send link request notification (for clients) - works even in background
   const sendLinkRequestNotification = useCallback((instructorName: string) => {
     if (permission !== 'granted') return;
 
@@ -292,6 +329,7 @@ export const usePushNotifications = () => {
     isSupported,
     permission,
     settings,
+    serviceWorkerReady,
     requestPermission,
     sendNotification,
     updateSettings,

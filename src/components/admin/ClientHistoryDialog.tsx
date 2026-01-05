@@ -4,18 +4,28 @@ import {
   User, CreditCard, Calendar, History, FileText, 
   Loader2, CheckCircle, Clock, AlertTriangle, XCircle,
   Pause, Play, DollarSign, Activity, TrendingUp, Eye,
-  Printer, Phone, Mail
+  Printer, Phone, Mail, Trash2, AlertCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/printUtils';
 import { format, isBefore, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ClientHistoryDialogProps {
   open: boolean;
@@ -82,6 +92,9 @@ const ClientHistoryDialog: React.FC<ClientHistoryDialogProps> = ({
   const [plans, setPlans] = useState<PaymentPlan[]>([]);
   const [accessLogs, setAccessLogs] = useState<AccessLog[]>([]);
   const [showFreezeDialog, setShowFreezeDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [duplicateInfo, setDuplicateInfo] = useState<{ payments: number; plans: number }>({ payments: 0, plans: 0 });
   const [freezeData, setFreezeData] = useState({
     startDate: format(new Date(), 'yyyy-MM-dd'),
     endDate: '',
@@ -116,7 +129,12 @@ const ClientHistoryDialog: React.FC<ClientHistoryDialogProps> = ({
         .eq('client_id', clientId)
         .order('created_at', { ascending: false });
       
-      if (paymentsData) setPayments(paymentsData as Payment[]);
+      if (paymentsData) {
+        // Detect and count duplicates
+        const duplicates = detectDuplicatePayments(paymentsData as Payment[]);
+        setDuplicateInfo(prev => ({ ...prev, payments: duplicates.length }));
+        setPayments(paymentsData as Payment[]);
+      }
 
       // Load payment plans (carnês)
       const { data: plansData } = await supabase
@@ -125,7 +143,12 @@ const ClientHistoryDialog: React.FC<ClientHistoryDialogProps> = ({
         .eq('client_id', clientId)
         .order('created_at', { ascending: false });
       
-      if (plansData) setPlans(plansData as PaymentPlan[]);
+      if (plansData) {
+        // Detect duplicate plans
+        const duplicatePlans = detectDuplicatePlans(plansData as PaymentPlan[]);
+        setDuplicateInfo(prev => ({ ...prev, plans: duplicatePlans.length }));
+        setPlans(plansData as PaymentPlan[]);
+      }
 
       // Load access logs
       const { data: accessData } = await supabase
@@ -141,6 +164,156 @@ const ClientHistoryDialog: React.FC<ClientHistoryDialogProps> = ({
       toast.error('Erro ao carregar histórico');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Detect duplicate payments (same amount, same plan_id, same installment_number)
+  const detectDuplicatePayments = (paymentsList: Payment[]): Payment[] => {
+    const seen = new Map<string, Payment>();
+    const duplicates: Payment[] = [];
+
+    paymentsList.forEach(payment => {
+      const key = `${payment.plan_id}-${payment.installment_number}-${payment.amount}`;
+      if (seen.has(key)) {
+        duplicates.push(payment);
+      } else {
+        seen.set(key, payment);
+      }
+    });
+
+    return duplicates;
+  };
+
+  // Detect duplicate plans (same total, same installments, same start_date, created within 5 min)
+  const detectDuplicatePlans = (plansList: PaymentPlan[]): PaymentPlan[] => {
+    const duplicates: PaymentPlan[] = [];
+    
+    for (let i = 0; i < plansList.length; i++) {
+      for (let j = i + 1; j < plansList.length; j++) {
+        const plan1 = plansList[i];
+        const plan2 = plansList[j];
+        
+        if (
+          plan1.total_amount === plan2.total_amount &&
+          plan1.installments === plan2.installments &&
+          plan1.start_date === plan2.start_date
+        ) {
+          const timeDiff = Math.abs(new Date(plan1.created_at).getTime() - new Date(plan2.created_at).getTime());
+          if (timeDiff < 5 * 60 * 1000) { // 5 minutes
+            duplicates.push(plan2);
+          }
+        }
+      }
+    }
+
+    return duplicates;
+  };
+
+  // Remove duplicate entries
+  const handleRemoveDuplicates = async () => {
+    if (!clientId) return;
+
+    try {
+      // Remove duplicate payments
+      const duplicatePayments = detectDuplicatePayments(payments);
+      if (duplicatePayments.length > 0) {
+        const duplicateIds = duplicatePayments.map(p => p.id);
+        await supabase.from('payments').delete().in('id', duplicateIds);
+      }
+
+      // Remove duplicate plans and their associated payments
+      const duplicatePlans = detectDuplicatePlans(plans);
+      if (duplicatePlans.length > 0) {
+        const duplicatePlanIds = duplicatePlans.map(p => p.id);
+        await supabase.from('payments').delete().in('plan_id', duplicatePlanIds);
+        await supabase.from('payment_plans').delete().in('id', duplicatePlanIds);
+      }
+
+      toast.success(`Removidos: ${duplicatePayments.length} pagamentos e ${duplicatePlans.length} carnês duplicados`);
+      loadData();
+      onEnrollmentChange?.();
+    } catch (err) {
+      console.error('Error removing duplicates:', err);
+      toast.error('Erro ao remover duplicatas');
+    }
+  };
+
+  // Delete client (soft delete - preserve history)
+  const handleDeleteClient = async () => {
+    if (!profile) return;
+
+    setDeleting(true);
+    try {
+      // Archive client data to deleted_items_trash
+      const archivedData = {
+        profile: {
+          id: profile.id,
+          username: profile.username,
+          full_name: profile.full_name,
+          email: profile.email,
+          phone: profile.phone,
+          enrollment_date: profile.enrollment_date,
+          monthly_fee: profile.monthly_fee,
+        },
+        payments_summary: {
+          total_paid: payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0),
+          total_pending: payments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.amount, 0),
+          payment_count: payments.length,
+        },
+        plans_summary: {
+          total_plans: plans.length,
+          completed_plans: plans.filter(p => p.status === 'completed').length,
+        },
+        deleted_reason: 'client_deleted_by_admin',
+      };
+
+      // Insert into trash
+      await supabase.from('deleted_items_trash').insert({
+        original_table: 'profiles',
+        original_id: profile.id,
+        item_data: archivedData,
+        deleted_by: profile.id,
+      });
+
+      // Mark all pending payments as cancelled (keep history)
+      await supabase
+        .from('payments')
+        .update({ status: 'cancelled' })
+        .eq('client_id', profile.id)
+        .eq('status', 'pending');
+
+      // Mark all active plans as cancelled
+      await supabase
+        .from('payment_plans')
+        .update({ status: 'cancelled' })
+        .eq('client_id', profile.id)
+        .eq('status', 'active');
+
+      // Update profile status to cancelled
+      await supabase
+        .from('profiles')
+        .update({ 
+          enrollment_status: 'cancelled',
+          notes: `Excluído em ${format(new Date(), 'dd/MM/yyyy HH:mm')}. Histórico preservado.`
+        })
+        .eq('id', profile.id);
+
+      // Deactivate instructor links
+      await supabase
+        .from('instructor_clients')
+        .update({ is_active: false, unlinked_at: new Date().toISOString() })
+        .eq('client_id', profile.id)
+        .eq('is_active', true);
+
+      toast.success('Cliente excluído! Histórico preservado.');
+      setShowDeleteDialog(false);
+      onOpenChange(false);
+      onEnrollmentChange?.();
+    } catch (err) {
+      console.error('Error deleting client:', err);
+      toast.error('Erro ao excluir cliente');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -232,6 +405,9 @@ const ClientHistoryDialog: React.FC<ClientHistoryDialogProps> = ({
     if (payment.status === 'frozen') {
       return <Badge className="bg-blue-500/20 text-blue-500 border-blue-500/50">Congelado</Badge>;
     }
+    if (payment.status === 'cancelled') {
+      return <Badge className="bg-gray-500/20 text-gray-500 border-gray-500/50">Cancelado</Badge>;
+    }
     if (payment.due_date && isBefore(new Date(payment.due_date), new Date())) {
       const daysLate = differenceInDays(new Date(), new Date(payment.due_date));
       return <Badge className="bg-red-500/20 text-red-500 border-red-500/50">{daysLate}d atraso</Badge>;
@@ -260,6 +436,8 @@ const ClientHistoryDialog: React.FC<ClientHistoryDialogProps> = ({
     accessCount: accessLogs.length,
   };
 
+  const hasDuplicates = duplicateInfo.payments > 0 || duplicateInfo.plans > 0;
+
   if (!clientId) return null;
 
   return (
@@ -283,6 +461,33 @@ const ClientHistoryDialog: React.FC<ClientHistoryDialogProps> = ({
           ) : (
             <ScrollArea className="max-h-[70vh]">
               <div className="space-y-4 pr-4">
+                {/* Duplicate Warning */}
+                {hasDuplicates && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5 text-yellow-500" />
+                        <div>
+                          <p className="text-sm font-medium text-yellow-500">Registros Duplicados Detectados</p>
+                          <p className="text-xs text-muted-foreground">
+                            {duplicateInfo.payments > 0 && `${duplicateInfo.payments} pagamentos`}
+                            {duplicateInfo.payments > 0 && duplicateInfo.plans > 0 && ' e '}
+                            {duplicateInfo.plans > 0 && `${duplicateInfo.plans} carnês`}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-yellow-500 text-yellow-500 hover:bg-yellow-500/10"
+                        onClick={handleRemoveDuplicates}
+                      >
+                        <Trash2 size={14} className="mr-1" /> Remover
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Profile Header */}
                 <div className="bg-muted/50 p-4 rounded-lg">
                   <div className="flex justify-between items-start">
@@ -326,7 +531,7 @@ const ClientHistoryDialog: React.FC<ClientHistoryDialogProps> = ({
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2 mt-3">
+                  <div className="flex gap-2 mt-3 flex-wrap">
                     {profile.enrollment_status === 'active' && (
                       <Button
                         size="sm"
@@ -345,6 +550,16 @@ const ClientHistoryDialog: React.FC<ClientHistoryDialogProps> = ({
                         onClick={handleUnfreezeEnrollment}
                       >
                         <Play size={14} className="mr-1" /> Descongelar
+                      </Button>
+                    )}
+                    {profile.enrollment_status !== 'cancelled' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-red-500 text-red-500 hover:bg-red-500/10"
+                        onClick={() => setShowDeleteDialog(true)}
+                      >
+                        <Trash2 size={14} className="mr-1" /> Excluir Cliente
                       </Button>
                     )}
                   </div>
@@ -514,6 +729,49 @@ const ClientHistoryDialog: React.FC<ClientHistoryDialogProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Client Confirmation */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-500">
+              <Trash2 /> Excluir Cliente
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Tem certeza que deseja excluir <strong>{profile?.full_name || profile?.username}</strong>?
+              </p>
+              <div className="bg-muted/50 p-3 rounded-lg text-sm">
+                <p className="font-medium mb-1">O que será preservado:</p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-1">
+                  <li>Histórico de pagamentos</li>
+                  <li>Informações básicas do cliente</li>
+                  <li>Registro de carnês e valores</li>
+                  <li>Logs de acesso</li>
+                </ul>
+              </div>
+              <p className="text-red-400 text-sm">
+                Esta ação cancelará todos os pagamentos pendentes e vínculos com instrutores.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteClient}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : (
+                <Trash2 size={16} className="mr-1" />
+              )}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
