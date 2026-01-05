@@ -1401,6 +1401,15 @@ export type Database = {
     Functions: {
       belongs_to_tenant: { Args: { check_tenant_id: string }; Returns: boolean }
       can_insert_profile: { Args: { _user_id: string }; Returns: boolean }
+      create_master_credential: {
+        Args: {
+          p_full_name?: string
+          p_is_active?: boolean
+          p_password: string
+          p_username: string
+        }
+        Returns: string
+      }
       generate_license_key: { Args: { prefix?: string }; Returns: string }
       generate_student_id: { Args: never; Returns: string }
       get_current_profile_id: { Args: never; Returns: string }
@@ -1428,6 +1437,10 @@ export type Database = {
       is_admin_or_higher: { Args: { _user_id: string }; Returns: boolean }
       is_master: { Args: { _user_id: string }; Returns: boolean }
       purge_expired_trash_items: { Args: never; Returns: number }
+      update_master_password: {
+        Args: { p_credential_id: string; p_new_password: string }
+        Returns: boolean
+      }
       validate_master_credentials: {
         Args: { p_password: string; p_username: string }
         Returns: {

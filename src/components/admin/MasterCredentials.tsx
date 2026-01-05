@@ -130,17 +130,15 @@ export function MasterCredentials() {
           is_active: formData.is_active,
         };
         
-        // Se nova senha fornecida, hash via RPC ou diretamente
+        // Se nova senha fornecida, usar RPC para atualizar com hash
         if (formData.password.trim()) {
-          // Para atualizar com hash, usamos uma função RPC
-          const { error: hashError } = await supabase.rpc('update_master_password', {
+          const { error: hashError } = await (supabase.rpc as any)('update_master_password', {
             p_credential_id: editingCredential.id,
             p_new_password: formData.password.trim()
           });
           
           if (hashError) {
-            // Fallback: atualizar outros campos apenas
-            console.warn('Hash update failed, updating other fields only');
+            console.warn('Hash update failed:', hashError);
           }
         }
         
@@ -153,7 +151,7 @@ export function MasterCredentials() {
         toast({ title: "Credencial atualizada com sucesso!" });
       } else {
         // Create new - usar RPC para criar com hash
-        const { error } = await supabase.rpc('create_master_credential', {
+        const { error } = await (supabase.rpc as any)('create_master_credential', {
           p_username: usernameNormalized,
           p_password: formData.password.trim(),
           p_full_name: formData.full_name.trim() || null,

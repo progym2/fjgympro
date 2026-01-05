@@ -37,16 +37,18 @@ const StudentLookup: React.FC = () => {
     setSearched(true);
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from('profiles')
-        .select('student_id, full_name, enrollment_status, enrollment_date, avatar_url')
-        .eq('student_id', searchId.toUpperCase().trim())
-        .maybeSingle();
+      // Usar função segura que retorna apenas dados básicos
+      const { data, error: fetchError } = await supabase.rpc('get_student_basic_info', {
+        p_student_id: searchId.toUpperCase().trim()
+      });
 
       if (fetchError) throw fetchError;
 
-      if (data) {
-        setStudent(data as StudentInfo);
+      if (data && data.length > 0) {
+        setStudent({
+          ...data[0],
+          enrollment_date: null // Não retornamos mais essa informação por segurança
+        } as StudentInfo);
       } else {
         setError('Aluno não encontrado');
       }
