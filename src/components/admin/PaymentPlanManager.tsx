@@ -111,7 +111,7 @@ const PaymentPlanManager: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load all clients (role = 'client') from the same tenant
+      // Get clients with role='client' from user_roles
       const { data: clientRoles } = await supabase
         .from('user_roles')
         .select('user_id')
@@ -119,21 +119,32 @@ const PaymentPlanManager: React.FC = () => {
 
       const clientUserIds = clientRoles?.map(r => r.user_id) || [];
 
-      // Get profiles that are clients
+      // Get all profiles - we need to include clients registered by admin without auth accounts
       const { data: clientsData } = await supabase
         .from('profiles')
-        .select('id, username, full_name, user_id, student_id, phone, email, tenant_id')
-        .in('user_id', clientUserIds)
+        .select('id, username, full_name, user_id, student_id, phone, email, tenant_id, created_by_admin')
         .order('full_name');
       
-      if (clientsData) setClients(clientsData);
+      // Filter to include: clients with role OR profiles created by admin
+      const filteredClients = (clientsData || []).filter(p => {
+        // Include if has client role
+        if (p.user_id && clientUserIds.includes(p.user_id)) return true;
+        // Include if created by admin (registered as client without auth account)
+        if (!p.user_id && p.created_by_admin) return true;
+        // Include profiles without user_id that have student_id (likely clients)
+        if (!p.user_id && p.student_id) return true;
+        return false;
+      });
+      
+      setClients(filteredClients);
 
       // Load default PIX key from tenant settings
-      if (clientsData && clientsData.length > 0 && clientsData[0].tenant_id) {
+      const tenantId = filteredClients.length > 0 ? filteredClients.find(c => c.tenant_id)?.tenant_id : null;
+      if (tenantId) {
         const { data: tenantData } = await supabase
           .from('tenants')
           .select('name, settings')
-          .eq('id', clientsData[0].tenant_id)
+          .eq('id', tenantId)
           .single();
         
         if (tenantData) {
