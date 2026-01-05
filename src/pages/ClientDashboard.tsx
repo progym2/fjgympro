@@ -56,6 +56,7 @@ const ProfileCompletionPrompt = lazy(() => import('@/components/ProfileCompletio
 const RealtimeNotifications = lazy(() => import('@/components/client/RealtimeNotifications'));
 const HydrationWidget = lazy(() => import('@/components/client/HydrationWidget'));
 const WidgetRestoreButton = lazy(() => import('@/components/shared/WidgetRestoreButton'));
+const FloatingLinkRequests = lazy(() => import('@/components/client/FloatingLinkRequests'));
 
 // Minimal loading fallback
 const ComponentLoader = memo(() => (
@@ -291,6 +292,9 @@ const ClientDashboard: React.FC = () => {
 
         {/* Widgets */}
         <Suspense fallback={null}>
+          {/* Floating Link Requests - visible on ALL pages */}
+          <FloatingLinkRequests />
+          
           <RealtimeNotifications 
             isVisible={notificationsVisible} 
             onVisibilityChange={handleNotificationsVisibility}
