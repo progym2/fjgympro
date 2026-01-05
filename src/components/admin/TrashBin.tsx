@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,9 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Trash2, RotateCcw, Clock, RefreshCw, AlertTriangle, Database, User, Key, CreditCard } from "lucide-react";
+import { Trash2, RotateCcw, Clock, RefreshCw, AlertTriangle, Database, User, Key, CreditCard, ArrowLeft } from "lucide-react";
 import { formatDistanceToNow, format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useAudio } from "@/contexts/AudioContext";
 
 interface TrashItem {
   id: string;
@@ -29,11 +31,26 @@ const TABLE_LABELS: Record<string, { label: string; icon: React.ComponentType<an
 };
 
 export function TrashBin() {
+  const navigate = useNavigate();
+  const { playClickSound } = useAudio();
   const [items, setItems] = useState<TrashItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [restoreConfirm, setRestoreConfirm] = useState<TrashItem | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<TrashItem | null>(null);
   const [purgeAllConfirm, setPurgeAllConfirm] = useState(false);
+
+  // Handle Escape key to go back
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only navigate if no dialogs are open
+      if (e.key === 'Escape' && !restoreConfirm && !deleteConfirm && !purgeAllConfirm) {
+        playClickSound();
+        navigate('/admin');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate, playClickSound, restoreConfirm, deleteConfirm, purgeAllConfirm]);
 
   const fetchTrashItems = async () => {
     setLoading(true);
@@ -153,6 +170,14 @@ export function TrashBin() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => { playClickSound(); navigate('/admin'); }}
+              className="mr-1"
+            >
+              <ArrowLeft size={18} />
+            </Button>
             <Trash2 className="h-5 w-5 text-orange-500" />
             <CardTitle className="text-xl">Lixeira</CardTitle>
             <Badge variant="outline" className="ml-2">
