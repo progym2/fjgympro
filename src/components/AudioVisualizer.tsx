@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAudio } from '@/contexts/AudioContext';
 
@@ -6,7 +6,7 @@ const BAR_COUNT = 24;
 const MIN_HEIGHT = 2;
 const MAX_HEIGHT = 28;
 
-const AudioVisualizer: React.FC = () => {
+const AudioVisualizer = forwardRef<HTMLDivElement>((_, ref) => {
   const { isMusicPlaying, analyserNode, isOnHomeScreen } = useAudio();
   const barsRef = useRef<(HTMLDivElement | null)[]>([]);
   const animationRef = useRef<number>();
@@ -62,6 +62,7 @@ const AudioVisualizer: React.FC = () => {
     <AnimatePresence>
       {isMusicPlaying && (
         <motion.div
+          ref={ref}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
@@ -72,7 +73,7 @@ const AudioVisualizer: React.FC = () => {
           }}
         >
           {Array.from({ length: BAR_COUNT }).map((_, i) => (
-            <motion.div
+            <div
               key={i}
               ref={el => barsRef.current[i] = el}
               className="rounded-t-sm transition-all duration-75"
@@ -82,13 +83,14 @@ const AudioVisualizer: React.FC = () => {
                 background: `linear-gradient(to top, hsl(var(--primary)), hsl(var(--primary) / 0.5))`,
                 boxShadow: '0 0 8px hsl(var(--primary) / 0.4)',
               }}
-              initial={{ height: MIN_HEIGHT }}
             />
           ))}
         </motion.div>
       )}
     </AnimatePresence>
   );
-};
+});
+
+AudioVisualizer.displayName = 'AudioVisualizer';
 
 export default AudioVisualizer;
