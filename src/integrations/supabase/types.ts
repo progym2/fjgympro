@@ -471,7 +471,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_active: boolean
-          password: string
+          password_hash: string
           updated_at: string | null
           username: string
         }
@@ -481,7 +481,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean
-          password: string
+          password_hash: string
           updated_at?: string | null
           username: string
         }
@@ -491,7 +491,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean
-          password?: string
+          password_hash?: string
           updated_at?: string | null
           username?: string
         }
@@ -1405,6 +1405,15 @@ export type Database = {
       generate_student_id: { Args: never; Returns: string }
       get_current_profile_id: { Args: never; Returns: string }
       get_current_tenant_id: { Args: never; Returns: string }
+      get_student_basic_info: {
+        Args: { p_student_id: string }
+        Returns: {
+          avatar_url: string
+          enrollment_status: string
+          full_name: string
+          student_id: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -1419,6 +1428,15 @@ export type Database = {
       is_admin_or_higher: { Args: { _user_id: string }; Returns: boolean }
       is_master: { Args: { _user_id: string }; Returns: boolean }
       purge_expired_trash_items: { Args: never; Returns: number }
+      validate_master_credentials: {
+        Args: { p_password: string; p_username: string }
+        Returns: {
+          full_name: string
+          id: string
+          is_valid: boolean
+          username: string
+        }[]
+      }
     }
     Enums: {
       app_role: "master" | "admin" | "instructor" | "client"
