@@ -1,9 +1,14 @@
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 
-// Playlist de músicas - adicione novas músicas aqui
+// Playlist de músicas - todas as músicas disponíveis
 const MUSIC_TRACKS: { path: string; name: string }[] = [
-  // Adicione músicas no formato:
-  // { path: '/audio/nome-do-arquivo.mp3', name: 'Nome da Música' },
+  { path: '/audio/background-80.mp3', name: 'Background 80s' },
+  { path: '/audio/background-lento.mp3', name: 'Background Lento' },
+  { path: '/audio/gym-pro-funk1.mp3', name: 'Gym Pro Funk 1' },
+  { path: '/audio/gym-pro-funk2.mp3', name: 'Gym Pro Funk 2' },
+  { path: '/audio/peso-neon.mp3', name: 'Peso Neon' },
+  { path: '/audio/peso-do-ritmo.mp3', name: 'Peso do Ritmo' },
+  { path: '/audio/peso-do-ritmo-1.mp3', name: 'Peso do Ritmo 2' },
 ];
 
 const DEFAULT_MUSIC_VOLUME = 0.18;
@@ -11,6 +16,7 @@ const MAX_MUSIC_VOLUME = 0.5;
 const FADE_DURATION = 2000;
 const SFX_VOLUME = 0.5;
 const VOLUME_STORAGE_KEY = 'gym_music_volume';
+const AUTOPLAY_DELAY_MS = 20000; // 20 segundos após splash
 
 interface AudioContextType {
   isMusicPlaying: boolean;
@@ -255,6 +261,8 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const [musicVolume, setMusicVolumeState] = useState(getStoredVolume);
+  const [autoplayScheduled, setAutoplayScheduled] = useState(false);
+  const autoplayTimerRef = useRef<number | null>(null);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fadeIntervalRef = useRef<number | null>(null);
@@ -456,15 +464,43 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [hasUserInteracted, isMusicEnabled, isOnHomeScreen, isSplashComplete, isMusicPlaying, shuffledPlaylist, currentTrackIndex, setupAnalyser, fadeIn]);
 
-  // Tentar autoplay quando condições forem atendidas
+  // Agendar autoplay com delay de 20 segundos após splash complete
   useEffect(() => {
-    if (isOnHomeScreen && isSplashComplete && isMusicEnabled && hasUserInteracted) {
+    if (isOnHomeScreen && isSplashComplete && isMusicEnabled && hasUserInteracted && !autoplayScheduled) {
       const wasStoppedThisSession = sessionStorage.getItem(MUSIC_STOPPED_SESSION_KEY) === 'true';
       if (!wasStoppedThisSession && !isMusicPlaying) {
-        tryAutoPlay();
+        setAutoplayScheduled(true);
+        
+        // Clear any existing timer
+        if (autoplayTimerRef.current) {
+          clearTimeout(autoplayTimerRef.current);
+        }
+        
+        // Agendar reprodução após 20 segundos
+        autoplayTimerRef.current = window.setTimeout(() => {
+          tryAutoPlay();
+        }, AUTOPLAY_DELAY_MS);
       }
     }
-  }, [isOnHomeScreen, isSplashComplete, isMusicEnabled, hasUserInteracted, isMusicPlaying, tryAutoPlay]);
+    
+    // Cleanup timer when leaving home screen
+    return () => {
+      if (autoplayTimerRef.current) {
+        clearTimeout(autoplayTimerRef.current);
+      }
+    };
+  }, [isOnHomeScreen, isSplashComplete, isMusicEnabled, hasUserInteracted, isMusicPlaying, autoplayScheduled, tryAutoPlay]);
+
+  // Reset autoplay scheduled when leaving home
+  useEffect(() => {
+    if (!isOnHomeScreen) {
+      setAutoplayScheduled(false);
+      if (autoplayTimerRef.current) {
+        clearTimeout(autoplayTimerRef.current);
+        autoplayTimerRef.current = null;
+      }
+    }
+  }, [isOnHomeScreen]);
 
   // Parar música quando sair da home
   useEffect(() => {
