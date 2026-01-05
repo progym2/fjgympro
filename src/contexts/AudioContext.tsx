@@ -273,7 +273,10 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const audio = new Audio();
     audio.crossOrigin = 'anonymous';
     audio.preload = 'auto';
-    audio.src = shuffled[0].path;
+    // Só define src se houver músicas na playlist
+    if (shuffled.length > 0) {
+      audio.src = shuffled[0].path;
+    }
     audio.loop = false;
     audio.volume = 0;
     audioRef.current = audio;
