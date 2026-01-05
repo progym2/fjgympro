@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Search, Send, Loader2, Phone, Mail } from 'lucide-react';
+import { AlertTriangle, Search, Send, Loader2, Phone, Mail, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useEscapeBack } from '@/hooks/useEscapeBack';
@@ -197,22 +197,46 @@ const Defaulters: React.FC = () => {
                     {defaulter.days_overdue} dias em atraso
                   </span>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => sendAlert(defaulter)}
-                  disabled={sendingAlert === defaulter.id}
-                  className="border-destructive/50 text-destructive hover:bg-destructive/10"
-                >
-                  {sendingAlert === defaulter.id ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4 mr-1" />
-                      Alertar
-                    </>
+                <div className="flex gap-2">
+                  {defaulter.client.phone && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const phone = defaulter.client.phone?.replace(/\D/g, '') || '';
+                        const message = encodeURIComponent(
+                          `Olá ${defaulter.client.full_name}! 🏋️\n\n` +
+                          `Verificamos que seu pagamento de R$ ${defaulter.amount.toFixed(2)} ` +
+                          `venceu em ${format(parseISO(defaulter.due_date), 'dd/MM/yyyy')} ` +
+                          `e está há ${defaulter.days_overdue} dias em atraso.\n\n` +
+                          `Por favor, regularize sua situação para continuar aproveitando nossos serviços.\n\n` +
+                          `Qualquer dúvida, estamos à disposição! 💪`
+                        );
+                        window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
+                        toast.success('WhatsApp aberto!');
+                      }}
+                      className="border-green-500/50 text-green-500 hover:bg-green-500/10"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                    </Button>
                   )}
-                </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => sendAlert(defaulter)}
+                    disabled={sendingAlert === defaulter.id}
+                    className="border-destructive/50 text-destructive hover:bg-destructive/10"
+                  >
+                    {sendingAlert === defaulter.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-1" />
+                        Alertar
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </motion.div>
           ))}
