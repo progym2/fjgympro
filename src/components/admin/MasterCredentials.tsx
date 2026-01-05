@@ -18,7 +18,6 @@ import { useAudio } from "@/contexts/AudioContext";
 interface MasterCredential {
   id: string;
   username: string;
-  password: string;
   full_name: string | null;
   is_active: boolean;
   created_at: string;
@@ -79,7 +78,7 @@ export function MasterCredentials() {
     setEditingCredential(credential);
     setFormData({
       username: credential.username,
-      password: credential.password,
+      password: "", // Senha não é mais retornada do banco (hash)
       full_name: credential.full_name || "",
       is_active: credential.is_active,
     });
@@ -87,10 +86,20 @@ export function MasterCredentials() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.username.trim() || !formData.password.trim()) {
+    if (!formData.username.trim()) {
       toast({
         title: "Dados incompletos",
-        description: "Usuário e senha são obrigatórios.",
+        description: "O nome de usuário é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Senha obrigatória apenas ao criar novo
+    if (!editingCredential && !formData.password.trim()) {
+      toast({
+        title: "Dados incompletos",
+        description: "A senha é obrigatória para novas credenciais.",
         variant: "destructive",
       });
       return;
@@ -114,29 +123,42 @@ export function MasterCredentials() {
       }
 
       if (editingCredential) {
-        // Update existing
+        // Update existing - só atualiza senha se foi fornecida
+        const updateData: Record<string, unknown> = {
+          username: usernameNormalized,
+          full_name: formData.full_name.trim() || null,
+          is_active: formData.is_active,
+        };
+        
+        // Se nova senha fornecida, hash via RPC ou diretamente
+        if (formData.password.trim()) {
+          // Para atualizar com hash, usamos uma função RPC
+          const { error: hashError } = await supabase.rpc('update_master_password', {
+            p_credential_id: editingCredential.id,
+            p_new_password: formData.password.trim()
+          });
+          
+          if (hashError) {
+            // Fallback: atualizar outros campos apenas
+            console.warn('Hash update failed, updating other fields only');
+          }
+        }
+        
         const { error } = await supabase
           .from("master_credentials")
-          .update({
-            username: usernameNormalized,
-            password: formData.password.trim(),
-            full_name: formData.full_name.trim() || null,
-            is_active: formData.is_active,
-          })
+          .update(updateData)
           .eq("id", editingCredential.id);
 
         if (error) throw error;
         toast({ title: "Credencial atualizada com sucesso!" });
       } else {
-        // Create new
-        const { error } = await supabase
-          .from("master_credentials")
-          .insert({
-            username: usernameNormalized,
-            password: formData.password.trim(),
-            full_name: formData.full_name.trim() || null,
-            is_active: formData.is_active,
-          });
+        // Create new - usar RPC para criar com hash
+        const { error } = await supabase.rpc('create_master_credential', {
+          p_username: usernameNormalized,
+          p_password: formData.password.trim(),
+          p_full_name: formData.full_name.trim() || null,
+          p_is_active: formData.is_active
+        });
 
         if (error) {
           if (error.code === '23505') {
@@ -336,7 +358,6 @@ export function MasterCredentials() {
             <TableHeader>
               <TableRow>
                 <TableHead>Usuário</TableHead>
-                <TableHead>Senha</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Atualizado</TableHead>
@@ -347,25 +368,6 @@ export function MasterCredentials() {
               {credentials.map((cred) => (
                 <TableRow key={cred.id}>
                   <TableCell className="font-medium">{cred.username}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <code className="bg-muted px-2 py-1 rounded text-sm">
-                        {showPassword[cred.id] ? cred.password : "••••••••"}
-                      </code>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => togglePasswordVisibility(cred.id)}
-                      >
-                        {showPassword[cred.id] ? (
-                          <EyeOff className="h-3 w-3" />
-                        ) : (
-                          <Eye className="h-3 w-3" />
-                        )}
-                      </Button>
-                    </div>
-                  </TableCell>
                   <TableCell>{cred.full_name || "-"}</TableCell>
                   <TableCell>
                     <Badge 

@@ -71,29 +71,30 @@ serve(async (req: Request): Promise<Response> => {
     // Check for demo account first (hardcoded)
     const demoAccount = inputUsername.toLowerCase() === "teste" && inputPassword === "2026";
     
-    // Check for master credentials from database
-    let masterCredential: { username: string; password: string; full_name: string | null } | null = null;
+    // Check for master credentials from database using secure function
+    let masterCredential: { username: string; full_name: string | null } | null = null;
     
-    const { data: dbMasterCred } = await supabaseAdmin
-      .from("master_credentials")
-      .select("username, password, full_name")
-      .ilike("username", inputUsername)
-      .eq("is_active", true)
-      .maybeSingle();
+    // Use the secure validate_master_credentials function (password hash comparison)
+    const { data: validationResult } = await supabaseAdmin.rpc('validate_master_credentials', {
+      p_username: inputUsername.toLowerCase(),
+      p_password: inputPassword
+    });
     
-    if (dbMasterCred && dbMasterCred.password === inputPassword) {
-      masterCredential = dbMasterCred;
+    if (validationResult && validationResult.length > 0 && validationResult[0].is_valid) {
+      masterCredential = {
+        username: validationResult[0].username,
+        full_name: validationResult[0].full_name
+      };
     }
 
     // Build special account info
-    type SpecialAccountInfo = { password: string; type: "demo" | "trial" | "master"; role: "client" | "admin" | "master"; fullName?: string };
+    type SpecialAccountInfo = { type: "demo" | "trial" | "master"; role: "client" | "admin" | "master"; fullName?: string };
     let specialAccount: SpecialAccountInfo | null = null;
 
     if (demoAccount) {
-      specialAccount = { password: "2026", type: "demo", role: "client" };
+      specialAccount = { type: "demo", role: "client" };
     } else if (masterCredential) {
       specialAccount = { 
-        password: masterCredential.password, 
         type: "master", 
         role: "master",
         fullName: masterCredential.full_name || undefined
