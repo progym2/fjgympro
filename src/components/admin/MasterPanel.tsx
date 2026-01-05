@@ -136,6 +136,9 @@ const MasterPanel: React.FC = () => {
   const [resetExpiredDialogOpen, setResetExpiredDialogOpen] = useState(false);
   const [resetDuration, setResetDuration] = useState<string>('30m');
   const [resettingExpired, setResettingExpired] = useState(false);
+  
+  // Delete pre-gen account confirmation
+  const [deletePreGenConfirm, setDeletePreGenConfirm] = useState<PreGenAccount | null>(null);
 
   useEffect(() => {
     if (profile?.profile_id) {
@@ -1307,11 +1310,7 @@ const MasterPanel: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => {
-                              if (window.confirm(`Excluir conta ${account.username}? Isso removerá também perfil, licença e usuário vinculados.`)) {
-                                deletePreGenAccount(account.id);
-                              }
-                            }}
+                            onClick={() => setDeletePreGenConfirm(account)}
                             className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1985,6 +1984,38 @@ const MasterPanel: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Pre-Gen Account Confirmation Dialog */}
+      <AlertDialog open={!!deletePreGenConfirm} onOpenChange={(open) => !open && setDeletePreGenConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 size={20} />
+              Excluir Conta Pré-Gerada
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a conta <strong>{deletePreGenConfirm?.username}</strong>?
+              <br /><br />
+              <strong>Atenção:</strong> Isso removerá também o perfil, licença e usuário vinculados (se houver).
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deletePreGenConfirm) {
+                  deletePreGenAccount(deletePreGenConfirm.id);
+                  setDeletePreGenConfirm(null);
+                }
+              }}
+            >
+              Sim, Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 };
