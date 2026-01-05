@@ -878,18 +878,16 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
                     </label>
                   </div>
 
-                  {hasSavedCredentials && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearSavedCredentials}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 px-2 text-xs"
-                    >
-                      <Trash2 size={12} className="mr-1" />
-                      Limpar dados salvos
-                    </Button>
-                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearSavedCredentials}
+                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 px-2 text-xs"
+                  >
+                    <Trash2 size={12} className="mr-1" />
+                    {hasSavedCredentials ? 'Limpar dados salvos' : 'Limpar cache'}
+                  </Button>
                 </div>
 
                 <Button
