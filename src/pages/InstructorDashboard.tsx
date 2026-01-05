@@ -3,7 +3,7 @@ import { Routes, Route, useNavigate } from 'react-router-dom';
 import { 
   Users, Dumbbell, Utensils, Calendar, 
   CreditCard, FileText, QrCode, LogOut, 
-  Info, Bell, TrendingUp, UserPlus, ClipboardList, UserMinus, Library, History, CalendarDays, UserCog, Loader2, Camera
+  Info, Bell, TrendingUp, UserPlus, ClipboardList, UserMinus, Library, History, CalendarDays, UserCog, Loader2, Camera, HardDrive
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -56,6 +56,7 @@ const StudentEvolutionGallery = lazy(() => import('@/components/instructor/Stude
 const ProfileCompletionPrompt = lazy(() => import('@/components/ProfileCompletionPrompt'));
 const RealtimeNotifications = lazy(() => import('@/components/client/RealtimeNotifications'));
 const WidgetRestoreButton = lazy(() => import('@/components/shared/WidgetRestoreButton'));
+const BackupRestorePanel = lazy(() => import('@/components/shared/BackupRestorePanel'));
 
 // Loading fallback
 const ComponentLoader = () => (
@@ -159,6 +160,7 @@ const InstructorDashboard: React.FC = () => {
     { icon: Bell, label: 'Notificações', path: 'notifications', color: 'text-pink-500' },
     { icon: QrCode, label: 'Meu QR Code', path: 'my-qrcode', color: 'text-lime-500' },
     { icon: QrCode, label: 'Leitor QR Code', path: 'qr-scanner', color: 'text-amber-500' },
+    { icon: HardDrive, label: 'Backup & Sync', path: 'backup', color: 'text-slate-500' },
   ], []);
 
   return (
@@ -282,6 +284,7 @@ const InstructorDashboard: React.FC = () => {
               <Route path="reports" element={<Reports />} />
               <Route path="qr-scanner" element={<QRScanner />} />
               <Route path="my-qrcode" element={<InstructorQRCode />} />
+              <Route path="backup" element={<BackupRestorePanel />} />
             </Routes>
           </Suspense>
         </main>
