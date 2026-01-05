@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   ArrowLeft, FileText, Plus, User, Search,
   Loader2, Printer, CheckCircle, Clock, XCircle,
-  DollarSign, Calendar
+  DollarSign, Calendar, Share2, MessageCircle, Mail
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
@@ -15,8 +15,9 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { formatCurrency, printPaymentPlan, generateReceiptNumber, printPaymentReceipt } from '@/lib/printUtils';
+import { formatCurrency, printPaymentPlan, generateReceiptNumber, printPaymentReceipt, generatePaymentPlanText } from '@/lib/printUtils';
 import { format, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { filterDecimalOnly } from '@/lib/inputValidation';
@@ -26,6 +27,8 @@ interface Client {
   username: string;
   full_name: string | null;
   student_id: string | null;
+  phone?: string | null;
+  email?: string | null;
 }
 
 interface PaymentPlan {
@@ -66,6 +69,8 @@ const PaymentPlanManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [clientSearchTerm, setClientSearchTerm] = useState('');
+  const [defaultPixKey, setDefaultPixKey] = useState<string>('');
+  const [gymName, setGymName] = useState<string>('FRANCGYMPRO');
   
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
@@ -117,18 +122,35 @@ const PaymentPlanManager: React.FC = () => {
       // Get profiles that are clients
       const { data: clientsData } = await supabase
         .from('profiles')
-        .select('id, username, full_name, user_id, student_id')
+        .select('id, username, full_name, user_id, student_id, phone, email, tenant_id')
         .in('user_id', clientUserIds)
         .order('full_name');
       
       if (clientsData) setClients(clientsData);
+
+      // Load default PIX key from tenant settings
+      if (clientsData && clientsData.length > 0 && clientsData[0].tenant_id) {
+        const { data: tenantData } = await supabase
+          .from('tenants')
+          .select('name, settings')
+          .eq('id', clientsData[0].tenant_id)
+          .single();
+        
+        if (tenantData) {
+          setGymName(tenantData.name || 'FRANCGYMPRO');
+          const tenantSettings = (tenantData.settings || {}) as Record<string, unknown>;
+          if (tenantSettings.pixKey) {
+            setDefaultPixKey(tenantSettings.pixKey as string);
+          }
+        }
+      }
 
       // Load payment plans
       const { data: plansData } = await supabase
         .from('payment_plans')
         .select(`
           *,
-          client:profiles!payment_plans_client_id_fkey(id, username, full_name, student_id)
+          client:profiles!payment_plans_client_id_fkey(id, username, full_name, student_id, phone, email)
         `)
         .eq('created_by', profile?.profile_id)
         .order('created_at', { ascending: false });
@@ -467,7 +489,77 @@ const PaymentPlanManager: React.FC = () => {
                   ))}
                 </div>
 
-                <div className="flex justify-end mt-3">
+                <div className="flex justify-end gap-2 mt-3">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Share2 size={14} className="mr-1" /> Enviar
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          playClickSound();
+                          const text = generatePaymentPlanText({
+                            clientName: plan.client?.full_name || plan.client?.username || '',
+                            studentId: plan.client?.student_id || undefined,
+                            totalAmount: plan.total_amount,
+                            installments: plan.installments,
+                            installmentAmount: plan.installment_amount,
+                            discount: plan.discount_percentage,
+                            startDate: format(new Date(plan.start_date), 'dd/MM/yyyy'),
+                            payments: plan.payments?.map(p => ({
+                              number: p.installment_number,
+                              dueDate: p.due_date ? format(new Date(p.due_date), 'dd/MM/yyyy') : '-',
+                              status: p.status,
+                            })) || [],
+                            pixKey: defaultPixKey || undefined,
+                            gymName,
+                          });
+                          const phone = (plan.client as any)?.phone?.replace(/\D/g, '') || '';
+                          if (phone) {
+                            const whatsappUrl = `https://wa.me/55${phone}?text=${encodeURIComponent(text)}`;
+                            window.open(whatsappUrl, '_blank');
+                          } else {
+                            // Copy to clipboard if no phone
+                            navigator.clipboard.writeText(text);
+                            toast.success('Carnê copiado! Cole no WhatsApp.');
+                          }
+                        }}
+                      >
+                        <MessageCircle size={16} className="mr-2 text-green-500" />
+                        WhatsApp
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          playClickSound();
+                          const text = generatePaymentPlanText({
+                            clientName: plan.client?.full_name || plan.client?.username || '',
+                            studentId: plan.client?.student_id || undefined,
+                            totalAmount: plan.total_amount,
+                            installments: plan.installments,
+                            installmentAmount: plan.installment_amount,
+                            discount: plan.discount_percentage,
+                            startDate: format(new Date(plan.start_date), 'dd/MM/yyyy'),
+                            payments: plan.payments?.map(p => ({
+                              number: p.installment_number,
+                              dueDate: p.due_date ? format(new Date(p.due_date), 'dd/MM/yyyy') : '-',
+                              status: p.status,
+                            })) || [],
+                            pixKey: defaultPixKey || undefined,
+                            gymName,
+                          });
+                          const email = (plan.client as any)?.email || '';
+                          const subject = `Carnê de Pagamento - ${gymName}`;
+                          const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text.replace(/\*/g, '').replace(/_/g, ''))}`;
+                          window.location.href = mailtoUrl;
+                        }}
+                      >
+                        <Mail size={16} className="mr-2 text-blue-500" />
+                        E-mail
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <Button
                     variant="outline"
                     size="sm"
@@ -486,10 +578,11 @@ const PaymentPlanManager: React.FC = () => {
                           dueDate: p.due_date ? format(new Date(p.due_date), 'dd/MM/yyyy') : '-',
                           status: p.status,
                         })) || [],
+                        pixKey: defaultPixKey || undefined,
                       });
                     }}
                   >
-                    <Printer size={14} className="mr-1" /> Imprimir Carnê
+                    <Printer size={14} className="mr-1" /> Imprimir
                   </Button>
                 </div>
               </motion.div>

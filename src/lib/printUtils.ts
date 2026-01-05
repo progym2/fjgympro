@@ -572,3 +572,46 @@ export const printAccountsReport = (accounts: {
     printWindow.print();
   }, 500);
 };
+
+// Generate text version of payment plan for WhatsApp/Email sharing
+export const generatePaymentPlanText = (plan: {
+  clientName: string;
+  studentId?: string;
+  totalAmount: number;
+  installments: number;
+  installmentAmount: number;
+  discount: number;
+  startDate: string;
+  payments: { number: number; dueDate: string; status: string }[];
+  pixKey?: string;
+  gymName?: string;
+}): string => {
+  let text = `📄 *CARNÊ DE PAGAMENTO*\n`;
+  text += `${plan.gymName || 'FRANCGYMPRO'}\n\n`;
+  text += `👤 *Cliente:* ${plan.clientName}\n`;
+  if (plan.studentId) {
+    text += `🎫 *Matrícula:* ${plan.studentId}\n`;
+  }
+  text += `\n`;
+  text += `💰 *Valor Total:* ${formatCurrency(plan.totalAmount)}\n`;
+  text += `📊 *Parcelas:* ${plan.installments}x de ${formatCurrency(plan.installmentAmount)}\n`;
+  if (plan.discount > 0) {
+    text += `🏷️ *Desconto:* ${plan.discount}%\n`;
+  }
+  text += `📅 *Início:* ${plan.startDate}\n\n`;
+  
+  text += `*PARCELAS:*\n`;
+  plan.payments.forEach(p => {
+    const status = p.status === 'paid' ? '✅' : '⏳';
+    text += `${status} Parcela ${p.number}/${plan.installments} - Venc: ${p.dueDate} - ${formatCurrency(plan.installmentAmount)}\n`;
+  });
+  
+  if (plan.pixKey) {
+    text += `\n📱 *PAGUE COM PIX*\n`;
+    text += `Chave: ${plan.pixKey}\n`;
+  }
+  
+  text += `\n_Mantenha suas parcelas em dia._`;
+  
+  return text;
+};
