@@ -29,7 +29,6 @@ const themePlayerIcons: Record<SportTheme, {
 const MiniMusicPlayer: React.FC = () => {
   const { 
     isMusicPlaying, 
-    isMusicEnabled, 
     isOnHomeScreen, 
     toggleMusic, 
     musicVolume, 
@@ -42,6 +41,7 @@ const MiniMusicPlayer: React.FC = () => {
   const { currentTheme, themeConfig } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Não renderizar se não estiver na home
   if (!isOnHomeScreen) {
     return null;
   }
