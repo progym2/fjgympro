@@ -38,6 +38,7 @@ import { ptBR } from 'date-fns/locale';
 import { MasterCredentials } from './MasterCredentials';
 import LicenseUsageReport from './LicenseUsageReport';
 import GlobalThemeManager from './GlobalThemeManager';
+import { TrashBin } from './TrashBin';
 
 interface License {
   id: string;
@@ -809,7 +810,7 @@ const MasterPanel: React.FC = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-7 mb-6">
+        <TabsList className="grid w-full grid-cols-8 mb-6">
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <BarChart3 size={16} />
             <span className="hidden sm:inline">Dashboard</span>
@@ -833,6 +834,10 @@ const MasterPanel: React.FC = () => {
           <TabsTrigger value="themes" className="flex items-center gap-2">
             <Palette size={16} />
             <span className="hidden sm:inline">Temas</span>
+          </TabsTrigger>
+          <TabsTrigger value="trash" className="flex items-center gap-2">
+            <Trash2 size={16} />
+            <span className="hidden sm:inline">Lixeira</span>
           </TabsTrigger>
           <TabsTrigger value="master-creds" className="flex items-center gap-2">
             <Lock size={16} />
@@ -1559,6 +1564,11 @@ const MasterPanel: React.FC = () => {
         {/* Themes Tab */}
         <TabsContent value="themes" className="space-y-6">
           <GlobalThemeManager />
+        </TabsContent>
+
+        {/* Trash Bin Tab */}
+        <TabsContent value="trash" className="space-y-6">
+          <TrashBin />
         </TabsContent>
 
         {/* Master Credentials Tab */}

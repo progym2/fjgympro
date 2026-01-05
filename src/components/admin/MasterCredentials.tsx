@@ -88,13 +88,29 @@ export function MasterCredentials() {
       return;
     }
 
+    const usernameNormalized = formData.username.toLowerCase().trim();
+
     try {
+      // Check for duplicate username
+      const existingUsername = credentials.find(
+        (c) => c.username === usernameNormalized && c.id !== editingCredential?.id
+      );
+      
+      if (existingUsername) {
+        toast({
+          title: "Usuário já existe",
+          description: `O usuário "${usernameNormalized}" já está cadastrado. Escolha outro nome.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (editingCredential) {
         // Update existing
         const { error } = await supabase
           .from("master_credentials")
           .update({
-            username: formData.username.toLowerCase().trim(),
+            username: usernameNormalized,
             password: formData.password.trim(),
             full_name: formData.full_name.trim() || null,
             is_active: formData.is_active,
@@ -108,13 +124,23 @@ export function MasterCredentials() {
         const { error } = await supabase
           .from("master_credentials")
           .insert({
-            username: formData.username.toLowerCase().trim(),
+            username: usernameNormalized,
             password: formData.password.trim(),
             full_name: formData.full_name.trim() || null,
             is_active: formData.is_active,
           });
 
-        if (error) throw error;
+        if (error) {
+          if (error.code === '23505') {
+            toast({
+              title: "Usuário já existe",
+              description: `O usuário "${usernameNormalized}" já está cadastrado.`,
+              variant: "destructive",
+            });
+            return;
+          }
+          throw error;
+        }
         toast({ title: "Credencial criada com sucesso!" });
       }
 

@@ -10,6 +10,7 @@ interface CleanupRequest {
   type: "master_credential" | "pre_generated_account" | "profile" | "license";
   id: string;
   username?: string; // For master_credential type
+  skipTrash?: boolean; // If true, don't save to trash
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -56,13 +57,39 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const { type, id, username }: CleanupRequest = await req.json();
+    const { type, id, username, skipTrash }: CleanupRequest = await req.json();
 
-    console.log(`Cleanup request: type=${type}, id=${id}, username=${username}`);
+    console.log(`Cleanup request: type=${type}, id=${id}, username=${username}, skipTrash=${skipTrash}`);
 
     const cleanupResults: string[] = [];
 
+    // Helper to save item to trash before deleting
+    const saveToTrash = async (table: string, originalId: string, itemData: any) => {
+      if (skipTrash) return;
+      try {
+        await admin.from("deleted_items_trash").insert({
+          original_table: table,
+          original_id: originalId,
+          item_data: itemData,
+          deleted_by: userData.user.id,
+        });
+      } catch (e) {
+        console.error(`Failed to save ${table}/${originalId} to trash:`, e);
+      }
+    };
+
     if (type === "master_credential") {
+      // Get the master credential before deleting
+      const { data: masterCred } = await admin
+        .from("master_credentials")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      
+      if (masterCred) {
+        await saveToTrash("master_credentials", id, masterCred);
+      }
+
       // Find the email pattern for this master credential
       const normalizedUsername = (username || "").toLowerCase();
       const email = `${normalizedUsername}@francgympro.local`;
@@ -121,6 +148,7 @@ serve(async (req: Request): Promise<Response> => {
         .maybeSingle();
 
       if (preGen) {
+        await saveToTrash("pre_generated_accounts", id, preGen);
         const email = `${preGen.username.toLowerCase()}@francgympro.local`;
 
         // Find auth user
@@ -185,11 +213,12 @@ serve(async (req: Request): Promise<Response> => {
       // Delete profile and all related data
       const { data: profile } = await admin
         .from("profiles")
-        .select("id, user_id")
+        .select("*")
         .eq("id", id)
         .maybeSingle();
 
       if (profile) {
+        await saveToTrash("profiles", id, profile);
         console.log(`Deleting profile ${profile.id} with user_id ${profile.user_id}`);
         
         // Delete workout_exercise_logs first (depends on workout_logs)
@@ -329,7 +358,18 @@ serve(async (req: Request): Promise<Response> => {
       }
 
     } else if (type === "license") {
-      // Just delete the license
+      // Get the license before deleting
+      const { data: license } = await admin
+        .from("licenses")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      
+      if (license) {
+        await saveToTrash("licenses", id, license);
+      }
+      
+      // Delete the license
       await admin.from("licenses").delete().eq("id", id);
       cleanupResults.push("license");
     }
