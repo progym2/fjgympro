@@ -37,11 +37,16 @@ const Home: React.FC = () => {
   // Marcar que está na tela inicial
   useEffect(() => {
     setOnHomeScreen(true);
+    
+    // Se não tem splash, marcar como completo imediatamente
+    if (!showSplash) {
+      setSplashComplete(true);
+    }
+    
     return () => {
       setOnHomeScreen(false);
-      setSplashComplete(false);
     };
-  }, [setOnHomeScreen, setSplashComplete]);
+  }, [setOnHomeScreen, setSplashComplete, showSplash]);
 
   const handleSplashComplete = () => {
     setShowSplash(false);

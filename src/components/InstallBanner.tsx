@@ -105,7 +105,7 @@ const InstallBanner: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 100 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="fixed bottom-0 left-0 right-0 z-[90] p-4 safe-area-pb"
+          className="fixed bottom-20 left-0 right-0 z-[60] p-4 safe-area-pb"
         >
           <div className="bg-gradient-to-r from-primary/95 to-primary/80 backdrop-blur-lg rounded-2xl p-4 shadow-2xl border border-primary/30 mx-auto max-w-md">
             <div className="flex items-center justify-between gap-3">
