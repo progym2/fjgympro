@@ -45,7 +45,6 @@ const ProfileCompletionPromptInner: React.FC<ProfileCompletionPromptProps> = mem
   });
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const hasLoggedAccess = useRef(false);
 
   // Carregar contador de dismissões do localStorage
   useEffect(() => {
@@ -62,27 +61,7 @@ const ProfileCompletionPromptInner: React.FC<ProfileCompletionPromptProps> = mem
     }
   }, [profile?.profile_id]);
 
-  // Log access when component mounts (once per session)
-  useEffect(() => {
-    if (profile?.profile_id && !hasLoggedAccess.current) {
-      logAccess();
-      hasLoggedAccess.current = true;
-    }
-  }, [profile?.profile_id]);
-
-  const logAccess = async () => {
-    if (!profile?.profile_id) return;
-    
-    try {
-      await supabase.from('access_logs').insert({
-        profile_id: profile.profile_id,
-        access_method: 'web_login',
-        notes: `Acesso via ${navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop'}`,
-      });
-    } catch (error) {
-      console.error('Error logging access:', error);
-    }
-  };
+  // Access logging removed - was causing constraint errors and slowing down login
 
   // Check which fields are missing
   const checkMissingFields = async () => {
