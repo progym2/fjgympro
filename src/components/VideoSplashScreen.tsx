@@ -14,7 +14,6 @@ document.head.appendChild(videoPreloadLink);
 
 const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => {
   const [isVisible, setIsVisible] = useState(true);
-  const [showSkip, setShowSkip] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -24,25 +23,10 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
     if (splashShown === 'true') {
       setIsVisible(false);
       onComplete();
-      return;
     }
-
-    // Show skip button after 1.5 seconds
-    const skipTimer = setTimeout(() => setShowSkip(true), 1500);
-
-    return () => clearTimeout(skipTimer);
   }, [onComplete]);
 
   const handleVideoEnd = () => {
-    sessionStorage.setItem('splashShown', 'true');
-    setIsVisible(false);
-    setTimeout(onComplete, 300);
-  };
-
-  const handleSkip = () => {
-    if (videoRef.current) {
-      videoRef.current.pause();
-    }
     sessionStorage.setItem('splashShown', 'true');
     setIsVisible(false);
     setTimeout(onComplete, 300);
@@ -92,23 +76,6 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
           >
             <source src="/video/splash.mp4" type="video/mp4" />
           </video>
-
-          {/* Skip Button */}
-          <AnimatePresence>
-            {showSkip && (
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                onClick={handleSkip}
-                className="absolute bottom-6 right-4 px-4 py-2 bg-white/10 backdrop-blur-sm 
-                           border border-white/20 rounded-full text-white/90 text-sm font-medium
-                           hover:bg-white/20 transition-colors active:scale-95"
-              >
-                Pular
-              </motion.button>
-            )}
-          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>
