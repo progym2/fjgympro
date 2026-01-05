@@ -8,6 +8,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useInstructorContext } from '@/hooks/useInstructorContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useAudio } from '@/contexts/AudioContext';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -90,6 +91,7 @@ const CreateWorkout: React.FC = () => {
   const { profile } = useAuth();
   const { effectiveInstructorId, needsInstructorSelection, isMaster, selectedInstructor } = useInstructorContext();
   const { playClickSound } = useAudio();
+  const { sendNewWorkoutNotification, permission: notificationPermission } = usePushNotifications();
 
   const [planName, setPlanName] = useState('');
   const [planDescription, setPlanDescription] = useState('');
@@ -307,6 +309,11 @@ const CreateWorkout: React.FC = () => {
         message: `Seu instrutor ${instructorName} criou um novo plano de treino para você: "${planName}". Confira agora!`,
         type: 'workout_plan'
       });
+
+      // Send push notification to student (if they have permission)
+      if (notificationPermission === 'granted') {
+        sendNewWorkoutNotification(planName, instructorName || 'Instrutor');
+      }
 
       toast.success('Plano de treino criado com sucesso!');
       playClickSound();

@@ -50,6 +50,7 @@ const WorkoutTimerPage = lazy(() => import('@/components/client/WorkoutTimerPage
 const EvolutionGallery = lazy(() => import('@/components/client/EvolutionGallery'));
 const PendingLinkRequests = lazy(() => import('@/components/client/PendingLinkRequests'));
 const LinkedInstructorCard = lazy(() => import('@/components/client/LinkedInstructorCard'));
+const LinkHistory = lazy(() => import('@/components/client/LinkHistory'));
 const FinancialAlerts = lazy(() => import('@/components/client/FinancialAlerts'));
 const ProfileCompletionPrompt = lazy(() => import('@/components/ProfileCompletionPrompt'));
 const RealtimeNotifications = lazy(() => import('@/components/client/RealtimeNotifications'));
@@ -81,6 +82,7 @@ const MENU_ITEMS = [
   { icon: Camera, label: 'Galeria Evolução', path: 'gallery', color: 'text-purple-500' },
   { icon: QrCode, label: 'Meu QR Code', path: 'qrcode', color: 'text-pink-500' },
   { icon: UserPlus, label: 'Escanear Instrutor', path: 'scan-instructor', color: 'text-green-500' },
+  { icon: History, label: 'Histórico Vínculos', path: 'link-history', color: 'text-indigo-500' },
   { icon: UserMinus, label: 'Desvincular Instrutor', path: 'unlink', color: 'text-red-500' },
 ] as const;
 
@@ -282,6 +284,7 @@ const ClientDashboard: React.FC = () => {
               <Route path="records" element={<PersonalRecords />} />
               <Route path="timer" element={<WorkoutTimerPage />} />
               <Route path="pending-links" element={<PendingLinkRequests />} />
+              <Route path="link-history" element={<LinkHistory />} />
             </Routes>
           </Suspense>
         </main>
