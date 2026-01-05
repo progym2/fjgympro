@@ -241,23 +241,16 @@
 
 @keyframes theme-glow {
   0%, 100% {
-    box-shadow: 0 0 20px 5px hsl(var(--primary) / 0.4);
+    box-shadow: 0 0 8px 2px hsl(var(--primary) / 0.15);
   }
   50% {
-    box-shadow: 0 0 40px 15px hsl(var(--primary) / 0.6);
+    box-shadow: 0 0 15px 5px hsl(var(--primary) / 0.25);
   }
 }
 
 @keyframes neon-flicker {
-  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-    text-shadow: 
-      0 0 4px hsl(var(--primary)),
-      0 0 11px hsl(var(--primary)),
-      0 0 19px hsl(var(--primary)),
-      0 0 40px hsl(var(--primary));
-  }
-  20%, 24%, 55% {
-    text-shadow: none;
+  0%, 100% {
+    text-shadow: 0 0 4px hsl(var(--primary) / 0.4);
   }
 }
 
@@ -275,11 +268,11 @@
 }
 
 .theme-lightning {
-  --theme-animation: neon-flicker;
+  --theme-animation: none;
 }
 
 .theme-galaxy {
-  --theme-animation: glow-pulse;
+  --theme-animation: none;
 }
 
 .theme-iron {
@@ -287,15 +280,15 @@
 }
 
 .theme-blood {
-  --theme-animation: pulse-fast;
+  --theme-animation: none;
 }
 
 .theme-neon {
-  --theme-animation: neon-flicker;
+  --theme-animation: none;
 }
 
 .theme-gold {
-  --theme-animation: theme-glow;
+  --theme-animation: none;
 }
 
 /* Card style variations */
@@ -346,15 +339,19 @@
   text-shadow: none;
 }
 
-/* Only apply glow on specific elements, not all text */
-.theme-lightning .glow-text,
-.theme-neon .glow-text {
-  text-shadow: 0 0 10px hsl(var(--primary) / 0.5);
+/* Only apply glow on specific elements with explicit class */
+.glow-text-subtle {
+  text-shadow: 0 0 6px hsl(var(--primary) / 0.2);
 }
 
-/* Themed glow animations */
+/* Themed glow animations - subtle */
 .animate-theme-glow {
-  animation: theme-glow 2s ease-in-out infinite;
+  animation: theme-glow 3s ease-in-out infinite;
+}
+
+/* Reduced glow shadows for panels */
+.panel-glow {
+  box-shadow: 0 0 10px 2px hsl(var(--primary) / 0.08);
 }
 
 /* Custom scrollbar */

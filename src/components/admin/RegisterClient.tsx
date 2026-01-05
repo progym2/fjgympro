@@ -295,8 +295,8 @@ const RegisterClient: React.FC = () => {
         </h2>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-card/80 backdrop-blur-md rounded-xl p-4 sm:p-6 border border-border/50 space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="bg-card/80 backdrop-blur-md rounded-xl p-4 sm:p-6 border border-border/50 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">Usuário *</label>
             <div className="relative">
