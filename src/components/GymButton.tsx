@@ -1,7 +1,8 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { LucideIcon, Flame, Waves, TreePine, Zap, Sparkles, Dumbbell, Heart, Stars, Trophy } from 'lucide-react';
 import { useTheme, SportTheme } from '@/contexts/ThemeContext';
+import { useAudio } from '@/contexts/AudioContext';
 
 interface GymButtonProps {
   onClick: () => void;
@@ -112,8 +113,33 @@ const GymButton: React.FC<GymButtonProps> = ({
   disabled = false,
 }) => {
   const { currentTheme } = useTheme();
+  const { playHoverSound } = useAudio();
   const config = getThemeConfig(currentTheme, color);
   const clipPath = getClipPath(config.shape);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Generate random particles on hover
+  const particles = useMemo(() => {
+    return Array.from({ length: 8 }, (_, i) => ({
+      id: i,
+      angle: (i * 45) + Math.random() * 20,
+      distance: 40 + Math.random() * 30,
+      size: 3 + Math.random() * 4,
+      delay: Math.random() * 0.2,
+      duration: 0.5 + Math.random() * 0.3,
+    }));
+  }, []);
+
+  const handleHoverStart = useCallback(() => {
+    if (!disabled) {
+      setIsHovered(true);
+      playHoverSound();
+    }
+  }, [disabled, playHoverSound]);
+
+  const handleHoverEnd = useCallback(() => {
+    setIsHovered(false);
+  }, []);
 
   const handleClick = () => {
     if (!disabled) {
@@ -126,6 +152,8 @@ const GymButton: React.FC<GymButtonProps> = ({
       key={`${currentTheme}-${color}`}
       onClick={handleClick}
       disabled={disabled}
+      onHoverStart={handleHoverStart}
+      onHoverEnd={handleHoverEnd}
       whileHover={{ scale: disabled ? 1 : 1.08, y: disabled ? 0 : -8 }}
       whileTap={{ scale: disabled ? 1 : 0.95 }}
       initial={{ opacity: 0, y: 30 }}
@@ -136,6 +164,44 @@ const GymButton: React.FC<GymButtonProps> = ({
         group
       `}
     >
+      {/* Particle explosion on hover */}
+      <AnimatePresence>
+        {isHovered && !disabled && (
+          <>
+            {particles.map((particle) => (
+              <motion.div
+                key={particle.id}
+                initial={{ 
+                  opacity: 0, 
+                  scale: 0,
+                  x: 0,
+                  y: 0,
+                }}
+                animate={{ 
+                  opacity: [0, 1, 0],
+                  scale: [0, 1, 0.5],
+                  x: Math.cos(particle.angle * Math.PI / 180) * particle.distance,
+                  y: Math.sin(particle.angle * Math.PI / 180) * particle.distance,
+                }}
+                exit={{ opacity: 0, scale: 0 }}
+                transition={{ 
+                  duration: particle.duration,
+                  delay: particle.delay,
+                  ease: 'easeOut',
+                }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none z-20"
+                style={{ 
+                  width: particle.size,
+                  height: particle.size,
+                  background: config.glow,
+                  boxShadow: `0 0 ${particle.size * 2}px ${config.glow}`,
+                }}
+              />
+            ))}
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Floating Glow Effect - Enhanced on hover */}
       <motion.div
         className="absolute -inset-6 rounded-3xl opacity-0 group-hover:opacity-100 transition-all duration-300 blur-2xl pointer-events-none"

@@ -31,6 +31,7 @@ interface AudioContextType {
   skipToNextTrack: () => void;
   skipToPreviousTrack: () => void;
   playClickSound: () => void;
+  playHoverSound: () => void;
   playNotificationSound: () => void;
   playSuccessSound: () => void;
   playTimerSound: () => void;
@@ -92,6 +93,28 @@ const createSinisterClick = () => {
   
   oscillator.start(audioContext.currentTime);
   oscillator.stop(audioContext.currentTime + 0.1);
+};
+
+// Som suave de hover
+const createHoverSound = () => {
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+  oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.06);
+  
+  gainNode.gain.setValueAtTime(SFX_VOLUME * 0.15, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.08);
+  
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.08);
 };
 
 const createNotificationSound = () => {
@@ -557,9 +580,14 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     : '';
 
   const playClickSound = useCallback(() => {
-    if (isOnHomeScreen || !isSfxEnabled) return;
+    if (!isSfxEnabled) return;
     try { createSinisterClick(); } catch {}
-  }, [isOnHomeScreen, isSfxEnabled]);
+  }, [isSfxEnabled]);
+
+  const playHoverSound = useCallback(() => {
+    if (!isSfxEnabled) return;
+    try { createHoverSound(); } catch {}
+  }, [isSfxEnabled]);
 
   const playNotificationSound = useCallback(() => {
     if (isOnHomeScreen || !isSfxEnabled) return;
@@ -607,6 +635,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         skipToNextTrack,
         skipToPreviousTrack,
         playClickSound,
+        playHoverSound,
         playNotificationSound,
         playSuccessSound,
         playTimerSound,
