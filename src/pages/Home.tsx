@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Dumbbell, Shield, Info } from 'lucide-react';
 
@@ -78,23 +78,9 @@ const Home: React.FC = () => {
     setLoginDialogOpen(true);
   };
 
-  const handleLoginSuccess = (role: string) => {
-    setLoginDialogOpen(false);
-    
-    // Usuário master vai para seleção de painel (sem transição especial)
-    if (role === 'master') {
-      navigate('/select-panel');
-      return;
-    }
-    
-    // Mostrar transição de entrada para outros usuários
-    setTransitionRole(role);
-    setShowEntryTransition(true);
-  };
-
-  const handleEntryTransitionComplete = () => {
+  const handleEntryTransitionComplete = useCallback(() => {
     setShowEntryTransition(false);
-    
+
     // Navegar para o painel correspondente
     if (transitionRole === 'admin') {
       navigate('/admin');
@@ -104,7 +90,30 @@ const Home: React.FC = () => {
       navigate('/client');
     }
     setTransitionRole(null);
+  }, [navigate, transitionRole]);
+
+  const handleLoginSuccess = (role: string) => {
+    setLoginDialogOpen(false);
+
+    // Usuário master vai para seleção de painel (sem transição especial)
+    if (role === 'master') {
+      navigate('/select-panel');
+      return;
+    }
+
+    // Mostrar transição de entrada para outros usuários
+    setTransitionRole(role);
+    setShowEntryTransition(true);
   };
+
+  // Fallback: se a transição travar, navega automaticamente.
+  useEffect(() => {
+    if (!showEntryTransition || !transitionRole) return;
+    const t = window.setTimeout(() => {
+      handleEntryTransitionComplete();
+    }, 3000);
+    return () => window.clearTimeout(t);
+  }, [handleEntryTransitionComplete, showEntryTransition, transitionRole]);
 
   if (showSplash) {
     return <SplashScreen onComplete={handleSplashComplete} />;
@@ -193,3 +202,4 @@ const Home: React.FC = () => {
 };
 
 export default Home;
+
