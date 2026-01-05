@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
   QrCode, Camera, CheckCircle, User, 
-  Loader2, RefreshCw, Search, Link2, UserCheck
+  Loader2, RefreshCw, Search, Link2, UserCheck, AlertCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,6 +30,8 @@ interface ScannedUser {
   };
   isLinked?: boolean;
   linkStatus?: 'pending' | 'accepted' | 'none';
+  linkedToOther?: boolean;
+  otherInstructorName?: string | null;
 }
 
 const QRScanner: React.FC = () => {
@@ -96,6 +98,8 @@ const QRScanner: React.FC = () => {
       // Check link status with this instructor
       let linkStatus: 'pending' | 'accepted' | 'none' = 'none';
       let isLinked = false;
+      let linkedToOther = false;
+      let otherInstructorName: string | null = null;
       
       if (profile?.profile_id) {
         const { data: linkData } = await supabase
@@ -113,6 +117,29 @@ const QRScanner: React.FC = () => {
             linkStatus = 'pending';
           }
         }
+
+        // Check if linked to ANOTHER instructor
+        const { data: otherLinkData } = await supabase
+          .from('instructor_clients')
+          .select(`
+            id,
+            instructor:profiles!instructor_clients_instructor_id_fkey(
+              full_name,
+              username
+            )
+          `)
+          .eq('client_id', profileData.id)
+          .eq('link_status', 'accepted')
+          .eq('is_active', true)
+          .neq('instructor_id', profile.profile_id)
+          .maybeSingle();
+
+        if (otherLinkData) {
+          linkedToOther = true;
+          otherInstructorName = (otherLinkData.instructor as any)?.full_name || 
+                                (otherLinkData.instructor as any)?.username || 
+                                'Outro instrutor';
+        }
       }
 
       const user: ScannedUser = {
@@ -123,7 +150,9 @@ const QRScanner: React.FC = () => {
           expires_at: licenseData.expires_at
         } : undefined,
         isLinked,
-        linkStatus
+        linkStatus,
+        linkedToOther,
+        otherInstructorName
       };
 
       setScannedUser(user);
@@ -134,9 +163,11 @@ const QRScanner: React.FC = () => {
         return [user, ...filtered].slice(0, 5);
       });
 
-      // Auto-link if from camera scan and not already linked
-      if (autoLink && !isLinked && linkStatus !== 'pending' && profile?.profile_id) {
+      // Auto-link if from camera scan and not already linked and not linked to other
+      if (autoLink && !isLinked && linkStatus !== 'pending' && !linkedToOther && profile?.profile_id) {
         await autoSendInvite(user);
+      } else if (linkedToOther) {
+        toast.error(`⚠️ Este aluno já está vinculado a ${otherInstructorName}!`);
       } else if (isLinked) {
         toast.info('Este aluno já está vinculado a você!');
       } else if (linkStatus === 'pending') {
@@ -281,6 +312,14 @@ const QRScanner: React.FC = () => {
   };
 
   const getLinkStatusBadge = (user: ScannedUser) => {
+    if (user.linkedToOther) {
+      return (
+        <Badge className="bg-red-500/20 text-red-500 border border-red-500/30">
+          <AlertCircle className="w-3 h-3 mr-1" />
+          Vinculado a: {user.otherInstructorName}
+        </Badge>
+      );
+    }
     if (user.linkStatus === 'accepted' || user.isLinked) {
       return (
         <Badge className="bg-blue-500/20 text-blue-500">
@@ -297,7 +336,7 @@ const QRScanner: React.FC = () => {
         </Badge>
       );
     }
-    return <Badge variant="outline">Não vinculado</Badge>;
+    return <Badge variant="outline">Disponível para vincular</Badge>;
   };
 
   return (
@@ -453,7 +492,14 @@ const QRScanner: React.FC = () => {
 
                   {/* Actions */}
                   <div className="flex flex-col gap-2 flex-shrink-0">
-                    {!scannedUser.isLinked && scannedUser.linkStatus !== 'pending' && (
+                    {scannedUser.linkedToOther ? (
+                      <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-center">
+                        <AlertCircle className="w-6 h-6 text-red-500 mx-auto mb-1" />
+                        <p className="text-xs text-red-500 font-medium">
+                          Vinculado a outro instrutor
+                        </p>
+                      </div>
+                    ) : !scannedUser.isLinked && scannedUser.linkStatus !== 'pending' ? (
                       <Button
                         onClick={handleManualLink}
                         disabled={loading}
@@ -462,7 +508,7 @@ const QRScanner: React.FC = () => {
                         {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Link2 className="w-4 h-4 mr-2" />}
                         Enviar Convite
                       </Button>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </motion.div>
