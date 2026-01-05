@@ -1,24 +1,43 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NotFound = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { profile, role } = useAuth();
 
   useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
+    console.warn("Redirecting from non-existent route:", location.pathname);
+    
+    // Auto-redirect based on auth status
+    const timer = setTimeout(() => {
+      if (profile && role) {
+        // Redirect to appropriate dashboard
+        switch (role) {
+          case 'client':
+            navigate('/client', { replace: true });
+            break;
+          case 'instructor':
+            navigate('/instructor', { replace: true });
+            break;
+          case 'admin':
+          case 'master':
+            navigate('/admin', { replace: true });
+            break;
+          default:
+            navigate('/select-panel', { replace: true });
+        }
+      } else {
+        navigate('/', { replace: true });
+      }
+    }, 100); // Quick redirect
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-muted">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>
-        <a href="/" className="text-primary underline hover:text-primary/90">
-          Return to Home
-        </a>
-      </div>
-    </div>
-  );
+    return () => clearTimeout(timer);
+  }, [location.pathname, profile, role, navigate]);
+
+  // Show nothing during redirect (instant transition)
+  return null;
 };
 
 export default NotFound;
