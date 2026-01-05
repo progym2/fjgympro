@@ -94,11 +94,12 @@ const ClientDashboard: React.FC = () => {
     localStorage.setItem('widget_notifications_visible', String(visible));
   };
 
+  // ESC volta para a seleção de painel (apenas na home do cliente)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && window.location.pathname === '/client') {
         playClickSound();
-        navigate(-1);
+        navigate('/panel-selector');
       }
     };
     window.addEventListener('keydown', handleKeyDown);

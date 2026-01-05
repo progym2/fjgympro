@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import ClientPageHeader from './ClientPageHeader';
 import ProfilePhotoUploader from '@/components/shared/ProfilePhotoUploader';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
@@ -40,6 +41,9 @@ const Profile: React.FC = () => {
   const [instructorLevel, setInstructorLevel] = useState<string | null>(null);
   const [instructorName, setInstructorName] = useState<string | null>(null);
   const [usernameError, setUsernameError] = useState('');
+
+  // ESC volta para /client
+  useEscapeBack({ to: '/client' });
 
   useEffect(() => {
     const loadProfile = async () => {
