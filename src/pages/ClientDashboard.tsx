@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useMemo, lazy, Suspense } from 'react';
+import React, { useEffect, useState, useMemo, lazy, Suspense, useCallback, memo } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
 import { 
   User, Scale, Droplets, Utensils, Dumbbell, 
   TrendingUp, QrCode, LogOut, Info,
@@ -9,10 +8,8 @@ import {
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import MusicToggle from '@/components/MusicToggle';
 import AppFooter from '@/components/AppFooter';
-import AboutDialog from '@/components/AboutDialog';
 import LicenseTimer from '@/components/LicenseTimer';
 import ProfileAvatar from '@/components/shared/ProfileAvatar';
 import {
@@ -26,14 +23,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import AnimatedLogo from '@/components/AnimatedLogo';
 import PanelSwitcher from '@/components/PanelSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
 import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
 
 import bgPanels from '@/assets/bg-panels.png';
 
-// Lazy load heavy components
+// Lazy load ALL components - include AboutDialog
+const AboutDialog = lazy(() => import('@/components/AboutDialog'));
 const Profile = lazy(() => import('@/components/client/Profile'));
 const WeightTracker = lazy(() => import('@/components/client/WeightTracker'));
 const HydrationTracker = lazy(() => import('@/components/client/HydrationTracker'));
@@ -59,12 +56,62 @@ const RealtimeNotifications = lazy(() => import('@/components/client/RealtimeNot
 const HydrationWidget = lazy(() => import('@/components/client/HydrationWidget'));
 const WidgetRestoreButton = lazy(() => import('@/components/shared/WidgetRestoreButton'));
 
-// Loading fallback
-const ComponentLoader = () => (
+// Minimal loading fallback
+const ComponentLoader = memo(() => (
   <div className="flex items-center justify-center py-12">
     <Loader2 className="w-8 h-8 animate-spin text-primary" />
   </div>
-);
+));
+ComponentLoader.displayName = 'ComponentLoader';
+
+// Menu items - defined outside component to avoid recreation
+const MENU_ITEMS = [
+  { icon: User, label: 'Meu Perfil', path: 'profile', color: 'text-blue-500' },
+  { icon: Scale, label: 'Peso e Evolução', path: 'weight', color: 'text-green-500' },
+  { icon: Droplets, label: 'Hidratação', path: 'hydration', color: 'text-cyan-500' },
+  { icon: Utensils, label: 'Plano Alimentar', path: 'nutrition', color: 'text-orange-500' },
+  { icon: Dumbbell, label: 'Meus Treinos', path: 'workouts', color: 'text-primary' },
+  { icon: Timer, label: 'Timer de Treino', path: 'timer', color: 'text-rose-500' },
+  { icon: Trophy, label: 'Recordes Pessoais', path: 'records', color: 'text-yellow-500' },
+  { icon: BarChart3, label: 'Evolução & Histórico', path: 'evolution', color: 'text-emerald-500' },
+  { icon: History, label: 'Histórico de Cargas', path: 'load-history', color: 'text-violet-500' },
+  { icon: Calendar, label: 'Agenda', path: 'schedule', color: 'text-purple-500' },
+  { icon: TrendingUp, label: 'Meu Progresso', path: 'progress', color: 'text-teal-500' },
+  { icon: Award, label: 'Metas Alcançadas', path: 'achievements', color: 'text-amber-500' },
+  { icon: Camera, label: 'Galeria Evolução', path: 'gallery', color: 'text-purple-500' },
+  { icon: QrCode, label: 'Meu QR Code', path: 'qrcode', color: 'text-pink-500' },
+  { icon: UserPlus, label: 'Escanear Instrutor', path: 'scan-instructor', color: 'text-green-500' },
+  { icon: UserMinus, label: 'Desvincular Instrutor', path: 'unlink', color: 'text-red-500' },
+] as const;
+
+// Memoized menu grid
+const MenuGrid = memo(({ onNavigate }: { onNavigate: (path: string) => void }) => (
+  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
+    {MENU_ITEMS.map((item) => (
+      <ThemedMenuButton
+        key={item.path}
+        icon={item.icon}
+        label={item.label}
+        color={item.color}
+        onClick={() => onNavigate(item.path)}
+      />
+    ))}
+  </div>
+));
+MenuGrid.displayName = 'MenuGrid';
+
+// Home content - separated for better memoization
+const HomeContent = memo(({ onNavigate }: { onNavigate: (path: string) => void }) => (
+  <div className="space-y-4">
+    <Suspense fallback={null}>
+      <FinancialAlerts />
+      <LinkedInstructorCard />
+      <PendingLinkRequests />
+    </Suspense>
+    <MenuGrid onNavigate={onNavigate} />
+  </div>
+));
+HomeContent.displayName = 'HomeContent';
 
 const ClientDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -73,6 +120,7 @@ const ClientDashboard: React.FC = () => {
   const { playClickSound } = useAudio();
   const [aboutOpen, setAboutOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [widgetsReady, setWidgetsReady] = useState(false);
   
   // Widget visibility state
   const [hydrationVisible, setHydrationVisible] = useState(() => {
@@ -82,31 +130,38 @@ const ClientDashboard: React.FC = () => {
     return localStorage.getItem('widget_notifications_visible') !== 'false';
   });
   
-  const showHydrationWidget = !location.pathname.includes('/hydration') && hydrationVisible;
-  
-  const handleHydrationVisibility = (visible: boolean) => {
+  const isOnHome = location.pathname === '/client';
+  const showHydrationWidget = isOnHome && !location.pathname.includes('/hydration') && hydrationVisible && widgetsReady;
+  const isMaster = role === 'master';
+
+  // Delay widgets to prioritize menu rendering
+  useEffect(() => {
+    const t = window.setTimeout(() => setWidgetsReady(true), 500);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  const handleHydrationVisibility = useCallback((visible: boolean) => {
     setHydrationVisible(visible);
     localStorage.setItem('widget_hydration_visible', String(visible));
-  };
+  }, []);
   
-  const handleNotificationsVisibility = (visible: boolean) => {
+  const handleNotificationsVisibility = useCallback((visible: boolean) => {
     setNotificationsVisible(visible);
     localStorage.setItem('widget_notifications_visible', String(visible));
-  };
+  }, []);
 
   // ESC volta para a seleção de painel (apenas na home do cliente)
   useEffect(() => {
+    if (!isOnHome) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && window.location.pathname === '/client') {
+      if (e.key === 'Escape') {
         playClickSound();
         navigate('/panel-selector');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigate, playClickSound]);
-
-  const isMaster = role === 'master';
+  }, [isOnHome, navigate, playClickSound]);
 
   useEffect(() => {
     if (!user) {
@@ -119,34 +174,26 @@ const ClientDashboard: React.FC = () => {
     }
   }, [user, licenseExpired, isLicenseValid, isMaster, navigate]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await signOut();
     navigate('/');
-  };
+  }, [signOut, navigate]);
 
-  const confirmLogout = () => {
+  const confirmLogout = useCallback(() => {
     setLogoutDialogOpen(true);
-  };
+  }, []);
 
-  // Memoize menu items
-  const menuItems = useMemo(() => [
-    { icon: User, label: 'Meu Perfil', path: 'profile', color: 'text-blue-500' },
-    { icon: Scale, label: 'Peso e Evolução', path: 'weight', color: 'text-green-500' },
-    { icon: Droplets, label: 'Hidratação', path: 'hydration', color: 'text-cyan-500' },
-    { icon: Utensils, label: 'Plano Alimentar', path: 'nutrition', color: 'text-orange-500' },
-    { icon: Dumbbell, label: 'Meus Treinos', path: 'workouts', color: 'text-primary' },
-    { icon: Timer, label: 'Timer de Treino', path: 'timer', color: 'text-rose-500' },
-    { icon: Trophy, label: 'Recordes Pessoais', path: 'records', color: 'text-yellow-500' },
-    { icon: BarChart3, label: 'Evolução & Histórico', path: 'evolution', color: 'text-emerald-500' },
-    { icon: History, label: 'Histórico de Cargas', path: 'load-history', color: 'text-violet-500' },
-    { icon: Calendar, label: 'Agenda', path: 'schedule', color: 'text-purple-500' },
-    { icon: TrendingUp, label: 'Meu Progresso', path: 'progress', color: 'text-teal-500' },
-    { icon: Award, label: 'Metas Alcançadas', path: 'achievements', color: 'text-amber-500' },
-    { icon: Camera, label: 'Galeria Evolução', path: 'gallery', color: 'text-purple-500' },
-    { icon: QrCode, label: 'Meu QR Code', path: 'qrcode', color: 'text-pink-500' },
-    { icon: UserPlus, label: 'Escanear Instrutor', path: 'scan-instructor', color: 'text-green-500' },
-    { icon: UserMinus, label: 'Desvincular Instrutor', path: 'unlink', color: 'text-red-500' },
-  ], []);
+  const handleNavigate = useCallback((path: string) => {
+    playClickSound();
+    navigate(path);
+  }, [playClickSound, navigate]);
+
+  const handleOpenAbout = useCallback(() => {
+    playClickSound();
+    setAboutOpen(true);
+  }, [playClickSound]);
+
+  const handleWorkoutBack = useCallback(() => navigate('/client/workouts'), [navigate]);
 
   return (
     <div
@@ -197,7 +244,7 @@ const ClientDashboard: React.FC = () => {
                   </span>
                 )}
                 <button
-                  onClick={() => { playClickSound(); setAboutOpen(true); }}
+                  onClick={handleOpenAbout}
                   className="p-1.5 sm:p-2 rounded-lg bg-background/50 border border-border hover:border-primary/50 transition-colors active:scale-95"
                 >
                   <Info size={16} className="text-muted-foreground" />
@@ -217,27 +264,7 @@ const ClientDashboard: React.FC = () => {
         <main className="flex-1 container mx-auto px-2 sm:px-4 py-3 sm:py-4 md:py-6">
           <Suspense fallback={<ComponentLoader />}>
             <Routes>
-              <Route path="/" element={
-                <div className="space-y-4">
-                  <Suspense fallback={null}>
-                    <FinancialAlerts />
-                    <LinkedInstructorCard />
-                    <PendingLinkRequests />
-                  </Suspense>
-                  
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
-                    {menuItems.map((item) => (
-                      <ThemedMenuButton
-                        key={item.path}
-                        icon={item.icon}
-                        label={item.label}
-                        color={item.color}
-                        onClick={() => { playClickSound(); navigate(item.path); }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              } />
+              <Route path="/" element={<HomeContent onNavigate={handleNavigate} />} />
               <Route path="profile" element={<Profile />} />
               <Route path="weight" element={<WeightTracker />} />
               <Route path="hydration" element={<HydrationTracker />} />
@@ -245,8 +272,8 @@ const ClientDashboard: React.FC = () => {
               <Route path="workouts" element={<SimpleWorkouts />} />
               <Route path="workouts/new" element={
                 <CreateClientWorkout 
-                  onBack={() => navigate('/client/workouts')} 
-                  onSuccess={() => navigate('/client/workouts')} 
+                  onBack={handleWorkoutBack} 
+                  onSuccess={handleWorkoutBack} 
                 />
               } />
               <Route path="evolution" element={<WorkoutHistory />} />
@@ -265,30 +292,31 @@ const ClientDashboard: React.FC = () => {
           </Suspense>
         </main>
 
-        <Suspense fallback={null}>
-          <RealtimeNotifications 
-            isVisible={notificationsVisible} 
-            onVisibilityChange={handleNotificationsVisibility}
-          />
-          
-          {profile && <ProfileCompletionPrompt />}
-          
-          <AnimatePresence>
+        {/* Widgets load after delay */}
+        {widgetsReady && (
+          <Suspense fallback={null}>
+            <RealtimeNotifications 
+              isVisible={notificationsVisible} 
+              onVisibilityChange={handleNotificationsVisibility}
+            />
+            
+            {profile && <ProfileCompletionPrompt />}
+            
             {showHydrationWidget && profile && (
               <HydrationWidget 
                 isVisible={hydrationVisible}
                 onVisibilityChange={handleHydrationVisibility}
               />
             )}
-          </AnimatePresence>
-          
-          <WidgetRestoreButton
-            hydrationHidden={!hydrationVisible}
-            notificationsHidden={!notificationsVisible}
-            onRestoreHydration={() => handleHydrationVisibility(true)}
-            onRestoreNotifications={() => handleNotificationsVisibility(true)}
-          />
-        </Suspense>
+            
+            <WidgetRestoreButton
+              hydrationHidden={!hydrationVisible}
+              notificationsHidden={!notificationsVisible}
+              onRestoreHydration={() => handleHydrationVisibility(true)}
+              onRestoreNotifications={() => handleNotificationsVisibility(true)}
+            />
+          </Suspense>
+        )}
         
         <MusicToggle />
         <div className="px-4">
@@ -296,7 +324,11 @@ const ClientDashboard: React.FC = () => {
         </div>
       </div>
 
-      <AboutDialog isOpen={aboutOpen} onClose={() => setAboutOpen(false)} />
+      {aboutOpen && (
+        <Suspense fallback={null}>
+          <AboutDialog isOpen={aboutOpen} onClose={() => setAboutOpen(false)} />
+        </Suspense>
+      )}
 
       <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
         <AlertDialogContent>
