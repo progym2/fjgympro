@@ -11,11 +11,13 @@ interface LoginRequest {
   password: string;
   deviceInfo?: string;
   panelType?: 'client' | 'instructor' | 'admin';
+  forceLogin?: boolean; // Allow forcing login (kicks out other sessions)
 }
 
 interface LoginResponse {
   success: boolean;
   error?: string;
+  errorCode?: 'SESSION_ACTIVE' | 'LICENSE_EXPIRED' | 'ACCESS_DENIED' | 'INVALID_CREDENTIALS';
   user?: {
     id: string;
     email: string;
@@ -34,6 +36,10 @@ interface LoginResponse {
     access_token: string;
     refresh_token: string;
   };
+  activeSession?: {
+    device_info: string;
+    last_activity: string;
+  };
 }
 
 // Generate a unique session token
@@ -44,6 +50,75 @@ function generateSessionToken(): string {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
+}
+
+// Check if there's an active session for a profile
+// Sessions expire after 2 hours of inactivity
+async function checkActiveSession(
+  supabaseAdmin: any, 
+  profileId: string
+): Promise<{ device_info: string; last_activity: string } | null> {
+  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+  
+  // First, clean up expired sessions
+  await supabaseAdmin
+    .from("active_sessions")
+    .delete()
+    .eq("profile_id", profileId)
+    .lt("last_activity", twoHoursAgo);
+  
+  // Check for valid active session
+  const { data: activeSession } = await supabaseAdmin
+    .from("active_sessions")
+    .select("device_info, last_activity")
+    .eq("profile_id", profileId)
+    .eq("is_valid", true)
+    .gte("last_activity", twoHoursAgo)
+    .maybeSingle();
+  
+  return activeSession;
+}
+
+// Create or replace session for a profile
+async function createSession(
+  supabaseAdmin: any,
+  profileId: string,
+  deviceInfo: string,
+  forceLogin: boolean = false
+): Promise<{ token: string; blocked: boolean; activeSession?: { device_info: string; last_activity: string } }> {
+  // Check for existing active session
+  const activeSession = await checkActiveSession(supabaseAdmin, profileId);
+  
+  if (activeSession && !forceLogin) {
+    return { 
+      token: '', 
+      blocked: true, 
+      activeSession: {
+        device_info: activeSession.device_info,
+        last_activity: activeSession.last_activity
+      }
+    };
+  }
+  
+  const sessionToken = generateSessionToken();
+  
+  // Remove any existing sessions for this profile
+  await supabaseAdmin
+    .from("active_sessions")
+    .delete()
+    .eq("profile_id", profileId);
+  
+  // Create new session
+  await supabaseAdmin
+    .from("active_sessions")
+    .insert({
+      profile_id: profileId,
+      session_token: sessionToken,
+      device_info: deviceInfo || "Unknown",
+      is_valid: true,
+    });
+  
+  return { token: sessionToken, blocked: false };
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -60,11 +135,12 @@ serve(async (req: Request): Promise<Response> => {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    const { username, password, deviceInfo, panelType }: LoginRequest = await req.json();
+    const { username, password, deviceInfo, panelType, forceLogin }: LoginRequest = await req.json();
 
     const inputUsername = (username ?? "").trim();
     const inputPassword = (password ?? "").trim();
     const requestedPanel = panelType || 'client';
+    const shouldForceLogin = forceLogin === true;
 
     console.log(`Login attempt for username: ${inputUsername} on panel: ${requestedPanel}`);
 
@@ -359,6 +435,24 @@ serve(async (req: Request): Promise<Response> => {
         }
       }
 
+      // Handle single session control for special accounts - BLOCK if already logged in (except master)
+      if (specialAccount.role !== 'master') {
+        const sessionResult = await createSession(supabaseAdmin, profileId, deviceInfo || "Unknown", shouldForceLogin);
+        
+        if (sessionResult.blocked) {
+          console.log(`Login blocked - active session exists for special account: ${inputUsername}`);
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: `Esta conta já está em uso em outro dispositivo (${sessionResult.activeSession?.device_info}). Faça logout no outro dispositivo primeiro ou aguarde 2 horas.`,
+              errorCode: 'SESSION_ACTIVE',
+              activeSession: sessionResult.activeSession,
+            } as LoginResponse),
+            { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+      }
+
       const response: LoginResponse = {
         success: true,
         user: {
@@ -623,24 +717,21 @@ serve(async (req: Request): Promise<Response> => {
         );
       }
 
-      // Handle single session control
-      const sessionToken = generateSessionToken();
-
-      // Invalidate existing sessions for this profile
-      await supabaseAdmin
-        .from("active_sessions")
-        .delete()
-        .eq("profile_id", profileId);
-
-      // Create new session record
-      await supabaseAdmin
-        .from("active_sessions")
-        .insert({
-          profile_id: profileId,
-          session_token: sessionToken,
-          device_info: deviceInfo || "Unknown",
-          is_valid: true,
-        });
+      // Handle single session control - BLOCK if already logged in
+      const sessionResult = await createSession(supabaseAdmin, profileId, deviceInfo || "Unknown", shouldForceLogin);
+      
+      if (sessionResult.blocked) {
+        console.log(`Login blocked - active session exists for: ${inputUsername}`);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: `Esta conta já está em uso em outro dispositivo (${sessionResult.activeSession?.device_info}). Faça logout no outro dispositivo primeiro ou aguarde 2 horas.`,
+            errorCode: 'SESSION_ACTIVE',
+            activeSession: sessionResult.activeSession,
+          } as LoginResponse),
+          { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
 
       let timeRemaining: number | null = null;
       if (license?.expires_at) {
@@ -834,24 +925,21 @@ serve(async (req: Request): Promise<Response> => {
       }
     }
 
-    // Handle single session control for commercial licenses
-    const sessionToken = generateSessionToken();
-
-    // Invalidate existing sessions for this profile
-    await supabaseAdmin
-      .from("active_sessions")
-      .delete()
-      .eq("profile_id", profile.id);
-
-    // Create new session record
-    await supabaseAdmin
-      .from("active_sessions")
-      .insert({
-        profile_id: profile.id,
-        session_token: sessionToken,
-        device_info: deviceInfo || "Unknown",
-        is_valid: true,
-      });
+    // Handle single session control - BLOCK if already logged in
+    const sessionResult = await createSession(supabaseAdmin, profile.id, deviceInfo || "Unknown", shouldForceLogin);
+    
+    if (sessionResult.blocked) {
+      console.log(`Login blocked - active session exists for: ${inputUsername}`);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Esta conta já está em uso em outro dispositivo (${sessionResult.activeSession?.device_info}). Faça logout no outro dispositivo primeiro ou aguarde 2 horas.`,
+          errorCode: 'SESSION_ACTIVE',
+          activeSession: sessionResult.activeSession,
+        } as LoginResponse),
+        { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     let timeRemaining: number | null = null;
     if (licenseInfo?.expires_at) {
