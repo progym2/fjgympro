@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Dumbbell, Shield, CheckCircle2 } from 'lucide-react';
 import AnimatedLogo from '@/components/AnimatedLogo';
@@ -30,11 +30,11 @@ const panelConfig = {
   },
 };
 
-const DashboardEntryTransition: React.FC<DashboardEntryTransitionProps> = ({
+const DashboardEntryTransition = forwardRef<HTMLDivElement, DashboardEntryTransitionProps>(({
   panelType,
   userName,
   onComplete,
-}) => {
+}, ref) => {
   const [phase, setPhase] = useState<'enter' | 'show' | 'exit'>('enter');
   const config = panelConfig[panelType];
   const Icon = config.icon;
@@ -53,15 +53,16 @@ const DashboardEntryTransition: React.FC<DashboardEntryTransitionProps> = ({
   }, [onComplete]);
 
   return (
-    <AnimatePresence>
-      {phase !== 'exit' && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.1 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background"
-        >
+    <div ref={ref}>
+      <AnimatePresence>
+        {phase !== 'exit' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-background"
+          >
           {/* Radial gradient background */}
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
@@ -140,10 +141,13 @@ const DashboardEntryTransition: React.FC<DashboardEntryTransitionProps> = ({
               ))}
             </motion.div>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
-};
+});
+
+DashboardEntryTransition.displayName = 'DashboardEntryTransition';
 
 export default DashboardEntryTransition;

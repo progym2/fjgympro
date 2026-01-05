@@ -1,4 +1,4 @@
-import React, { useState, memo, useMemo } from 'react';
+import React, { useState, useMemo, forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/contexts/ThemeContext';
 import logomarca from '@/assets/logomarca.png';
@@ -9,11 +9,11 @@ interface AnimatedLogoProps {
   showGlow?: boolean;
 }
 
-const AnimatedLogo: React.FC<AnimatedLogoProps> = memo(({ 
+const AnimatedLogo = forwardRef<HTMLDivElement, AnimatedLogoProps>(({ 
   size = 'md', 
   className = '',
   showGlow = true 
-}) => {
+}, ref) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const { themeConfig, currentTheme } = useTheme();
 
@@ -119,6 +119,7 @@ const AnimatedLogo: React.FC<AnimatedLogoProps> = memo(({
 
   return (
     <motion.div
+      ref={ref}
       key={currentTheme}
       className={`relative ${className}`}
       initial={{ opacity: 0, scale: 0.8 }}
