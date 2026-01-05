@@ -10,6 +10,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import SportThemeSelector from '@/components/SportThemeSelector';
 import LoginLoadingOverlay from '@/components/LoginLoadingOverlay';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface LoginDialogProps {
   isOpen: boolean;
@@ -58,6 +68,9 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
   
   // Lockout state
   const [lockoutData, setLockoutData] = useState<LockoutData>({ attempts: 0, lockedUntil: null, lockoutLevel: 0 });
+  
+  // Clear credentials confirmation dialog
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [lockoutTimeRemaining, setLockoutTimeRemaining] = useState(0);
 
   const { signIn, clearDeviceSession } = useAuth();
@@ -611,8 +624,13 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
     onSuccess(result.role ?? panelType);
   };
 
-  const clearSavedCredentials = () => {
+  const handleClearCredentialsClick = () => {
     playClickSound();
+    setShowClearConfirm(true);
+  };
+
+  const clearSavedCredentials = () => {
+    setShowClearConfirm(false);
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(BIOMETRIC_KEY);
@@ -621,8 +639,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
       setHasSavedCredentials(false);
       setBiometricEnabled(false);
       toast({
-        title: 'Credenciais removidas',
-        description: 'Suas credenciais foram apagadas deste dispositivo',
+        title: '✅ Credenciais removidas',
+        description: 'Dados salvos foram apagados deste dispositivo',
       });
     } catch (e) {
       // Ignore errors
@@ -882,13 +900,37 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={clearSavedCredentials}
+                    onClick={handleClearCredentialsClick}
                     className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 px-2 text-xs"
                   >
                     <Trash2 size={12} className="mr-1" />
                     {hasSavedCredentials ? 'Limpar dados salvos' : 'Limpar cache'}
                   </Button>
                 </div>
+
+                {/* Clear Credentials Confirmation Dialog */}
+                <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+                  <AlertDialogContent className="max-w-sm">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="flex items-center gap-2">
+                        <Trash2 size={18} className="text-destructive" />
+                        Limpar dados salvos?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Isso vai remover suas credenciais salvas e configurações de biometria deste dispositivo. Você precisará digitar novamente na próxima vez.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={clearSavedCredentials}
+                        className="bg-destructive hover:bg-destructive/90"
+                      >
+                        Limpar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
 
                 <Button
                   type="button"
