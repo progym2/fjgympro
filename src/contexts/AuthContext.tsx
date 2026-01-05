@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
 
@@ -342,6 +342,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [license?.expires_at, license?.type]);
 
   // Session bootstrap + updates
+  // Track if signIn already populated context (skip duplicate hydrate)
+  const signInPopulatedRef = useRef(false);
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
@@ -349,6 +352,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!newSession) {
         clearAuthState();
+        setIsLoading(false);
+        signInPopulatedRef.current = false;
+        return;
+      }
+
+      // Skip hydrate if signIn already populated context
+      if (signInPopulatedRef.current) {
+        signInPopulatedRef.current = false;
         setIsLoading(false);
         return;
       }
@@ -451,6 +462,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           setSession(sessionData.session);
           setUser(sessionData.user);
+          // Mark that signIn populated context - skip hydrate in onAuthStateChange
+          signInPopulatedRef.current = true;
         }
 
         const userRole = data.user.role as UserRole;

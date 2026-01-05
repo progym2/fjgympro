@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
@@ -41,7 +41,7 @@ const getBorderStyle = (style: string): string => {
   }
 };
 
-export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = ({
+export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
   icon: Icon,
   label,
   onClick,
@@ -57,8 +57,8 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = ({
       ? 'font-bold' 
       : 'font-medium';
 
-  // Get theme-specific icon background
-  const getIconBackground = () => {
+  // Memoize icon background to prevent recalculation
+  const iconBackground = useMemo(() => {
     switch (themeConfig.id) {
       case 'fire':
         return 'bg-gradient-to-br from-orange-500/20 to-red-600/20';
@@ -81,7 +81,7 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = ({
       default:
         return 'bg-primary/10';
     }
-  };
+  }, [themeConfig.id]);
 
   const iconStyleClasses = themeConfig.icons.style === 'glow' 
     ? 'drop-shadow-[0_0_6px_currentColor]' 
@@ -145,7 +145,7 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = ({
       {/* Icon container with themed background */}
       <div className={cn(
         'relative p-3 rounded-xl',
-        getIconBackground()
+        iconBackground
       )}>
         <motion.div
           animate={themeConfig.icons.style === 'glow' ? {
@@ -197,6 +197,8 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = ({
       />
     </motion.button>
   );
-};
+});
+
+ThemedMenuButton.displayName = 'ThemedMenuButton';
 
 export default ThemedMenuButton;

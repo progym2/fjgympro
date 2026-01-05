@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, memo, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Timer, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-const LicenseTimer: React.FC = () => {
+const LicenseTimer: React.FC = memo(() => {
   const navigate = useNavigate();
   const { license, licenseTimeRemaining, role, signOut } = useAuth();
   const [currentTime, setCurrentTime] = useState(licenseTimeRemaining || 0);
@@ -91,19 +91,18 @@ const LicenseTimer: React.FC = () => {
     return value.toString().padStart(2, '0');
   };
 
-  const getTimeComponents = (ms: number) => {
-    if (ms <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  // Memoize time calculations
+  const { days, hours, minutes, seconds } = useMemo(() => {
+    if (currentTime <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     
-    const totalSeconds = Math.floor(ms / 1000);
-    const days = Math.floor(totalSeconds / 86400);
-    const hours = Math.floor((totalSeconds % 86400) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    return { days, hours, minutes, seconds };
-  };
-
-  const { days, hours, minutes, seconds } = getTimeComponents(currentTime);
+    const totalSeconds = Math.floor(currentTime / 1000);
+    return {
+      days: Math.floor(totalSeconds / 86400),
+      hours: Math.floor((totalSeconds % 86400) / 3600),
+      minutes: Math.floor((totalSeconds % 3600) / 60),
+      seconds: totalSeconds % 60,
+    };
+  }, [currentTime]);
 
   const getLabel = () => {
     if (isDemo) return 'DEMO';
@@ -286,6 +285,8 @@ const LicenseTimer: React.FC = () => {
       )}
     </>
   );
-};
+});
+
+LicenseTimer.displayName = 'LicenseTimer';
 
 export default LicenseTimer;

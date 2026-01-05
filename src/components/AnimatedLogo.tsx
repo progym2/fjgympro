@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/contexts/ThemeContext';
 import logomarca from '@/assets/logomarca.png';
@@ -9,7 +9,7 @@ interface AnimatedLogoProps {
   showGlow?: boolean;
 }
 
-const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ 
+const AnimatedLogo: React.FC<AnimatedLogoProps> = memo(({ 
   size = 'md', 
   className = '',
   showGlow = true 
@@ -24,8 +24,8 @@ const AnimatedLogo: React.FC<AnimatedLogoProps> = ({
     xl: 'w-36 h-auto sm:w-44 md:w-48',
   };
 
-  // Get theme-specific animation
-  const getThemeAnimation = () => {
+  // Memoize theme animation to prevent recalculation on every render
+  const themeAnimation = useMemo(() => {
     switch (currentTheme) {
       case 'fire':
         return {
@@ -115,9 +115,7 @@ const AnimatedLogo: React.FC<AnimatedLogoProps> = ({
           ] : 'none',
         };
     }
-  };
-
-  const themeAnimation = getThemeAnimation();
+  }, [currentTheme, showGlow]);
 
   return (
     <motion.div
@@ -215,6 +213,8 @@ const AnimatedLogo: React.FC<AnimatedLogoProps> = ({
       />
     </motion.div>
   );
-};
+});
+
+AnimatedLogo.displayName = 'AnimatedLogo';
 
 export default AnimatedLogo;
