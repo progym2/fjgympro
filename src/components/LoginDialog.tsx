@@ -194,22 +194,36 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
     }
   }, [isOpen, loadLockoutData]);
 
-  // Auto-login when dialog opens and credentials are saved
+  // Track if auto-login was already attempted this session
+  const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
+
+  // Auto-login ONLY ONCE when dialog opens and credentials are saved
   // Priority: biometric > auto-login with saved credentials
   useEffect(() => {
-    if (!isOpen || isLoading) return;
-    
-    // If biometric is enabled and supported, try biometric first
-    if (biometricEnabled && biometricSupported && hasSavedCredentials) {
-      handleBiometricLogin();
+    if (!isOpen) {
+      // Reset when dialog closes
+      setAutoLoginAttempted(false);
       return;
     }
     
-    // Otherwise, auto-login with saved credentials
-    if (hasSavedCredentials && username && password) {
-      handleAutoLogin();
+    if (isLoading || autoLoginAttempted) return;
+    
+    // Mark as attempted so it doesn't run again while typing
+    if (hasSavedCredentials) {
+      setAutoLoginAttempted(true);
+      
+      // If biometric is enabled and supported, try biometric first
+      if (biometricEnabled && biometricSupported) {
+        handleBiometricLogin();
+        return;
+      }
+      
+      // Otherwise, auto-login with saved credentials
+      if (username && password) {
+        handleAutoLogin();
+      }
     }
-  }, [isOpen, biometricEnabled, biometricSupported, hasSavedCredentials, username, password]);
+  }, [isOpen]);
 
   // Auto-login with saved credentials (no user interaction needed)
   const handleAutoLogin = async () => {
