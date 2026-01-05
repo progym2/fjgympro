@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import InstructorPageHeader from './InstructorPageHeader';
 import FadeScrollList from '@/components/shared/FadeScrollList';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 
 interface Student {
   id: string;
@@ -54,6 +55,9 @@ const MyStudents: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [savingLevel, setSavingLevel] = useState<string | null>(null);
+
+  // ESC volta para /instructor
+  useEscapeBack({ to: '/instructor', disableWhen: [selectedStudent !== null] });
 
   useEffect(() => {
     if (effectiveInstructorId) {

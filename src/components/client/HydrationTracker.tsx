@@ -23,6 +23,7 @@ import HydrationAchievements from './HydrationAchievements';
 import HealthIntegrations from './HealthIntegrations';
 import ClientPageHeader from './ClientPageHeader';
 import { useHydrationNotifications } from '@/hooks/useHydrationNotifications';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 
 interface WeeklyData {
   day: string;
@@ -453,6 +454,9 @@ const HydrationTracker: React.FC = () => {
   const [customTimerMinutes, setCustomTimerMinutes] = useState(60);
   const [activeTab, setActiveTab] = useState('today');
   const [pushEnabled, setPushEnabled] = useState(false);
+
+  // ESC volta para /client
+  useEscapeBack({ to: '/client', disableWhen: [showSettings] });
   
   // Native notifications hook
   const {

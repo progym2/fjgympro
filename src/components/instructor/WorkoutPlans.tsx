@@ -30,6 +30,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import InstructorPageHeader from './InstructorPageHeader';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 
 interface WorkoutPlan {
   id: string;
@@ -63,6 +64,9 @@ const WorkoutPlans: React.FC = () => {
   const [planExercises, setPlanExercises] = useState<Record<string, any[]>>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // ESC volta para /instructor
+  useEscapeBack({ to: '/instructor', disableWhen: [deleteDialogOpen, selectedPlan !== null] });
 
   useEffect(() => {
     if (effectiveInstructorId) {
