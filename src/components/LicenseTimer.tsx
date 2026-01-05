@@ -143,85 +143,70 @@ const LicenseTimer: React.FC = memo(() => {
   };
 
   return (
-    <div className="fixed top-2 right-2 z-[60]">
+    <div className="relative">
       <AnimatePresence mode="wait">
         {isExpanded ? (
           <motion.div
             key="expanded"
-            initial={{ opacity: 0, scale: 0.8, x: 20 }}
+            initial={{ opacity: 0, scale: 0.8, x: -10 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.8, x: 20 }}
+            exit={{ opacity: 0, scale: 0.8, x: -10 }}
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             className={`
-              px-3 py-2 rounded-xl backdrop-blur-xl cursor-pointer
+              absolute top-1/2 -translate-y-1/2 left-0 z-50
+              px-2 py-1.5 rounded-lg backdrop-blur-xl cursor-pointer
               bg-gradient-to-r ${bgColor} border
               shadow-lg shadow-black/20
-              flex items-center gap-3
+              flex items-center gap-2 whitespace-nowrap
             `}
             onClick={handleClick}
           >
             {/* Icon */}
-            <div className={`flex items-center gap-2 ${textColor}`}>
+            <div className={`flex items-center gap-1.5 ${textColor}`}>
               {isLow ? (
                 <motion.div
                   animate={{ scale: [1, 1.15, 1] }}
                   transition={{ duration: 0.6, repeat: Infinity }}
                 >
-                  <AlertTriangle size={18} />
+                  <AlertTriangle size={14} />
                 </motion.div>
               ) : (
-                <Timer size={18} />
+                <Timer size={14} />
               )}
-              <span className="font-bebas text-xs tracking-wider opacity-80">
+              <span className="font-bebas text-[10px] tracking-wider opacity-80">
                 {isDemo ? 'DEMO' : isTrial ? 'TRIAL' : 'LICENÇA'}
               </span>
             </div>
 
             {/* Timer Display */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
               {days > 0 && (
                 <>
-                  <div className="flex flex-col items-center">
-                    <span className={`font-bebas text-xl tracking-wider ${textColor}`}>
-                      {formatTimeUnit(days)}
-                    </span>
-                    <span className="text-[8px] text-muted-foreground uppercase leading-none">Dias</span>
-                  </div>
-                  <span className={`font-bebas text-lg ${textColor} opacity-50 mx-0.5`}>:</span>
+                  <span className={`font-bebas text-sm tracking-wider ${textColor}`}>
+                    {formatTimeUnit(days)}d
+                  </span>
+                  <span className={`font-bebas text-xs ${textColor} opacity-50`}>:</span>
                 </>
               )}
 
-              <div className="flex flex-col items-center">
-                <span className={`font-bebas text-xl tracking-wider ${textColor}`}>
-                  {formatTimeUnit(hours)}
-                </span>
-                <span className="text-[8px] text-muted-foreground uppercase leading-none">Hrs</span>
-              </div>
-
-              <span className={`font-bebas text-lg ${textColor} opacity-50 mx-0.5`}>:</span>
-
-              <div className="flex flex-col items-center">
-                <span className={`font-bebas text-xl tracking-wider ${textColor}`}>
-                  {formatTimeUnit(minutes)}
-                </span>
-                <span className="text-[8px] text-muted-foreground uppercase leading-none">Min</span>
-              </div>
-
-              <span className={`font-bebas text-lg ${textColor} opacity-50 mx-0.5`}>:</span>
-
-              <div className="flex flex-col items-center">
-                <span className={`font-bebas text-xl tracking-wider ${textColor}`}>
-                  {formatTimeUnit(seconds)}
-                </span>
-                <span className="text-[8px] text-muted-foreground uppercase leading-none">Seg</span>
-              </div>
+              <span className={`font-bebas text-sm tracking-wider ${textColor}`}>
+                {formatTimeUnit(hours)}
+              </span>
+              <span className={`font-bebas text-xs ${textColor} opacity-50`}>:</span>
+              <span className={`font-bebas text-sm tracking-wider ${textColor}`}>
+                {formatTimeUnit(minutes)}
+              </span>
+              <span className={`font-bebas text-xs ${textColor} opacity-50`}>:</span>
+              <span className={`font-bebas text-sm tracking-wider ${textColor}`}>
+                {formatTimeUnit(seconds)}
+              </span>
             </div>
 
             {isLow && (
               <motion.div
                 animate={{ opacity: [0.5, 1, 0.5] }}
                 transition={{ duration: 1, repeat: Infinity }}
-                className="w-2 h-2 rounded-full bg-destructive ml-1"
+                className="w-1.5 h-1.5 rounded-full bg-destructive"
               />
             )}
           </motion.div>
@@ -235,21 +220,20 @@ const LicenseTimer: React.FC = memo(() => {
             whileTap={{ scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             className={`
-              w-9 h-9 rounded-full backdrop-blur-xl
+              w-6 h-6 rounded-full backdrop-blur-sm
               ${iconBgColor} border
-              shadow-md shadow-black/10
               flex items-center justify-center
               relative
             `}
             onClick={handleClick}
             aria-label="Ver tempo de licença"
           >
-            <Clock size={16} className={textColor} />
+            <Clock size={12} className={textColor} />
             
             {/* Pulse indicator for demo/trial */}
-            {(isDemo || isTrial) && (
+            {(isDemo || isTrial || isLow) && (
               <motion.div
-                className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ${isLow ? 'bg-destructive' : 'bg-primary'}`}
+                className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full ${isLow ? 'bg-destructive' : 'bg-primary'}`}
                 animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
               />

@@ -200,8 +200,6 @@ const ClientDashboard: React.FC = () => {
     >
       <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background/90" />
 
-      <LicenseTimer />
-
       <div className="relative z-10 min-h-screen min-h-[100dvh] flex flex-col pb-14">
         <div className="h-14 sm:h-16" />
         
@@ -214,13 +212,16 @@ const ClientDashboard: React.FC = () => {
                   fallbackName={profile?.full_name || profile?.username}
                   size="md"
                 />
-                <div className="min-w-0">
-                  <h1 className="text-base sm:text-lg md:text-xl font-bebas text-primary tracking-wider truncate">
-                    PAINEL CLIENTE
-                  </h1>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                    {profile?.full_name || profile?.username || 'Cliente'}
-                  </p>
+                <div className="min-w-0 flex items-center gap-2">
+                  <div>
+                    <h1 className="text-base sm:text-lg md:text-xl font-bebas text-primary tracking-wider truncate">
+                      PAINEL CLIENTE
+                    </h1>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                      {profile?.full_name || profile?.username || 'Cliente'}
+                    </p>
+                  </div>
+                  <LicenseTimer />
                 </div>
               </div>
 
