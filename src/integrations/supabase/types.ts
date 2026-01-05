@@ -963,6 +963,7 @@ export type Database = {
           monthly_fee: number | null
           notes: string | null
           phone: string | null
+          student_id: string | null
           tenant_id: string | null
           updated_at: string | null
           user_id: string | null
@@ -991,6 +992,7 @@ export type Database = {
           monthly_fee?: number | null
           notes?: string | null
           phone?: string | null
+          student_id?: string | null
           tenant_id?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -1019,6 +1021,7 @@ export type Database = {
           monthly_fee?: number | null
           notes?: string | null
           phone?: string | null
+          student_id?: string | null
           tenant_id?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -1399,6 +1402,7 @@ export type Database = {
       belongs_to_tenant: { Args: { check_tenant_id: string }; Returns: boolean }
       can_insert_profile: { Args: { _user_id: string }; Returns: boolean }
       generate_license_key: { Args: { prefix?: string }; Returns: string }
+      generate_student_id: { Args: never; Returns: string }
       get_current_profile_id: { Args: never; Returns: string }
       get_current_tenant_id: { Args: never; Returns: string }
       get_user_role: {
