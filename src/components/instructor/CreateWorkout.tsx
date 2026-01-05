@@ -331,7 +331,8 @@ const CreateWorkout: React.FC = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex flex-col h-full"
+      transition={{ duration: 0.2 }}
+      className="flex flex-col h-full min-h-0"
     >
       <InstructorPageHeader 
         title="CRIAR FICHA DE TREINO"
@@ -339,7 +340,7 @@ const CreateWorkout: React.FC = () => {
         iconColor="text-green-500"
       />
       
-      <div className="flex-1 overflow-auto space-y-4">
+      <div className="flex-1 overflow-y-auto overscroll-contain space-y-4 momentum-scroll pb-4">
 
       {/* Form */}
       <div className="bg-card/80 backdrop-blur-md rounded-xl p-4 sm:p-6 border border-border/50 space-y-4">
