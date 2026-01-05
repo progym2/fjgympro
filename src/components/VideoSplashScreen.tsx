@@ -123,19 +123,17 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.2 }}
               >
                 {/* Logo with scale and glow animation */}
                 <motion.div
-                  initial={{ scale: 0.5, opacity: 0, y: 20 }}
+                  initial={{ scale: 0.7, opacity: 0 }}
                   animate={{ 
-                    scale: [0.5, 1.1, 1],
-                    opacity: 1,
-                    y: 0
+                    scale: 1,
+                    opacity: 1
                   }}
                   transition={{ 
-                    duration: 0.8,
-                    times: [0, 0.6, 1],
+                    duration: 0.4,
                     ease: "easeOut"
                   }}
                   className="relative"
@@ -143,9 +141,9 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
                   {/* Glow effect behind logo */}
                   <motion.div
                     className="absolute inset-0 blur-2xl"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: [0, 0.6, 0.4], scale: [0.8, 1.2, 1] }}
-                    transition={{ duration: 1, delay: 0.2 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.5 }}
+                    transition={{ duration: 0.3 }}
                     style={{
                       background: 'radial-gradient(circle, hsl(24 100% 50% / 0.5) 0%, transparent 70%)'
                     }}
@@ -161,38 +159,33 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
                   />
                 </motion.div>
 
-                {/* App name with stagger animation */}
+                {/* App name */}
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
+                  transition={{ duration: 0.3, delay: 0.15 }}
                   className="mt-6 text-center"
                 >
-                  <motion.h1 
-                    className="text-4xl sm:text-5xl font-display tracking-wider"
-                    initial={{ opacity: 0, letterSpacing: '0.5em' }}
-                    animate={{ opacity: 1, letterSpacing: '0.1em' }}
-                    transition={{ duration: 0.6, delay: 0.5 }}
-                  >
+                  <h1 className="text-4xl sm:text-5xl font-display tracking-wider">
                     <span className="text-primary">fj</span>
                     <span className="text-foreground">GymPro</span>
-                  </motion.h1>
+                  </h1>
                   
                   <motion.p
                     className="text-muted-foreground text-sm mt-2 tracking-widest uppercase"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ duration: 0.4, delay: 0.8 }}
+                    transition={{ duration: 0.2, delay: 0.3 }}
                   >
                     Sua evolução começa aqui
                   </motion.p>
                 </motion.div>
 
-                {/* Trigger completion after logo animation */}
+                {/* Trigger completion - reduced from 1.8s to 0.9s */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 1.8 }}
+                  transition={{ delay: 0.9 }}
                   onAnimationComplete={handleLogoAnimationComplete}
                 />
               </motion.div>
