@@ -510,12 +510,8 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [isOnHomeScreen, isMusicPlaying, fadeOut]);
 
   const toggleMusic = useCallback(() => {
-    console.log('toggleMusic called', { isMusicEnabled, shuffledPlaylistLength: shuffledPlaylist.length });
+    console.log('toggleMusic called', { isMusicPlaying, shuffledPlaylistLength: shuffledPlaylist.length });
     
-    const newEnabled = !isMusicEnabled;
-    setIsMusicEnabled(newEnabled);
-    localStorage.setItem(STORAGE_KEY, String(newEnabled));
-
     const audio = audioRef.current;
     if (!audio) {
       console.log('No audio ref');
@@ -527,8 +523,19 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return;
     }
 
-    if (newEnabled && isOnHomeScreen && isSplashComplete) {
+    // Se está tocando, pausa
+    if (isMusicPlaying) {
+      console.log('Pausing music');
+      sessionStorage.setItem(MUSIC_STOPPED_SESSION_KEY, 'true');
+      setIsMusicEnabled(false);
+      localStorage.setItem(STORAGE_KEY, 'false');
+      fadeOut();
+    } else {
+      // Se não está tocando, inicia
+      console.log('Starting music');
       sessionStorage.removeItem(MUSIC_STOPPED_SESSION_KEY);
+      setIsMusicEnabled(true);
+      localStorage.setItem(STORAGE_KEY, 'true');
       setHasUserInteracted(true);
       
       setupAnalyser();
@@ -546,11 +553,8 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsMusicPlaying(true);
         fadeIn();
       }).catch((e) => console.error('Play failed:', e));
-    } else {
-      sessionStorage.setItem(MUSIC_STOPPED_SESSION_KEY, 'true');
-      fadeOut();
     }
-  }, [isMusicEnabled, isOnHomeScreen, isSplashComplete, shuffledPlaylist, currentTrackIndex, setupAnalyser, fadeIn, fadeOut]);
+  }, [isMusicPlaying, shuffledPlaylist, currentTrackIndex, setupAnalyser, fadeIn, fadeOut]);
 
   const setOnHomeScreen = useCallback((value: boolean) => {
     setIsOnHomeScreenState(value);
