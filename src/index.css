@@ -449,3 +449,31 @@ body {
 .stable-scroll {
   contain: layout style;
 }
+
+/* Disable hover effects when toggle is off */
+html[data-hover-effects="false"] {
+  /* Disable all hover transforms and animations on interactive elements */
+  & button:hover,
+  & a:hover,
+  & [role="button"]:hover,
+  & .hover-lift:hover,
+  & .hover-scale:hover,
+  & .hover-glow:hover,
+  & .interactive-card:hover {
+    transform: none !important;
+    box-shadow: inherit !important;
+    filter: none !important;
+  }
+  
+  /* Disable framer-motion hover animations */
+  & [data-motion="hover"] {
+    transform: none !important;
+  }
+  
+  /* Keep basic visual feedback but remove animated effects */
+  & button:active,
+  & a:active,
+  & [role="button"]:active {
+    opacity: 0.9;
+  }
+}

@@ -200,17 +200,24 @@ interface ThemeContextType {
   globalTheme: SportTheme | null;
   isGlobalThemeActive: boolean;
   themeConfig: ThemeConfig;
+  hoverEffectsEnabled: boolean;
+  setHoverEffectsEnabled: (enabled: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const THEME_STORAGE_KEY = 'francgym_sport_theme';
 const GLOBAL_THEME_KEY = 'francgym_global_theme';
+const HOVER_EFFECTS_KEY = 'francgym_hover_effects';
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { profile, role } = useAuth();
   const [currentTheme, setCurrentTheme] = useState<SportTheme>('fire');
   const [globalTheme, setGlobalTheme] = useState<SportTheme | null>(null);
+  const [hoverEffectsEnabled, setHoverEffectsEnabledState] = useState<boolean>(() => {
+    const saved = localStorage.getItem(HOVER_EFFECTS_KEY);
+    return saved !== 'false';
+  });
 
   // Carregar tema global do localStorage
   useEffect(() => {
@@ -296,6 +303,17 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   };
 
+  const setHoverEffectsEnabled = (enabled: boolean) => {
+    setHoverEffectsEnabledState(enabled);
+    localStorage.setItem(HOVER_EFFECTS_KEY, String(enabled));
+    document.documentElement.setAttribute('data-hover-effects', String(enabled));
+  };
+
+  // Aplicar hover effects no mount
+  useEffect(() => {
+    document.documentElement.setAttribute('data-hover-effects', String(hoverEffectsEnabled));
+  }, [hoverEffectsEnabled]);
+
   const getThemeConfig = (theme: SportTheme): ThemeConfig => {
     return SPORT_THEMES.find(t => t.id === theme) || SPORT_THEMES[0];
   };
@@ -309,6 +327,8 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       globalTheme,
       isGlobalThemeActive: !!globalTheme,
       themeConfig,
+      hoverEffectsEnabled,
+      setHoverEffectsEnabled,
     }}>
       {children}
     </ThemeContext.Provider>

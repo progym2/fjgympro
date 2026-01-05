@@ -112,7 +112,7 @@ const GymButton: React.FC<GymButtonProps> = ({
   color = 'primary',
   disabled = false,
 }) => {
-  const { currentTheme } = useTheme();
+  const { currentTheme, hoverEffectsEnabled } = useTheme();
   const { playHoverSound } = useAudio();
   const config = getThemeConfig(currentTheme, color);
   const clipPath = getClipPath(config.shape);
@@ -131,11 +131,11 @@ const GymButton: React.FC<GymButtonProps> = ({
   }, []);
 
   const handleHoverStart = useCallback(() => {
-    if (!disabled) {
+    if (!disabled && hoverEffectsEnabled) {
       setIsHovered(true);
       playHoverSound();
     }
-  }, [disabled, playHoverSound]);
+  }, [disabled, hoverEffectsEnabled, playHoverSound]);
 
   const handleHoverEnd = useCallback(() => {
     setIsHovered(false);
@@ -147,6 +147,10 @@ const GymButton: React.FC<GymButtonProps> = ({
     }
   };
 
+  // Condicional para animações de hover
+  const hoverScale = hoverEffectsEnabled && !disabled ? 1.08 : 1;
+  const hoverY = hoverEffectsEnabled && !disabled ? -8 : 0;
+
   return (
     <motion.button
       key={`${currentTheme}-${color}`}
@@ -154,7 +158,7 @@ const GymButton: React.FC<GymButtonProps> = ({
       disabled={disabled}
       onHoverStart={handleHoverStart}
       onHoverEnd={handleHoverEnd}
-      whileHover={{ scale: disabled ? 1 : 1.08, y: disabled ? 0 : -8 }}
+      whileHover={{ scale: hoverScale, y: hoverY }}
       whileTap={{ scale: disabled ? 1 : 0.95 }}
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
@@ -166,7 +170,7 @@ const GymButton: React.FC<GymButtonProps> = ({
     >
       {/* Particle explosion on hover */}
       <AnimatePresence>
-        {isHovered && !disabled && (
+        {isHovered && !disabled && hoverEffectsEnabled && (
           <>
             {particles.map((particle) => (
               <motion.div
@@ -203,23 +207,27 @@ const GymButton: React.FC<GymButtonProps> = ({
       </AnimatePresence>
 
       {/* Floating Glow Effect - Enhanced on hover */}
-      <motion.div
-        className="absolute -inset-6 rounded-3xl opacity-0 group-hover:opacity-100 transition-all duration-300 blur-2xl pointer-events-none"
-        style={{ background: `radial-gradient(circle, ${config.glow}, transparent 60%)` }}
-      />
+      {hoverEffectsEnabled && (
+        <motion.div
+          className="absolute -inset-6 rounded-3xl opacity-0 group-hover:opacity-100 transition-all duration-300 blur-2xl pointer-events-none"
+          style={{ background: `radial-gradient(circle, ${config.glow}, transparent 60%)` }}
+        />
+      )}
       
       {/* Ripple pulse effect on hover */}
-      <motion.div
-        className="absolute -inset-8 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none"
-        style={{ 
-          background: `radial-gradient(circle, transparent 30%, ${config.glow} 50%, transparent 70%)`,
-        }}
-        animate={{
-          scale: [0.8, 1.2, 0.8],
-          opacity: [0, 0.4, 0],
-        }}
-        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-      />
+      {hoverEffectsEnabled && (
+        <motion.div
+          className="absolute -inset-8 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none"
+          style={{ 
+            background: `radial-gradient(circle, transparent 30%, ${config.glow} 50%, transparent 70%)`,
+          }}
+          animate={{
+            scale: [0.8, 1.2, 0.8],
+            opacity: [0, 0.4, 0],
+          }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      )}
 
       {/* Main Button Container */}
       <div className="relative">
@@ -300,7 +308,7 @@ const GymButton: React.FC<GymButtonProps> = ({
 
               {/* Icon - Enhanced hover effect */}
               <Icon
-                className="relative z-10 w-7 h-7 sm:w-8 sm:h-8 text-white drop-shadow-lg transition-all duration-300 group-hover:scale-125 group-hover:drop-shadow-[0_0_12px_rgba(255,255,255,0.5)]"
+                className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 text-white drop-shadow-lg transition-all duration-300 ${hoverEffectsEnabled ? 'group-hover:scale-125 group-hover:drop-shadow-[0_0_12px_rgba(255,255,255,0.5)]' : ''}`}
                 strokeWidth={2.5}
               />
 
@@ -364,13 +372,13 @@ const GymButton: React.FC<GymButtonProps> = ({
 
       {/* Label - Enhanced hover effect */}
       <motion.span
-        className="font-bebas text-sm sm:text-base tracking-[0.2em] text-white/90 drop-shadow-lg transition-all duration-300 uppercase group-hover:text-white group-hover:tracking-[0.3em] group-hover:scale-105"
+        className={`font-bebas text-sm sm:text-base tracking-[0.2em] text-white/90 drop-shadow-lg transition-all duration-300 uppercase ${hoverEffectsEnabled ? 'group-hover:text-white group-hover:tracking-[0.3em] group-hover:scale-105' : ''}`}
         style={{
           textShadow: `0 0 0px transparent`,
         }}
-        whileHover={{
+        whileHover={hoverEffectsEnabled ? {
           textShadow: `0 0 15px ${config.glow}`,
-        }}
+        } : undefined}
       >
         {label}
       </motion.span>
