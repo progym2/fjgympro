@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
+import { triggerDataPreload } from '@/hooks/useDataPreloader';
 
 export type UserRole = 'master' | 'admin' | 'instructor' | 'client';
 export type LicenseType = 'demo' | 'trial' | 'full' | 'master';
@@ -493,6 +494,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await forceSignOut('Licença não encontrada no login');
           return { error: 'Licença não encontrada. Procure o Master para ativar.' };
         }
+
+        // Trigger background preload immediately (non-blocking)
+        triggerDataPreload(data.user.profile_id, userRole);
 
         return { error: null, role: userRole };
       } catch (error) {
