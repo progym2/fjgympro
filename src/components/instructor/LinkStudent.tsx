@@ -37,6 +37,7 @@ interface FoundStudent extends ClientProfile {
   pending_link: boolean;
   linked_to_other: boolean;
   pending_from_other: boolean;
+  current_instructor_name?: string | null;
 }
 
 const LinkStudent: React.FC = () => {
@@ -208,7 +209,14 @@ const LinkStudent: React.FC = () => {
 
     const { data: otherLinkData } = await supabase
       .from('instructor_clients')
-      .select('id, instructor_id')
+      .select(`
+        id, 
+        instructor_id,
+        instructor:profiles!instructor_clients_instructor_id_fkey(
+          full_name,
+          username
+        )
+      `)
       .eq('client_id', studentData.id)
       .eq('link_status', 'accepted')
       .neq('instructor_id', effectiveInstructorId)
@@ -224,12 +232,18 @@ const LinkStudent: React.FC = () => {
       .neq('instructor_id', effectiveInstructorId)
       .maybeSingle();
 
+    // Get the instructor name if linked to another
+    const currentInstructorName = otherLinkData 
+      ? ((otherLinkData.instructor as any)?.full_name || (otherLinkData.instructor as any)?.username || 'outro instrutor')
+      : null;
+
     setFoundStudent({
       ...studentData,
       already_linked: myLinkData?.link_status === 'accepted',
       pending_link: myLinkData?.link_status === 'pending',
       linked_to_other: !!otherLinkData,
       pending_from_other: !!pendingFromOther,
+      current_instructor_name: currentInstructorName,
     });
   };
 
@@ -555,7 +569,8 @@ const LinkStudent: React.FC = () => {
                   <span className="text-sm font-medium">Aluno já vinculado!</span>
                 </div>
                 <span className="text-xs opacity-80">
-                  Este aluno já está vinculado a outro instrutor. Cada aluno pode ter apenas um instrutor ativo. 
+                  Este aluno já está vinculado ao instrutor <strong>{foundStudent.current_instructor_name}</strong>. 
+                  Cada aluno pode ter apenas um instrutor ativo. 
                   O aluno precisa se desvincular primeiro para poder aceitar um novo vínculo.
                 </span>
               </div>
