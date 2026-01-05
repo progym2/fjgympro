@@ -212,38 +212,245 @@ export const printEnrollmentReceipt = (enrollment: {
 
 export const printPaymentPlan = (plan: {
   clientName: string;
+  studentId?: string;
   totalAmount: number;
   installments: number;
   installmentAmount: number;
   discount: number;
   startDate: string;
   payments: { number: number; dueDate: string; status: string }[];
+  pixKey?: string;
 }) => {
-  const items = [
-    { label: 'Cliente', value: plan.clientName },
-    { label: 'Valor Total', value: formatCurrency(plan.totalAmount) },
-    { label: 'Parcelas', value: `${plan.installments}x de ${formatCurrency(plan.installmentAmount)}` },
-  ];
-
-  if (plan.discount > 0) {
-    items.push({ label: 'Desconto', value: `${plan.discount}%` });
+  const printWindow = window.open('', '_blank', 'width=500,height=800');
+  if (!printWindow) {
+    alert('Por favor, permita pop-ups para imprimir.');
+    return;
   }
 
-  items.push({ label: 'Início', value: plan.startDate });
-  items.push({ label: '', value: '--- PARCELAS ---' });
-
-  plan.payments.forEach(p => {
-    items.push({
-      label: `Parcela ${p.number}`,
-      value: `${p.dueDate} - ${p.status === 'paid' ? 'PAGO' : 'PENDENTE'}`,
-    });
+  const formattedDate = new Date().toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
   });
 
-  printReceipt({
-    title: 'CARNÊ DE PAGAMENTO',
-    items,
-    footer: 'Mantenha suas parcelas em dia para manter acesso à academia.',
-  });
+  // Generate PIX QR Code data (EMV format simplified)
+  const pixQRData = plan.pixKey ? 
+    `00020126${String(26 + plan.pixKey.length).padStart(2, '0')}0014BR.GOV.BCB.PIX01${String(plan.pixKey.length).padStart(2, '0')}${plan.pixKey}5204000053039865802BR5925FRANCGYMPRO ACADEMIA6009SAO PAULO62070503***6304` : '';
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Carnê - ${plan.clientName}</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          font-family: 'Courier New', monospace;
+          padding: 15px;
+          max-width: 400px;
+          margin: 0 auto;
+        }
+        .header {
+          text-align: center;
+          border-bottom: 2px dashed #000;
+          padding-bottom: 15px;
+          margin-bottom: 15px;
+        }
+        .logo {
+          font-size: 24px;
+          font-weight: bold;
+          color: #f97316;
+        }
+        .title {
+          font-size: 16px;
+          font-weight: bold;
+          margin-top: 8px;
+        }
+        .client-info {
+          background: #f5f5f5;
+          padding: 10px;
+          border-radius: 8px;
+          margin-bottom: 15px;
+        }
+        .client-name {
+          font-size: 14px;
+          font-weight: bold;
+        }
+        .student-id {
+          font-size: 12px;
+          color: #666;
+          margin-top: 4px;
+        }
+        .summary {
+          margin-bottom: 15px;
+          padding: 10px;
+          background: #fff3cd;
+          border-radius: 8px;
+        }
+        .summary-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 12px;
+          padding: 3px 0;
+        }
+        .installments-title {
+          font-weight: bold;
+          font-size: 14px;
+          text-align: center;
+          margin: 15px 0 10px;
+          border-top: 1px dashed #000;
+          padding-top: 10px;
+        }
+        .installment {
+          border: 1px solid #000;
+          margin-bottom: 8px;
+          padding: 8px;
+          border-radius: 5px;
+          page-break-inside: avoid;
+        }
+        .installment-header {
+          display: flex;
+          justify-content: space-between;
+          font-weight: bold;
+          font-size: 12px;
+        }
+        .installment-value {
+          font-size: 16px;
+          font-weight: bold;
+          text-align: center;
+          margin: 5px 0;
+        }
+        .installment-date {
+          font-size: 11px;
+          text-align: center;
+          color: #666;
+        }
+        .status-paid {
+          background: #d4edda;
+          color: #155724;
+        }
+        .status-pending {
+          background: #fff;
+        }
+        .qr-section {
+          text-align: center;
+          margin: 15px 0;
+          padding: 10px;
+          border: 1px dashed #000;
+          border-radius: 8px;
+        }
+        .qr-title {
+          font-size: 12px;
+          font-weight: bold;
+          margin-bottom: 8px;
+        }
+        .qr-code {
+          width: 120px;
+          height: 120px;
+          margin: 0 auto;
+          background: #fff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .pix-key {
+          font-size: 10px;
+          color: #666;
+          margin-top: 8px;
+          word-break: break-all;
+        }
+        .footer {
+          text-align: center;
+          font-size: 10px;
+          color: #666;
+          margin-top: 15px;
+          border-top: 1px dashed #000;
+          padding-top: 10px;
+        }
+        @media print {
+          body { padding: 10px; }
+          .no-print { display: none; }
+          .installment { page-break-inside: avoid; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="logo">FRANCGYMPRO</div>
+        <div class="title">CARNÊ DE PAGAMENTO</div>
+        <div style="font-size: 11px; margin-top: 5px;">Emitido em ${formattedDate}</div>
+      </div>
+
+      <div class="client-info">
+        <div class="client-name">${plan.clientName}</div>
+        ${plan.studentId ? `<div class="student-id">Matrícula: ${plan.studentId}</div>` : ''}
+      </div>
+
+      <div class="summary">
+        <div class="summary-row">
+          <span>Valor Total:</span>
+          <strong>${formatCurrency(plan.totalAmount)}</strong>
+        </div>
+        <div class="summary-row">
+          <span>Parcelas:</span>
+          <span>${plan.installments}x de ${formatCurrency(plan.installmentAmount)}</span>
+        </div>
+        ${plan.discount > 0 ? `
+          <div class="summary-row">
+            <span>Desconto:</span>
+            <span>${plan.discount}%</span>
+          </div>
+        ` : ''}
+        <div class="summary-row">
+          <span>Início:</span>
+          <span>${plan.startDate}</span>
+        </div>
+      </div>
+
+      ${plan.pixKey ? `
+        <div class="qr-section">
+          <div class="qr-title">📱 PAGUE COM PIX</div>
+          <div class="qr-code">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(pixQRData)}" alt="QR Code PIX" />
+          </div>
+          <div class="pix-key">Chave PIX: ${plan.pixKey}</div>
+        </div>
+      ` : ''}
+
+      <div class="installments-title">PARCELAS</div>
+      
+      ${plan.payments.map(p => `
+        <div class="installment ${p.status === 'paid' ? 'status-paid' : 'status-pending'}">
+          <div class="installment-header">
+            <span>Parcela ${p.number}/${plan.installments}</span>
+            <span>${p.status === 'paid' ? '✓ PAGO' : 'PENDENTE'}</span>
+          </div>
+          <div class="installment-value">${formatCurrency(plan.installmentAmount)}</div>
+          <div class="installment-date">Vencimento: ${p.dueDate}</div>
+        </div>
+      `).join('')}
+
+      <div class="footer">
+        Mantenha suas parcelas em dia.<br/>
+        Documento válido como comprovante.
+      </div>
+
+      <div class="no-print" style="text-align: center; margin-top: 20px;">
+        <button onclick="window.print()" style="padding: 10px 20px; cursor: pointer; font-size: 14px;">
+          🖨️ Imprimir Carnê
+        </button>
+      </div>
+    </body>
+    </html>
+  `;
+
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.focus();
+  
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
 };
 
 export const printAccountsReport = (accounts: {

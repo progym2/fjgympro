@@ -25,6 +25,7 @@ interface Client {
   id: string;
   username: string;
   full_name: string | null;
+  student_id: string | null;
 }
 
 interface PaymentPlan {
@@ -78,6 +79,7 @@ const PaymentPlanManager: React.FC = () => {
     discount: '0',
     description: '',
     startDate: format(new Date(), 'yyyy-MM-dd'),
+    pixKey: '',
   });
   
   const [payMethod, setPayMethod] = useState<'cash' | 'pix' | 'card'>('cash');
@@ -115,7 +117,7 @@ const PaymentPlanManager: React.FC = () => {
       // Get profiles that are clients
       const { data: clientsData } = await supabase
         .from('profiles')
-        .select('id, username, full_name, user_id')
+        .select('id, username, full_name, user_id, student_id')
         .in('user_id', clientUserIds)
         .order('full_name');
       
@@ -126,7 +128,7 @@ const PaymentPlanManager: React.FC = () => {
         .from('payment_plans')
         .select(`
           *,
-          client:profiles!payment_plans_client_id_fkey(id, username, full_name)
+          client:profiles!payment_plans_client_id_fkey(id, username, full_name, student_id)
         `)
         .eq('created_by', profile?.profile_id)
         .order('created_at', { ascending: false });
@@ -235,6 +237,7 @@ const PaymentPlanManager: React.FC = () => {
       // Print the payment plan
       printPaymentPlan({
         clientName: client?.full_name || client?.username || '',
+        studentId: client?.student_id || undefined,
         totalAmount: discountedTotal,
         installments,
         installmentAmount,
@@ -245,6 +248,7 @@ const PaymentPlanManager: React.FC = () => {
           dueDate: format(new Date(p.due_date), 'dd/MM/yyyy'),
           status: 'pending',
         })),
+        pixKey: formData.pixKey || undefined,
       });
 
       setShowCreateDialog(false);
@@ -255,6 +259,7 @@ const PaymentPlanManager: React.FC = () => {
         discount: '0',
         description: '',
         startDate: format(new Date(), 'yyyy-MM-dd'),
+        pixKey: '',
       });
       loadData();
     } catch (err) {
@@ -470,6 +475,7 @@ const PaymentPlanManager: React.FC = () => {
                       playClickSound();
                       printPaymentPlan({
                         clientName: plan.client?.full_name || plan.client?.username || '',
+                        studentId: plan.client?.student_id || undefined,
                         totalAmount: plan.total_amount,
                         installments: plan.installments,
                         installmentAmount: plan.installment_amount,
@@ -587,6 +593,18 @@ const PaymentPlanManager: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="bg-background/50"
               />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground">Chave PIX (opcional)</label>
+              <Input
+                placeholder="CPF, CNPJ, email ou chave aleatória"
+                value={formData.pixKey}
+                onChange={(e) => setFormData({ ...formData, pixKey: e.target.value })}
+                className="bg-background/50"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Se informada, será gerado QR Code PIX no carnê
+              </p>
             </div>
             
             {formData.totalAmount && (
