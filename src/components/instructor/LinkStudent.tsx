@@ -42,69 +42,53 @@ const LinkStudent: React.FC = () => {
   const [foundStudent, setFoundStudent] = useState<FoundStudent | null>(null);
   const [error, setError] = useState('');
   
-  // Available clients list
-  const [availableClients, setAvailableClients] = useState<ClientProfile[]>([]);
-  const [loadingClients, setLoadingClients] = useState(false);
-  const [clientLinkStatus, setClientLinkStatus] = useState<Record<string, 'linked' | 'pending' | 'available'>>({});
+  // My linked students list (only show students linked by this instructor)
+  const [myLinkedStudents, setMyLinkedStudents] = useState<ClientProfile[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
 
   useEscapeBack({ to: '/instructor' });
 
-  // Fetch all available clients
+  // Fetch only MY linked students
   useEffect(() => {
-    const fetchAvailableClients = async () => {
+    const fetchMyLinkedStudents = async () => {
       if (!effectiveInstructorId) return;
       
-      setLoadingClients(true);
+      setLoadingStudents(true);
       try {
-        // Get all clients
-        const { data: clients, error: clientsError } = await supabase
-          .from('profiles')
-          .select('id, username, full_name, email, cpf')
-          .order('full_name', { ascending: true });
-
-        if (clientsError) throw clientsError;
-
-        // Get current instructor's links
-        const { data: myLinks } = await supabase
+        // Get only students linked to this instructor
+        const { data: myLinks, error: linksError } = await supabase
           .from('instructor_clients')
-          .select('client_id, link_status')
+          .select(`
+            client_id,
+            link_status,
+            profiles:client_id (
+              id,
+              username,
+              full_name,
+              email,
+              cpf
+            )
+          `)
           .eq('instructor_id', effectiveInstructorId)
           .in('link_status', ['pending', 'accepted'])
           .eq('is_active', true);
 
-        // Get links to other instructors
-        const { data: otherLinks } = await supabase
-          .from('instructor_clients')
-          .select('client_id')
-          .neq('instructor_id', effectiveInstructorId)
-          .eq('link_status', 'accepted')
-          .eq('is_active', true);
+        if (linksError) throw linksError;
 
-        const otherLinkedIds = new Set(otherLinks?.map(l => l.client_id) || []);
-        const myLinkMap = new Map(myLinks?.map(l => [l.client_id, l.link_status]) || []);
+        const students = myLinks?.map(link => ({
+          ...(link.profiles as unknown as ClientProfile),
+          link_status: link.link_status
+        })).filter(s => s.id) || [];
 
-        // Build status map
-        const statusMap: Record<string, 'linked' | 'pending' | 'available'> = {};
-        clients?.forEach(c => {
-          if (myLinkMap.get(c.id) === 'accepted') {
-            statusMap[c.id] = 'linked';
-          } else if (myLinkMap.get(c.id) === 'pending') {
-            statusMap[c.id] = 'pending';
-          } else if (!otherLinkedIds.has(c.id)) {
-            statusMap[c.id] = 'available';
-          }
-        });
-
-        setAvailableClients(clients || []);
-        setClientLinkStatus(statusMap);
+        setMyLinkedStudents(students);
       } catch (err) {
-        console.error('Error fetching clients:', err);
+        console.error('Error fetching my students:', err);
       } finally {
-        setLoadingClients(false);
+        setLoadingStudents(false);
       }
     };
 
-    fetchAvailableClients();
+    fetchMyLinkedStudents();
   }, [effectiveInstructorId]);
 
   const formatCpf = (value: string) => {
@@ -250,8 +234,8 @@ const LinkStudent: React.FC = () => {
       toast.success('Solicitação enviada! Aguardando confirmação do aluno.');
       playClickSound();
       
-      // Update local state
-      setClientLinkStatus(prev => ({ ...prev, [foundStudent.id]: 'pending' }));
+      // Refresh linked students list
+      setMyLinkedStudents(prev => [...prev, { ...foundStudent, link_status: 'pending' } as any]);
       setFoundStudent(null);
     } catch (err: any) {
       console.error('Link error:', err);
@@ -265,18 +249,15 @@ const LinkStudent: React.FC = () => {
     }
   };
 
-  const getStatusBadge = (clientId: string) => {
-    const status = clientLinkStatus[clientId];
-    if (status === 'linked') {
+  const getStatusBadge = (student: any) => {
+    const status = student.link_status;
+    if (status === 'accepted') {
       return <span className="text-xs bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full">Vinculado</span>;
     }
     if (status === 'pending') {
       return <span className="text-xs bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded-full">Pendente</span>;
     }
-    if (status === 'available') {
-      return <span className="text-xs bg-blue-500/20 text-blue-500 px-2 py-0.5 rounded-full">Disponível</span>;
-    }
-    return <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">Vinculado a outro</span>;
+    return null;
   };
 
   return (
@@ -305,11 +286,11 @@ const LinkStudent: React.FC = () => {
           <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="list" className="gap-1 text-xs">
               <Users className="w-3 h-3" />
-              Lista
+              Meus Alunos
             </TabsTrigger>
             <TabsTrigger value="username" className="gap-1 text-xs">
               <Search className="w-3 h-3" />
-              Usuário
+              Buscar
             </TabsTrigger>
             <TabsTrigger value="cpf" className="gap-1 text-xs">
               <CreditCard className="w-3 h-3" />
@@ -321,43 +302,44 @@ const LinkStudent: React.FC = () => {
             </TabsTrigger>
           </TabsList>
           
-          {/* List of all clients */}
+          {/* List of MY linked students only */}
           <TabsContent value="list" className="mt-0">
             <p className="text-sm text-muted-foreground mb-3">
-              Selecione um aluno da lista para vincular:
+              Seus alunos vinculados:
             </p>
-            {loadingClients ? (
+            {loadingStudents ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-green-500" />
               </div>
-            ) : availableClients.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                Nenhum cliente cadastrado.
-              </p>
+            ) : myLinkedStudents.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>Você ainda não tem alunos vinculados.</p>
+                <p className="text-sm mt-1">Use as abas acima para buscar e vincular novos alunos.</p>
+              </div>
             ) : (
               <ScrollArea className="h-[300px] rounded-lg border border-border/50">
                 <div className="p-2 space-y-1">
-                  {availableClients.map((client) => (
-                    <button
-                      key={client.id}
-                      onClick={() => handleSelectFromList(client)}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors text-left"
+                  {myLinkedStudents.map((student: any) => (
+                    <div
+                      key={student.id}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-accent/30 text-left"
                     >
                       <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center justify-center flex-shrink-0">
                         <span className="text-sm font-bebas text-green-500">
-                          {(client.full_name || client.username).charAt(0).toUpperCase()}
+                          {(student.full_name || student.username).charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">
-                          {client.full_name || client.username}
+                          {student.full_name || student.username}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
-                          @{client.username} {client.cpf && `• ${client.cpf}`}
+                          @{student.username} {student.cpf && `• ${student.cpf}`}
                         </p>
                       </div>
-                      {getStatusBadge(client.id)}
-                    </button>
+                      {getStatusBadge(student)}
+                    </div>
                   ))}
                 </div>
               </ScrollArea>
