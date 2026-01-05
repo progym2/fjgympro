@@ -530,10 +530,20 @@ serve(async (req: Request): Promise<Response> => {
         
         const licenseType = is30MinAccount ? "demo" : (preGenAccount.account_type === "trial" ? "trial" : "full");
         
-        // DEMO and ADMIN demo accounts get 30 minutes, others use license_duration_days
-        const durationMs = is30MinAccount 
-          ? 30 * 60 * 1000 // 30 minutes
-          : preGenAccount.license_duration_days * 24 * 60 * 60 * 1000;
+        // Calculate duration:
+        // - Negative values = minutes (e.g., -30 = 30 minutes)
+        // - Positive values = days (e.g., 7 = 7 days)
+        // - DEMO and ADMIN demo accounts always get 30 minutes
+        let durationMs: number;
+        if (is30MinAccount) {
+          durationMs = 30 * 60 * 1000; // 30 minutes
+        } else if (preGenAccount.license_duration_days < 0) {
+          // Negative value = minutes
+          durationMs = Math.abs(preGenAccount.license_duration_days) * 60 * 1000;
+        } else {
+          // Positive value = days
+          durationMs = preGenAccount.license_duration_days * 24 * 60 * 60 * 1000;
+        }
         const expiresAt = new Date(now.getTime() + durationMs);
 
         const { data: newLicense } = await supabaseAdmin

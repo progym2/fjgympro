@@ -61,12 +61,13 @@ interface ActiveAccountWithProfile extends PreGeneratedAccount {
 
 type AccountType = 'client' | 'instructor' | 'admin' | 'trial';
 
-// Opções de tempo de expiração
+// Opções de tempo de expiração (em minutos para valores < 1 dia, senão em dias)
+// Armazenamos como minutos negativos para diferenciar de dias
 const EXPIRATION_OPTIONS = [
-  { value: '0.02', label: '30 minutos', prefix: 'T30M' },
-  { value: '0.04', label: '1 hora', prefix: 'T1H' },
-  { value: '7', label: '7 dias', prefix: 'T7D' },
-  { value: '30', label: '30 dias', prefix: 'T30D' },
+  { value: '-30', label: '30 minutos', isMinutes: true },
+  { value: '-60', label: '1 hora', isMinutes: true },
+  { value: '7', label: '7 dias', isMinutes: false },
+  { value: '30', label: '30 dias', isMinutes: false },
 ];
 
 const ACCOUNT_TYPE_OPTIONS: { value: AccountType; label: string }[] = [
@@ -85,7 +86,7 @@ const PreGeneratedAccounts: React.FC = () => {
   const [activeAccounts, setActiveAccounts] = useState<ActiveAccountWithProfile[]>([]);
   const [activeTab, setActiveTab] = useState('client');
   const [activeAccountsLoading, setActiveAccountsLoading] = useState(false);
-  const [quickExpiration, setQuickExpiration] = useState('0.02');
+  const [quickExpiration, setQuickExpiration] = useState('-30');
   const [quickQuantity, setQuickQuantity] = useState('10');
   const [quickPrefix, setQuickPrefix] = useState('TESTE');
   
@@ -321,8 +322,14 @@ const PreGeneratedAccounts: React.FC = () => {
 
     try {
       const quantity = parseInt(quickQuantity) || 10;
-      const duration = parseFloat(quickExpiration);
+      const durationValue = parseInt(quickExpiration);
       const prefix = quickPrefix.trim() || 'TESTE';
+      
+      // Valores negativos são minutos, positivos são dias
+      // Para armazenar no banco (que aceita apenas int), usamos:
+      // - Valores negativos para minutos (ex: -30 = 30 minutos)
+      // - Valores positivos para dias (ex: 7 = 7 dias)
+      const storedDuration = durationValue;
 
       const newAccounts = [];
       for (let i = 1; i <= quantity; i++) {
@@ -332,7 +339,7 @@ const PreGeneratedAccounts: React.FC = () => {
           username,
           license_key: licenseKey,
           account_type: 'trial' as const,
-          license_duration_days: duration,
+          license_duration_days: storedDuration,
           is_used: false,
         });
       }
