@@ -202,7 +202,20 @@ const RegisterClient: React.FC = () => {
   };
 
   const handlePayment = async (method: 'cash' | 'pix' | 'card') => {
-    if (!enrollmentResult) return;
+    if (!enrollmentResult || processingPayment) return;
+    
+    // Check if payment already registered to prevent duplicates
+    const { data: existingPayment } = await supabase
+      .from('payments')
+      .select('id')
+      .eq('client_id', enrollmentResult.profileId)
+      .eq('description', 'Primeira mensalidade')
+      .maybeSingle();
+    
+    if (existingPayment) {
+      toast.info('Pagamento já foi registrado!');
+      return;
+    }
     
     setProcessingPayment(true);
     setPaymentData(prev => ({ ...prev, method }));

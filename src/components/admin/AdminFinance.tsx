@@ -88,14 +88,24 @@ const AdminFinance: React.FC = () => {
 
       const { data: payments } = await paymentsQuery;
 
-      const paymentsWithClients = (payments || []).map((p: any) => ({
+      // Deduplicate payments by client_id + description + amount + date (same day)
+      const seenPayments = new Set<string>();
+      const uniquePayments = (payments || []).filter((p: any) => {
+        const dateKey = p.paid_at ? p.paid_at.split('T')[0] : (p.due_date || p.created_at?.split('T')[0]);
+        const key = `${p.client_id}-${p.description}-${p.amount}-${dateKey}`;
+        if (seenPayments.has(key)) return false;
+        seenPayments.add(key);
+        return true;
+      });
+
+      const paymentsWithClients = uniquePayments.map((p: any) => ({
         ...p,
         client: p.profiles ? { full_name: p.profiles.full_name, username: p.profiles.username } : undefined,
       }));
 
       setRecentPayments(paymentsWithClients.slice(0, 10));
 
-      // Calculate stats
+      // Calculate stats using unique payments
       const total = paymentsWithClients.filter((p: any) => p.status !== 'cancelled').reduce((sum: number, p: any) => sum + p.amount, 0);
       const paid = paymentsWithClients.filter((p: any) => p.status === 'paid').reduce((sum: number, p: any) => sum + p.amount, 0);
       const pending = paymentsWithClients.filter((p: any) => p.status === 'pending').reduce((sum: number, p: any) => sum + p.amount, 0);
