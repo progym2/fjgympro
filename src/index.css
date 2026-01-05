@@ -359,7 +359,8 @@
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -368,11 +369,58 @@
 
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--muted));
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary));
+}
+
+/* Optimized scroll behavior */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  overscroll-behavior-y: contain;
+}
+
+/* GPU-accelerated scroll containers */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  will-change: scroll-position;
+}
+
+/* Smooth panel scrolling */
+.panel-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted)) transparent;
+}
+
+/* Hide scrollbar on mobile but keep functionality */
+@media (max-width: 640px) {
+  .hide-scrollbar-mobile {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .hide-scrollbar-mobile::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Momentum scrolling for touch devices */
+.momentum-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 /* Safe area for mobile devices */
@@ -398,4 +446,9 @@
     border-color var(--theme-animation-speed, 0.3s) ease,
     color var(--theme-animation-speed, 0.3s) ease,
     box-shadow var(--theme-animation-speed, 0.3s) ease;
+}
+
+/* Prevent layout shift during scroll */
+.stable-scroll {
+  contain: layout style;
 }
