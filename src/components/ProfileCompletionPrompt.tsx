@@ -21,7 +21,7 @@ const MAX_DISMISS_COUNT = 3; // Máximo de vezes que pode fechar antes de bloque
 
 const ProfileCompletionPromptInner: React.FC<ProfileCompletionPromptProps> = memo(({ 
   onComplete,
-  delaySeconds = 30 
+  delaySeconds = 180 // 3 minutes default for clients and instructors
 }) => {
   const { profile, user, role } = useAuth();
   const navigate = useNavigate();
