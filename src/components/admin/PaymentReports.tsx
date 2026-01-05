@@ -1,23 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, BarChart3, TrendingUp, Calendar, Filter,
   Loader2, DollarSign, AlertTriangle, CheckCircle, Clock,
-  Download, Bell, Percent
+  Download, Bell, Percent, MessageCircle, User, CreditCard,
+  Banknote, Smartphone, Search, Send
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/printUtils';
 import { format, startOfMonth, endOfMonth, subMonths, differenceInDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 interface PaymentData {
   id: string;
@@ -27,7 +29,8 @@ interface PaymentData {
   paid_at: string | null;
   late_fee: number | null;
   payment_method: string | null;
-  client: { full_name: string; username: string } | null;
+  client_id: string;
+  client: { full_name: string; username: string; phone: string | null } | null;
 }
 
 interface MonthlyStats {
@@ -38,8 +41,16 @@ interface MonthlyStats {
   lateFees: number;
 }
 
-const LATE_FEE_PERCENTAGE = 2; // 2% per day late
-const MAX_LATE_FEE_PERCENTAGE = 20; // Maximum 20% late fee
+interface ClientOption {
+  id: string;
+  full_name: string;
+  username: string;
+  phone: string | null;
+}
+
+const LATE_FEE_PERCENTAGE = 2;
+const MAX_LATE_FEE_PERCENTAGE = 20;
+const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#6366f1'];
 
 const PaymentReports: React.FC = () => {
   const navigate = useNavigate();
@@ -49,15 +60,19 @@ const PaymentReports: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<PaymentData[]>([]);
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
+  const [clients, setClients] = useState<ClientOption[]>([]);
 
-  // ESC para voltar ao menu admin
-  useEscapeBack({ to: '/admin' });
+  // Filters
   const [selectedPeriod, setSelectedPeriod] = useState('3');
+  const [selectedClient, setSelectedClient] = useState('all');
+  const [selectedMethod, setSelectedMethod] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+
   const [sendingReminders, setSendingReminders] = useState(false);
 
-  const isMaster = role === 'master';
+  useEscapeBack({ to: '/admin' });
 
-  const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#6366f1'];
+  const isMaster = role === 'master';
 
   useEffect(() => {
     loadReports();
@@ -80,7 +95,6 @@ const PaymentReports: React.FC = () => {
       const months = parseInt(selectedPeriod);
       const startDate = startOfMonth(subMonths(new Date(), months - 1));
       
-      // Get profile IDs if not master
       let myProfileIds: string[] = [];
       if (!isMaster && profile?.profile_id) {
         const { data: myProfiles } = await supabase
@@ -94,7 +108,7 @@ const PaymentReports: React.FC = () => {
         .from('payments')
         .select(`
           id, amount, status, due_date, paid_at, late_fee, payment_method, client_id,
-          profiles!payments_client_id_fkey (full_name, username)
+          profiles!payments_client_id_fkey (full_name, username, phone)
         `)
         .gte('created_at', startDate.toISOString())
         .order('created_at', { ascending: false });
@@ -108,10 +122,28 @@ const PaymentReports: React.FC = () => {
 
       const paymentsData = (data || []).map((p: any) => ({
         ...p,
-        client: p.profiles ? { full_name: p.profiles.full_name, username: p.profiles.username } : null,
+        client: p.profiles ? { 
+          full_name: p.profiles.full_name, 
+          username: p.profiles.username,
+          phone: p.profiles.phone 
+        } : null,
       }));
 
       setPayments(paymentsData);
+
+      // Extract unique clients
+      const uniqueClients = new Map<string, ClientOption>();
+      paymentsData.forEach((p: PaymentData) => {
+        if (p.client && !uniqueClients.has(p.client_id)) {
+          uniqueClients.set(p.client_id, {
+            id: p.client_id,
+            full_name: p.client.full_name,
+            username: p.client.username,
+            phone: p.client.phone
+          });
+        }
+      });
+      setClients(Array.from(uniqueClients.values()));
 
       // Calculate monthly stats
       const stats: MonthlyStats[] = [];
@@ -155,12 +187,70 @@ const PaymentReports: React.FC = () => {
     }
   };
 
+  // Filtered payments
+  const filteredPayments = useMemo(() => {
+    return payments.filter(p => {
+      const matchesClient = selectedClient === 'all' || p.client_id === selectedClient;
+      const matchesMethod = selectedMethod === 'all' || p.payment_method === selectedMethod;
+      const matchesSearch = !searchTerm || 
+        p.client?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.client?.username?.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesClient && matchesMethod && matchesSearch;
+    });
+  }, [payments, selectedClient, selectedMethod, searchTerm]);
+
+  const sendWhatsAppReminder = (phone: string | null, clientName: string, amount: number, daysLate: number) => {
+    if (!phone) {
+      toast.error('Cliente sem telefone cadastrado');
+      return;
+    }
+    
+    const cleanPhone = phone.replace(/\D/g, '');
+    const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+    const lateFee = calculateLateFee(new Date().toISOString(), amount);
+    const total = amount + lateFee;
+    
+    const message = encodeURIComponent(
+      `Olá ${clientName}! 👋\n\n` +
+      `Identificamos que seu pagamento está em atraso há ${daysLate} dia(s).\n\n` +
+      `💰 Valor original: ${formatCurrency(amount)}\n` +
+      `📈 Juros acumulados: ${formatCurrency(lateFee)}\n` +
+      `💵 *Total a pagar: ${formatCurrency(total)}*\n\n` +
+      `Por favor, regularize seu pagamento o mais breve possível.\n\n` +
+      `Qualquer dúvida, estamos à disposição! 🏋️`
+    );
+    
+    window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
+    toast.success('WhatsApp aberto para envio!');
+  };
+
+  const sendBulkWhatsAppReminders = () => {
+    playClickSound();
+    const overduePayments = filteredPayments.filter(p => 
+      p.status === 'pending' && p.due_date && parseISO(p.due_date) < new Date() && p.client?.phone
+    );
+
+    if (overduePayments.length === 0) {
+      toast.error('Nenhum cliente inadimplente com telefone cadastrado');
+      return;
+    }
+
+    // Open first one and show count
+    const first = overduePayments[0];
+    const daysLate = differenceInDays(new Date(), parseISO(first.due_date!));
+    sendWhatsAppReminder(first.client?.phone || null, first.client?.full_name || 'Cliente', first.amount, daysLate);
+    
+    if (overduePayments.length > 1) {
+      toast.info(`Mais ${overduePayments.length - 1} cliente(s) para enviar mensagem`);
+    }
+  };
+
   const sendOverdueReminders = async () => {
     playClickSound();
     setSendingReminders(true);
 
     try {
-      const overduePayments = payments.filter(p => 
+      const overduePayments = filteredPayments.filter(p => 
         p.status === 'pending' && p.due_date && parseISO(p.due_date) < new Date()
       );
 
@@ -173,17 +263,15 @@ const PaymentReports: React.FC = () => {
         const lateFee = calculateLateFee(payment.due_date!, payment.amount);
         const totalDue = payment.amount + lateFee;
 
-        // Update late fee in database
         await supabase
           .from('payments')
           .update({ late_fee: lateFee })
           .eq('id', payment.id);
 
-        // Get client profile_id
         const { data: clientProfile } = await supabase
           .from('profiles')
           .select('id')
-          .or(`full_name.eq.${payment.client.full_name},username.eq.${payment.client.username}`)
+          .eq('full_name', payment.client.full_name)
           .single();
 
         if (clientProfile) {
@@ -192,7 +280,7 @@ const PaymentReports: React.FC = () => {
             .insert({
               profile_id: clientProfile.id,
               title: '⚠️ Pagamento em Atraso',
-              message: `Seu pagamento de ${formatCurrency(payment.amount)} está ${daysLate} dia(s) em atraso. Juros acumulados: ${formatCurrency(lateFee)}. Total a pagar: ${formatCurrency(totalDue)}. Regularize sua situação para evitar mais encargos.`,
+              message: `Seu pagamento de ${formatCurrency(payment.amount)} está ${daysLate} dia(s) em atraso. Juros: ${formatCurrency(lateFee)}. Total: ${formatCurrency(totalDue)}.`,
               type: 'payment_reminder',
             });
         }
@@ -212,7 +300,7 @@ const PaymentReports: React.FC = () => {
     playClickSound();
     
     try {
-      const overduePayments = payments.filter(p => 
+      const overduePayments = filteredPayments.filter(p => 
         p.status === 'pending' && p.due_date && parseISO(p.due_date) < new Date()
       );
 
@@ -237,22 +325,20 @@ const PaymentReports: React.FC = () => {
     }
   };
 
-  // Summary calculations
-  const totalReceived = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
-  const totalPending = payments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.amount, 0);
-  const totalOverdue = payments.filter(p => p.status === 'pending' && p.due_date && parseISO(p.due_date) < new Date()).reduce((sum, p) => sum + p.amount, 0);
-  const totalLateFees = payments.reduce((sum, p) => sum + (p.late_fee || 0), 0);
-  const overdueCount = payments.filter(p => p.status === 'pending' && p.due_date && parseISO(p.due_date) < new Date()).length;
+  // Summary calculations with filters
+  const totalReceived = filteredPayments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
+  const totalPending = filteredPayments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.amount, 0);
+  const totalOverdue = filteredPayments.filter(p => p.status === 'pending' && p.due_date && parseISO(p.due_date) < new Date()).reduce((sum, p) => sum + p.amount, 0);
+  const totalLateFees = filteredPayments.reduce((sum, p) => sum + (p.late_fee || 0), 0);
+  const overdueCount = filteredPayments.filter(p => p.status === 'pending' && p.due_date && parseISO(p.due_date) < new Date()).length;
 
-  // Pie chart data
   const pieData = [
     { name: 'Recebido', value: totalReceived },
     { name: 'Pendente', value: totalPending - totalOverdue },
     { name: 'Em Atraso', value: totalOverdue },
   ].filter(d => d.value > 0);
 
-  // Payment method distribution
-  const methodStats = payments
+  const methodStats = filteredPayments
     .filter(p => p.status === 'paid')
     .reduce((acc: Record<string, number>, p) => {
       const method = p.payment_method || 'pending';
@@ -264,6 +350,14 @@ const PaymentReports: React.FC = () => {
     name: name === 'cash' ? 'Dinheiro' : name === 'pix' ? 'PIX' : name === 'card' ? 'Cartão' : 'Outro',
     value,
   }));
+
+  const getMethodIcon = (method: string | null) => {
+    switch (method) {
+      case 'pix': return <Smartphone size={14} className="text-green-500" />;
+      case 'card': return <CreditCard size={14} className="text-blue-500" />;
+      default: return <Banknote size={14} className="text-emerald-500" />;
+    }
+  };
 
   if (loading) {
     return (
@@ -288,11 +382,19 @@ const PaymentReports: React.FC = () => {
             RELATÓRIO DE PAGAMENTOS
           </h2>
         </div>
-        
-        <div className="flex items-center gap-2">
+      </div>
+
+      {/* Filters */}
+      <div className="bg-card/80 backdrop-blur-md rounded-xl p-4 border border-border/50">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Filter size={16} className="text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Filtros:</span>
+          </div>
+          
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-36 bg-background/50">
-              <Filter size={14} className="mr-1" />
+            <SelectTrigger className="w-32 bg-background/50">
+              <Calendar size={14} className="mr-1" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -302,6 +404,42 @@ const PaymentReports: React.FC = () => {
               <SelectItem value="12">12 meses</SelectItem>
             </SelectContent>
           </Select>
+
+          <Select value={selectedClient} onValueChange={setSelectedClient}>
+            <SelectTrigger className="w-44 bg-background/50">
+              <User size={14} className="mr-1" />
+              <SelectValue placeholder="Todos clientes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os clientes</SelectItem>
+              {clients.map(c => (
+                <SelectItem key={c.id} value={c.id}>{c.full_name || c.username}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedMethod} onValueChange={setSelectedMethod}>
+            <SelectTrigger className="w-36 bg-background/50">
+              <CreditCard size={14} className="mr-1" />
+              <SelectValue placeholder="Método" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos métodos</SelectItem>
+              <SelectItem value="cash">Dinheiro</SelectItem>
+              <SelectItem value="pix">PIX</SelectItem>
+              <SelectItem value="card">Cartão</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="relative flex-1 min-w-48">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar cliente..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-background/50"
+            />
+          </div>
         </div>
       </div>
 
@@ -361,11 +499,19 @@ const PaymentReports: React.FC = () => {
             <div>
               <p className="font-semibold text-red-400">Pagamentos em Atraso</p>
               <p className="text-sm text-muted-foreground">
-                {overdueCount} pagamento(s) em atraso. Taxa de juros: {LATE_FEE_PERCENTAGE}% ao dia (máx. {MAX_LATE_FEE_PERCENTAGE}%)
+                {overdueCount} pagamento(s) em atraso. Taxa: {LATE_FEE_PERCENTAGE}% ao dia (máx. {MAX_LATE_FEE_PERCENTAGE}%)
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-green-500/50 text-green-400 hover:bg-green-500/10"
+              onClick={sendBulkWhatsAppReminders}
+            >
+              <MessageCircle size={14} className="mr-1" /> WhatsApp
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -396,6 +542,7 @@ const PaymentReports: React.FC = () => {
           <TabsTrigger value="monthly">Evolução Mensal</TabsTrigger>
           <TabsTrigger value="distribution">Distribuição</TabsTrigger>
           <TabsTrigger value="methods">Formas de Pagamento</TabsTrigger>
+          <TabsTrigger value="list">Lista Detalhada</TabsTrigger>
         </TabsList>
 
         <TabsContent value="monthly">
@@ -488,6 +635,91 @@ const PaymentReports: React.FC = () => {
             </div>
           </div>
         </TabsContent>
+
+        <TabsContent value="list">
+          <div className="bg-card/80 backdrop-blur-md rounded-xl border border-border/50 overflow-hidden">
+            <div className="p-4 border-b border-border/50">
+              <h3 className="font-bebas text-lg">LISTA DE PAGAMENTOS ({filteredPayments.length})</h3>
+            </div>
+            <div className="divide-y divide-border/50 max-h-96 overflow-y-auto">
+              {filteredPayments.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <DollarSign className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>Nenhum pagamento encontrado com os filtros selecionados</p>
+                </div>
+              ) : (
+                filteredPayments.slice(0, 50).map((payment) => {
+                  const isOverdue = payment.status === 'pending' && payment.due_date && parseISO(payment.due_date) < new Date();
+                  const daysLate = payment.due_date ? differenceInDays(new Date(), parseISO(payment.due_date)) : 0;
+                  const lateFee = isOverdue ? calculateLateFee(payment.due_date!, payment.amount) : 0;
+                  
+                  return (
+                    <div key={payment.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-background/30">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          payment.status === 'paid' ? 'bg-green-500/20' : isOverdue ? 'bg-red-500/20' : 'bg-yellow-500/20'
+                        }`}>
+                          {payment.status === 'paid' ? (
+                            <CheckCircle size={18} className="text-green-500" />
+                          ) : isOverdue ? (
+                            <AlertTriangle size={18} className="text-red-500" />
+                          ) : (
+                            <Clock size={18} className="text-yellow-500" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-semibold">{payment.client?.full_name || 'Cliente'}</p>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            {payment.paid_at ? (
+                              <span>Pago em {format(parseISO(payment.paid_at), 'dd/MM/yyyy')}</span>
+                            ) : payment.due_date ? (
+                              <span className={isOverdue ? 'text-red-400' : ''}>
+                                Vence em {format(parseISO(payment.due_date), 'dd/MM/yyyy')}
+                                {isOverdue && ` (${daysLate} dias atraso)`}
+                              </span>
+                            ) : null}
+                            {payment.payment_method && (
+                              <span className="flex items-center gap-1">
+                                {getMethodIcon(payment.payment_method)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className={`font-bebas text-lg ${
+                            payment.status === 'paid' ? 'text-green-500' : isOverdue ? 'text-red-500' : 'text-yellow-500'
+                          }`}>
+                            {formatCurrency(payment.amount + lateFee)}
+                          </p>
+                          {lateFee > 0 && (
+                            <p className="text-xs text-red-400">+{formatCurrency(lateFee)} juros</p>
+                          )}
+                        </div>
+                        {isOverdue && payment.client?.phone && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-green-500 hover:bg-green-500/10"
+                            onClick={() => sendWhatsAppReminder(
+                              payment.client?.phone || null, 
+                              payment.client?.full_name || 'Cliente', 
+                              payment.amount, 
+                              daysLate
+                            )}
+                          >
+                            <MessageCircle size={18} />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </TabsContent>
       </Tabs>
 
       {/* Recent Overdue List */}
@@ -498,7 +730,7 @@ const PaymentReports: React.FC = () => {
             <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded-full">{overdueCount} pagamento(s)</span>
           </div>
           <div className="divide-y divide-border/50 max-h-64 overflow-y-auto">
-            {payments
+            {filteredPayments
               .filter(p => p.status === 'pending' && p.due_date && parseISO(p.due_date) < new Date())
               .slice(0, 10)
               .map((payment) => {
@@ -514,12 +746,29 @@ const PaymentReports: React.FC = () => {
                         Venceu em {format(parseISO(payment.due_date!), 'dd/MM/yyyy')} ({daysLate} dias)
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground line-through">{formatCurrency(payment.amount)}</p>
-                      <p className="font-bebas text-lg text-red-400">
-                        {formatCurrency(totalDue)}
-                        <span className="text-xs ml-1">(+{formatCurrency(lateFee)} juros)</span>
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground line-through">{formatCurrency(payment.amount)}</p>
+                        <p className="font-bebas text-lg text-red-400">
+                          {formatCurrency(totalDue)}
+                          <span className="text-xs ml-1">(+{formatCurrency(lateFee)} juros)</span>
+                        </p>
+                      </div>
+                      {payment.client?.phone && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-green-500 hover:bg-green-500/10"
+                          onClick={() => sendWhatsAppReminder(
+                            payment.client?.phone || null, 
+                            payment.client?.full_name || 'Cliente', 
+                            payment.amount, 
+                            daysLate
+                          )}
+                        >
+                          <MessageCircle size={18} />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 );
