@@ -51,7 +51,7 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-[9999] bg-gradient-to-b from-background via-background to-primary/20 flex items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
         >
           {/* Loading indicator while video loads */}
           {!isLoaded && (
@@ -60,7 +60,7 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
             </div>
           )}
 
-          {/* Video (sem zoom) + corte inferior para esconder marca d'água */}
+          {/* Video - object-contain to avoid zoom */}
           <video
             ref={videoRef}
             autoPlay
@@ -70,8 +70,6 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
             onEnded={handleVideoEnd}
             onError={handleVideoError}
             onCanPlay={handleCanPlay}
-            // Ajuste a % se ainda aparecer a marca (ex.: 12% / 15%)
-            style={{ clipPath: 'inset(0 0 10% 0)' }}
             className={`w-full h-full object-contain transition-opacity duration-300 ${
               isLoaded ? 'opacity-100' : 'opacity-0'
             }`}
