@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Dumbbell, Shield, Info, Search } from 'lucide-react';
 
-import SplashScreen from '@/components/SplashScreen';
 import DigitalClock from '@/components/DigitalClock';
 import GymButton from '@/components/GymButton';
 import AppFooter from '@/components/AppFooter';
@@ -19,14 +18,7 @@ import { useAudio } from '@/contexts/AudioContext';
 
 import bgHome from '@/assets/bg-home.png';
 
-// Chave para persistir se é primeira visita (localStorage = permanente)
-const FIRST_VISIT_KEY = 'francgym_first_visit_complete';
-
 const Home: React.FC = () => {
-  // Splash só aparece na PRIMEIRA visita do dispositivo (localStorage)
-  const [showSplash, setShowSplash] = useState(() => {
-    return !localStorage.getItem(FIRST_VISIT_KEY);
-  });
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false);
   const [selectedPanel, setSelectedPanel] = useState<'client' | 'instructor' | 'admin'>('client');
@@ -38,23 +30,12 @@ const Home: React.FC = () => {
   // Marcar que está na tela inicial
   useEffect(() => {
     setOnHomeScreen(true);
-    
-    // Se não tem splash, marcar como completo imediatamente
-    if (!showSplash) {
-      setSplashComplete(true);
-    }
+    setSplashComplete(true);
     
     return () => {
       setOnHomeScreen(false);
     };
-  }, [setOnHomeScreen, setSplashComplete, showSplash]);
-
-  const handleSplashComplete = () => {
-    setShowSplash(false);
-    setSplashComplete(true);
-    // Marca que a primeira visita foi concluída (permanente)
-    localStorage.setItem(FIRST_VISIT_KEY, 'true');
-  };
+  }, [setOnHomeScreen, setSplashComplete]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -77,7 +58,6 @@ const Home: React.FC = () => {
   const handlePanelClick = (panel: 'client' | 'instructor' | 'admin') => {
     playClickSound();
     setSelectedPanel(panel);
-    // Parar música imediatamente ao abrir login
     stopMusicImmediately();
     setLoginDialogOpen(true);
   };
@@ -85,7 +65,6 @@ const Home: React.FC = () => {
   const handleLoginSuccess = (role: string) => {
     setLoginDialogOpen(false);
 
-    // Navegar diretamente para o painel correspondente
     if (role === 'master') {
       navigate('/select-panel');
     } else if (role === 'admin') {
@@ -97,13 +76,9 @@ const Home: React.FC = () => {
     }
   };
 
-  if (showSplash) {
-    return <SplashScreen onComplete={handleSplashComplete} />;
-  }
-
   return (
     <div
-      className="h-screen h-[100dvh] relative overflow-hidden"
+      className="h-[100dvh] relative overflow-hidden touch-pan-y"
       onClick={tryAutoPlay}
       onTouchStart={tryAutoPlay}
       style={{
@@ -119,7 +94,10 @@ const Home: React.FC = () => {
       <ParticlesBackground />
 
       {/* Content */}
-      <div className="relative z-10 h-full flex flex-col px-3 sm:px-4 overflow-hidden safe-area-inset">
+      <div className="relative z-10 h-full flex flex-col px-3 sm:px-4 overflow-hidden">
+        {/* Safe area top padding */}
+        <div className="pt-safe" />
+        
         {/* Header with Logo */}
         <header className="pt-3 sm:pt-4 md:pt-6 flex-shrink-0">
           <div className="flex justify-center">
@@ -128,7 +106,7 @@ const Home: React.FC = () => {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col items-center justify-center gap-4 sm:gap-6 md:gap-8 py-2 sm:py-4">
+        <main className="flex-1 flex flex-col items-center justify-center gap-4 sm:gap-6 md:gap-8 py-2 sm:py-4 min-h-0">
           {/* Digital Clock */}
           <DigitalClock />
 
@@ -141,14 +119,14 @@ const Home: React.FC = () => {
         </main>
 
         {/* Theme Selector - top left */}
-        <div className="fixed top-3 left-3 sm:top-4 sm:left-4 z-50">
+        <div className="fixed top-3 left-3 sm:top-4 sm:left-4 z-50 pt-safe pl-safe">
           <SportThemeSelector compact />
         </div>
 
         {/* Consulta Aluno Button - bottom left */}
         <button
           onClick={() => { playClickSound(); navigate('/consulta-aluno'); }}
-          className="fixed bottom-20 left-3 sm:bottom-24 sm:left-4 z-50 p-2 sm:p-2.5 rounded-full bg-card/40 backdrop-blur-md border border-border/50 text-muted-foreground hover:text-green-500 hover:border-green-500/50 transition-all shadow-md hover:scale-105 active:scale-95"
+          className="fixed bottom-20 left-3 sm:bottom-24 sm:left-4 z-50 p-2 sm:p-2.5 rounded-full bg-card/40 backdrop-blur-md border border-border/50 text-muted-foreground hover:text-green-500 hover:border-green-500/50 transition-all shadow-md"
           aria-label="Consultar aluno"
         >
           <Search size={16} className="sm:w-[18px] sm:h-[18px]" />
@@ -158,7 +136,7 @@ const Home: React.FC = () => {
         {/* About Button - discreet corner */}
         <button
           onClick={() => setAboutDialogOpen(true)}
-          className="fixed top-3 right-3 sm:top-4 sm:right-4 z-50 p-2 sm:p-2.5 rounded-full bg-card/40 backdrop-blur-md border border-border/50 text-muted-foreground hover:text-primary hover:border-primary/50 transition-all shadow-md hover:scale-105 active:scale-95"
+          className="fixed top-3 right-3 sm:top-4 sm:right-4 z-50 p-2 sm:p-2.5 rounded-full bg-card/40 backdrop-blur-md border border-border/50 text-muted-foreground hover:text-primary hover:border-primary/50 transition-all shadow-md pt-safe pr-safe"
           aria-label="Sobre o aplicativo"
         >
           <Info size={16} className="sm:w-[18px] sm:h-[18px]" />
@@ -173,6 +151,9 @@ const Home: React.FC = () => {
 
         {/* Footer */}
         <AppFooter />
+        
+        {/* Safe area bottom padding */}
+        <div className="pb-safe" />
       </div>
 
       {/* Dialogs */}
@@ -191,4 +172,3 @@ const Home: React.FC = () => {
 };
 
 export default Home;
-

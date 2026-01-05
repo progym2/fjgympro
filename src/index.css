@@ -63,11 +63,29 @@
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    height: 100%;
+    overflow: hidden;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  #root {
+    height: 100%;
+    overflow: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -78,6 +96,35 @@
   .font-bebas {
     font-family: 'Bebas Neue', sans-serif;
   }
+
+  /* Prevent zoom on input focus (iOS) */
+  input, textarea, select {
+    font-size: 16px;
+  }
+}
+
+/* Mobile viewport fix - use dvh for proper mobile height */
+@supports (height: 100dvh) {
+  html, body, #root {
+    height: 100dvh;
+  }
+}
+
+/* Safe area utilities */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pl-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+.pr-safe {
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 @layer utilities {
@@ -153,7 +200,7 @@
     animation: icon-hover 0.3s ease-out;
   }
 
-  /* Hover effects - without transform to prevent shaking */
+  /* Hover effects */
   .hover-lift {
     @apply transition-shadow duration-200;
   }
@@ -175,7 +222,7 @@
     @apply scale-[1.02];
   }
 
-  /* Card hover states - smooth without transform */
+  /* Card hover states */
   .card-interactive {
     @apply transition-colors duration-200 cursor-pointer;
   }
@@ -200,23 +247,13 @@
 }
 
 @keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
 }
 
 @keyframes pulse-fast {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.8;
-  }
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
 }
 
 @keyframes rest-complete {
@@ -231,65 +268,29 @@
 }
 
 @keyframes glow-pulse {
-  0%, 100% {
-    box-shadow: 0 0 20px 5px hsl(142 76% 36% / 0.6);
-  }
-  50% {
-    box-shadow: 0 0 40px 15px hsl(142 76% 36% / 0.8);
-  }
+  0%, 100% { box-shadow: 0 0 20px 5px hsl(142 76% 36% / 0.6); }
+  50% { box-shadow: 0 0 40px 15px hsl(142 76% 36% / 0.8); }
 }
 
 @keyframes theme-glow {
-  0%, 100% {
-    box-shadow: 0 0 8px 2px hsl(var(--primary) / 0.15);
-  }
-  50% {
-    box-shadow: 0 0 15px 5px hsl(var(--primary) / 0.25);
-  }
+  0%, 100% { box-shadow: 0 0 8px 2px hsl(var(--primary) / 0.15); }
+  50% { box-shadow: 0 0 15px 5px hsl(var(--primary) / 0.25); }
 }
 
 @keyframes neon-flicker {
-  0%, 100% {
-    text-shadow: 0 0 4px hsl(var(--primary) / 0.4);
-  }
+  0%, 100% { text-shadow: 0 0 4px hsl(var(--primary) / 0.4); }
 }
 
 /* Theme-specific styles */
-.theme-fire {
-  --theme-animation: pulse-fast;
-}
-
-.theme-ocean {
-  --theme-animation: float;
-}
-
-.theme-forest {
-  --theme-animation: none;
-}
-
-.theme-lightning {
-  --theme-animation: none;
-}
-
-.theme-galaxy {
-  --theme-animation: none;
-}
-
-.theme-iron {
-  --theme-animation: none;
-}
-
-.theme-blood {
-  --theme-animation: none;
-}
-
-.theme-neon {
-  --theme-animation: none;
-}
-
-.theme-gold {
-  --theme-animation: none;
-}
+.theme-fire { --theme-animation: pulse-fast; }
+.theme-ocean { --theme-animation: float; }
+.theme-forest { --theme-animation: none; }
+.theme-lightning { --theme-animation: none; }
+.theme-galaxy { --theme-animation: none; }
+.theme-iron { --theme-animation: none; }
+.theme-blood { --theme-animation: none; }
+.theme-neon { --theme-animation: none; }
+.theme-gold { --theme-animation: none; }
 
 /* Card style variations */
 [data-card-style="sharp"] .card,
@@ -322,7 +323,7 @@
   clip-path: polygon(5% 0%, 95% 0%, 100% 50%, 95% 100%, 5% 100%, 0% 50%);
 }
 
-/* Font weight variations - balanced for readability */
+/* Font weight variations */
 [data-font-weight="bold"] .font-bebas {
   font-weight: 400;
   letter-spacing: 0.08em;
@@ -333,23 +334,19 @@
   letter-spacing: 0.05em;
 }
 
-/* Reduce text-shadow intensity for better readability */
 [data-font-weight="bold"] .text-primary,
 [data-font-weight="normal"] .text-primary {
   text-shadow: none;
 }
 
-/* Only apply glow on specific elements with explicit class */
 .glow-text-subtle {
   text-shadow: 0 0 6px hsl(var(--primary) / 0.2);
 }
 
-/* Themed glow animations - subtle */
 .animate-theme-glow {
   animation: theme-glow 3s ease-in-out infinite;
 }
 
-/* Reduced glow shadows for panels */
 .panel-glow {
   box-shadow: 0 0 10px 2px hsl(var(--primary) / 0.08);
 }
@@ -373,25 +370,16 @@
   background: hsl(var(--primary));
 }
 
-/* Optimized scroll behavior */
-html {
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-}
-
-body {
-  overscroll-behavior-y: contain;
-}
-
-/* GPU-accelerated scroll containers */
+/* Scroll containers - smooth scrolling */
 .scroll-container {
+  overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scroll-behavior: smooth;
-  will-change: scroll-position;
 }
 
-/* Smooth panel scrolling */
+/* Panel scrolling */
 .panel-scroll {
   overflow-y: auto;
   overflow-x: hidden;
@@ -402,7 +390,7 @@ body {
   scrollbar-color: hsl(var(--muted)) transparent;
 }
 
-/* Hide scrollbar on mobile but keep functionality */
+/* Hide scrollbar on mobile */
 @media (max-width: 640px) {
   .hide-scrollbar-mobile {
     -ms-overflow-style: none;
@@ -414,21 +402,7 @@ body {
   }
 }
 
-/* Momentum scrolling for touch devices */
-.momentum-scroll {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
-
-/* Safe area for mobile devices */
-.safe-area-inset {
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
-}
-
-/* Mobile-first responsive utilities */
+/* Mobile responsive */
 @media (max-width: 380px) {
   .container {
     padding-left: 0.75rem;
@@ -436,7 +410,7 @@ body {
   }
 }
 
-/* Theme transition effects */
+/* Theme transitions */
 .theme-transition {
   transition: 
     background-color var(--theme-animation-speed, 0.3s) ease,
@@ -445,14 +419,12 @@ body {
     box-shadow var(--theme-animation-speed, 0.3s) ease;
 }
 
-/* Prevent layout shift during scroll */
 .stable-scroll {
   contain: layout style;
 }
 
-/* Disable hover effects when toggle is off */
+/* Disable hover effects toggle */
 html[data-hover-effects="false"] {
-  /* Disable all hover transforms and animations on interactive elements */
   & button:hover,
   & a:hover,
   & [role="button"]:hover,
@@ -465,15 +437,23 @@ html[data-hover-effects="false"] {
     filter: none !important;
   }
   
-  /* Disable framer-motion hover animations */
   & [data-motion="hover"] {
     transform: none !important;
   }
   
-  /* Keep basic visual feedback but remove animated effects */
   & button:active,
   & a:active,
   & [role="button"]:active {
     opacity: 0.9;
+  }
+}
+
+/* Disable hover on touch devices */
+@media (hover: none) {
+  .hover-lift:hover,
+  .hover-scale:hover,
+  .hover-glow:hover {
+    transform: none;
+    box-shadow: none;
   }
 }

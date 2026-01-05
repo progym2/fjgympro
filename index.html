@@ -29,19 +29,22 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/pwa-192x192.png" />
     <link rel="mask-icon" href="/favicon.ico" color="#dc2626" />
     
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
     <!-- Open Graph / Social -->
-    
-    
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://francgympro.com" />
+    <meta property="og:title" content="fjGymPro - sua academia, no modo profissional">
+    <meta property="og:description" content="Sistema completo de gerenciamento de academia. Gerencie clientes, instrutores, treinos, pagamentos e muito mais.">
     <meta property="og:image" content="/og-image.png" />
     <meta property="og:locale" content="pt_BR" />
     <meta property="og:site_name" content="FrancGymPro" />
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    
-    
+    <meta name="twitter:title" content="fjGymPro - sua academia, no modo profissional">
+    <meta name="twitter:description" content="Sistema completo de gerenciamento de academia. Gerencie clientes, instrutores, treinos, pagamentos e muito mais.">
     <meta name="twitter:image" content="/og-image.png" />
     
     <!-- Preconnect for performance -->
@@ -50,12 +53,28 @@
     
     <!-- DNS Prefetch -->
     <link rel="dns-prefetch" href="https://bnbibezhgpztqvlhvkum.supabase.co" />
-    <meta property="og:title" content="fjGymPro - sua academia, no modo profissional">
-  <meta name="twitter:title" content="fjGymPro - sua academia, no modo profissional">
-  <meta property="og:description" content="Sistema completo de gerenciamento de academia. Gerencie clientes, instrutores, treinos, pagamentos e muito mais.">
-  <meta name="twitter:description" content="Sistema completo de gerenciamento de academia. Gerencie clientes, instrutores, treinos, pagamentos e muito mais.">
-</head>
-
+    
+    <style>
+      /* Critical CSS for faster FCP */
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #0a0a0a;
+        color: #fafafa;
+      }
+      #root {
+        height: 100%;
+        overflow: hidden;
+      }
+      /* Prevent overscroll bounce on iOS */
+      body {
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: touch;
+      }
+    </style>
+  </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

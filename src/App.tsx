@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from "react";
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,7 +8,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AudioProvider } from "@/contexts/AudioContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useAutoNightMode } from "@/hooks/useAutoNightMode";
-import { motion, AnimatePresence } from "framer-motion";
 import { clearExpiredCache } from "@/hooks/useOfflineStorage";
 import { initializeCache } from "@/hooks/useIndexedDBCache";
 import OfflineIndicator from "@/components/OfflineIndicator";
@@ -31,18 +30,18 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 1000 * 60 * 60 * 24, // 24 hours
-      retry: 1, // Reduce retries for faster feedback
+      retry: 1,
       refetchOnWindowFocus: false,
-      refetchOnMount: false, // Don't refetch on every mount
+      refetchOnMount: false,
     },
   },
 });
 
-// Clear expired cache on app start (localStorage + IndexedDB)
+// Clear expired cache on app start
 clearExpiredCache();
 initializeCache();
 
-// Component to handle auto night mode (night after 20h/8pm)
+// Component to handle auto night mode
 const NightModeHandler = () => {
   useAutoNightMode({ startHour: 20, endHour: 6, enabled: true });
   return null;
@@ -50,52 +49,29 @@ const NightModeHandler = () => {
 
 // Minimal loading fallback
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
+  <div className="min-h-[100dvh] flex items-center justify-center bg-background">
     <Loader2 className="w-8 h-8 animate-spin text-primary" />
   </div>
 );
 
-// Page transition disabled for faster navigation
-const pageVariants = {
-  initial: { opacity: 1 },
-  in: { opacity: 1 },
-  out: { opacity: 1 },
-};
-
-const pageTransition = {
-  duration: 0,
-};
-
-// Animated Routes component with Suspense
-const AnimatedRoutes = () => {
+// Simple Routes component without heavy animations
+const AppRoutes = () => {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={location.pathname.split('/')[1] || 'home'}
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
-        className="w-full min-h-screen"
-      >
-        <Suspense fallback={<PageLoader />}>
-          <Routes location={location}>
-            <Route path="/" element={<Home />} />
-            <Route path="/install" element={<Install />} />
-            <Route path="/select-panel" element={<PanelSelector />} />
-            <Route path="/consulta-aluno" element={<StudentLookup />} />
-            <Route path="/client/*" element={<ClientDashboard />} />
-            <Route path="/instructor/*" element={<InstructorDashboard />} />
-            <Route path="/admin/*" element={<AdminDashboard />} />
-            <Route path="/license-expired" element={<LicenseExpired />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </motion.div>
-    </AnimatePresence>
+    <Suspense fallback={<PageLoader />}>
+      <Routes location={location}>
+        <Route path="/" element={<Home />} />
+        <Route path="/install" element={<Install />} />
+        <Route path="/select-panel" element={<PanelSelector />} />
+        <Route path="/consulta-aluno" element={<StudentLookup />} />
+        <Route path="/client/*" element={<ClientDashboard />} />
+        <Route path="/instructor/*" element={<InstructorDashboard />} />
+        <Route path="/admin/*" element={<AdminDashboard />} />
+        <Route path="/license-expired" element={<LicenseExpired />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 };
 
@@ -111,7 +87,7 @@ const App = () => (
             <OfflineIndicator />
             <BrowserRouter>
               <InstallBanner />
-              <AnimatedRoutes />
+              <AppRoutes />
             </BrowserRouter>
           </TooltipProvider>
         </AudioProvider>
