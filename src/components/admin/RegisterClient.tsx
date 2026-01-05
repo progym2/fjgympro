@@ -27,6 +27,7 @@ import { useUsernameValidation } from '@/hooks/useUsernameValidation';
 
 interface EnrollmentResult {
   profileId: string;
+  studentId: string;
   username: string;
   fullName: string;
   licenseKey: string;
@@ -179,6 +180,7 @@ const RegisterClient: React.FC = () => {
       // Store enrollment result and show payment dialog
       setEnrollmentResult({
         profileId: profile.id,
+        studentId: profile.student_id || 'N/A',
         username: formData.username.toLowerCase(),
         fullName: formData.full_name,
         licenseKey,
@@ -262,6 +264,7 @@ const RegisterClient: React.FC = () => {
     toast.success(
       <div className="space-y-1">
         <p className="font-semibold">Cliente cadastrado com sucesso!</p>
+        <p className="text-sm">ID: <strong>{enrollmentResult?.studentId}</strong></p>
         <p className="text-sm">Usuário: <strong>{enrollmentResult?.username}</strong></p>
         <p className="text-sm">Senha: <strong>{enrollmentResult?.licenseKey}</strong></p>
       </div>,
@@ -521,6 +524,10 @@ const RegisterClient: React.FC = () => {
             <div className="space-y-4">
               {/* Client Info Summary */}
               <div className="bg-muted/30 rounded-lg p-4 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">ID do Aluno:</span>
+                  <span className="font-mono text-primary font-bold text-lg">{enrollmentResult.studentId}</span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Cliente:</span>
                   <span className="font-medium">{enrollmentResult.fullName}</span>
