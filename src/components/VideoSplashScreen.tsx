@@ -57,43 +57,29 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
         <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.6, ease: "easeInOut" }}
+          transition={{ duration: 0.2 }}
           className="fixed inset-0 z-[9999] bg-background flex items-center justify-center overflow-hidden"
         >
-          {/* Gradient overlay for smooth color transition */}
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background/95" />
-          
-          {/* Subtle glow effect matching primary color */}
-          <motion.div 
-            className="absolute inset-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: showLogo ? 0.25 : 0.15 }}
-            transition={{ duration: 0.5 }}
+          {/* Subtle glow effect */}
+          <div 
+            className="absolute inset-0 opacity-20"
             style={{
               background: 'radial-gradient(circle at center, hsl(24 100% 50% / 0.4) 0%, transparent 60%)'
             }}
           />
 
-          {/* Video phase - fast fade out */}
+          {/* Video phase */}
           <AnimatePresence mode="wait">
             {!showLogo && (
               <motion.div
                 key="video"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: isLoaded ? 1 : 0 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
+                transition={{ duration: 0.1 }}
                 className="relative w-full h-full flex items-center justify-center"
               >
-                {/* Loading indicator while video loads */}
                 {!isLoaded && (
                   <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <motion.div 
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className="w-12 h-12 border-3 border-primary border-t-transparent rounded-full animate-spin"
-                      style={{ borderWidth: '3px' }}
-                    />
+                    <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                   </div>
                 )}
 
@@ -106,7 +92,7 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
                   onEnded={handleVideoEnd}
                   onError={handleVideoError}
                   onCanPlay={handleCanPlay}
-                  className="w-full h-full object-contain"
+                  className={`w-full h-full object-contain ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
                 >
                   <source src="/video/splash.mp4" type="video/mp4" />
                 </video>
@@ -114,7 +100,7 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
             )}
           </AnimatePresence>
 
-          {/* Logo phase - after video ends */}
+          {/* Logo phase - ultra fast */}
           <AnimatePresence>
             {showLogo && (
               <motion.div
@@ -122,86 +108,53 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
                 className="absolute inset-0 flex flex-col items-center justify-center"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.1 }}
               >
-                {/* Logo with scale and glow animation */}
                 <motion.div
-                  initial={{ scale: 0.7, opacity: 0 }}
-                  animate={{ 
-                    scale: 1,
-                    opacity: 1
-                  }}
-                  transition={{ 
-                    duration: 0.4,
-                    ease: "easeOut"
-                  }}
+                  initial={{ scale: 0.85, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.2 }}
                   className="relative"
                 >
-                  {/* Glow effect behind logo */}
-                  <motion.div
-                    className="absolute inset-0 blur-2xl"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.5 }}
-                    transition={{ duration: 0.3 }}
+                  <div 
+                    className="absolute inset-0 blur-2xl opacity-50"
                     style={{
                       background: 'radial-gradient(circle, hsl(24 100% 50% / 0.5) 0%, transparent 70%)'
                     }}
                   />
-                  
-                  <motion.img
+                  <img
                     src={logomarca}
                     alt="fjGymPro"
-                    className="w-40 h-40 sm:w-52 sm:h-52 object-contain relative z-10 drop-shadow-2xl"
-                    style={{
-                      filter: 'drop-shadow(0 0 30px hsl(24 100% 50% / 0.4))'
-                    }}
+                    className="w-36 h-36 sm:w-44 sm:h-44 object-contain relative z-10"
+                    style={{ filter: 'drop-shadow(0 0 20px hsl(24 100% 50% / 0.4))' }}
                   />
                 </motion.div>
 
-                {/* App name */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.15 }}
-                  className="mt-6 text-center"
-                >
-                  <h1 className="text-4xl sm:text-5xl font-display tracking-wider">
-                    <span className="text-primary">fj</span>
-                    <span className="text-foreground">GymPro</span>
-                  </h1>
-                  
-                  <motion.p
-                    className="text-muted-foreground text-sm mt-2 tracking-widest uppercase"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.2, delay: 0.3 }}
-                  >
-                    Sua evolução começa aqui
-                  </motion.p>
-                </motion.div>
-
-                {/* Trigger completion - reduced from 1.8s to 0.9s */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.9 }}
+                  transition={{ duration: 0.15, delay: 0.1 }}
+                  className="mt-4 text-center"
+                >
+                  <h1 className="text-3xl sm:text-4xl font-display tracking-wider">
+                    <span className="text-primary">fj</span>
+                    <span className="text-foreground">GymPro</span>
+                  </h1>
+                  <p className="text-muted-foreground text-xs mt-1 tracking-widest uppercase">
+                    Sua evolução começa aqui
+                  </p>
+                </motion.div>
+
+                {/* Complete after 0.5s */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
                   onAnimationComplete={handleLogoAnimationComplete}
                 />
               </motion.div>
             )}
           </AnimatePresence>
-
-          {/* Bottom gradient fade */}
-          <motion.div 
-            className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            style={{
-              background: 'linear-gradient(to top, hsl(var(--background)) 0%, transparent 100%)'
-            }}
-          />
         </motion.div>
       )}
     </AnimatePresence>
