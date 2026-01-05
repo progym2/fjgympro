@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, memo, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, X, User, Calendar, Phone, MapPin, CreditCard, Clock, Shield, Home, Lock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,7 +25,11 @@ const ProfileCompletionPromptInner: React.FC<ProfileCompletionPromptProps> = mem
 }) => {
   const { profile, user, role } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showDialog, setShowDialog] = useState(false);
+  
+  // Se estiver na página de perfil, não exibir o prompt
+  const isOnProfilePage = location.pathname.includes('/profile');
   const [showReminder, setShowReminder] = useState(false);
   const [showDismissWarning, setShowDismissWarning] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -254,7 +259,8 @@ const ProfileCompletionPromptInner: React.FC<ProfileCompletionPromptProps> = mem
     phone: { label: 'Celular', icon: <Phone className="w-4 h-4" /> }
   };
 
-  if (missingFields.length === 0) return null;
+  // Não exibir se não há campos faltando ou se está na página de perfil
+  if (missingFields.length === 0 || isOnProfilePage) return null;
 
   const remainingDismisses = MAX_DISMISS_COUNT - dismissCount;
 
