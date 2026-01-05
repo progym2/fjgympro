@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Key, Copy, RefreshCw, Search, CheckCircle, XCircle, Loader2, Users, Clock, Shield, Crown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAudio } from '@/contexts/AudioContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,11 +37,15 @@ interface MasterCredential {
 const TrialPasswords: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { playClickSound } = useAudio();
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState<PreGeneratedAccount[]>([]);
   const [masterCredentials, setMasterCredentials] = useState<MasterCredential[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('master');
+
+  // ESC para voltar ao menu admin
+  useEscapeBack({ to: '/admin' });
 
   useEffect(() => {
     fetchAllData();

@@ -5,6 +5,7 @@ import { Users, Search, Trash2, Key, Loader2, User, Dumbbell, Edit2, Shield, Eye
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -52,6 +53,9 @@ const ListUsers: React.FC = () => {
   const navigate = useNavigate();
   const { playClickSound } = useAudio();
   const { role, profile: currentProfile } = useAuth();
+  
+  // ESC para voltar ao menu admin
+  useEscapeBack({ to: '/admin' });
   const [clients, setClients] = useState<Profile[]>([]);
   const [instructors, setInstructors] = useState<Profile[]>([]);
   const [deletedUsers, setDeletedUsers] = useState<Profile[]>([]);

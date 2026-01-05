@@ -9,6 +9,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -55,6 +56,9 @@ const SendAlerts: React.FC = () => {
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const [pushSupported, setPushSupported] = useState(false);
   const [pushPermission, setPushPermission] = useState<NotificationPermission | null>(null);
+
+  // ESC para voltar ao menu admin
+  useEscapeBack({ to: '/admin', disableWhen: [selectedNotification !== null] });
   
   const isMaster = role === 'master';
   

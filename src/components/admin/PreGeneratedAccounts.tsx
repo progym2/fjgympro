@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -110,22 +111,11 @@ const PreGeneratedAccounts: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Escape = voltar para o menu do Admin (quando não há diálogos abertos)
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-
-      // Se algum dialog estiver aberto, deixamos o próprio dialog tratar o ESC
-      if (showDetailsDialog || showDeleteDialog || showEditDialog || showBatchDeleteDialog) return;
-
-      e.preventDefault();
-      playClickSound();
-      navigate('/admin');
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [navigate, playClickSound, showDetailsDialog, showDeleteDialog, showEditDialog, showBatchDeleteDialog]);
+  // ESC para voltar ao menu admin (desabilitado quando há dialogs abertos)
+  useEscapeBack({ 
+    to: '/admin', 
+    disableWhen: [showDetailsDialog, showDeleteDialog, showEditDialog, showBatchDeleteDialog] 
+  });
 
   useEffect(() => {
     fetchAccounts();

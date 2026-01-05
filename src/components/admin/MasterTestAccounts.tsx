@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -88,6 +89,12 @@ const MasterTestAccounts: React.FC = () => {
   
   // Visibility
   const [showKeys, setShowKeys] = useState<Set<string>>(new Set());
+
+  // ESC para voltar ao menu admin (desabilitado quando há dialogs abertos)
+  useEscapeBack({ 
+    to: '/admin', 
+    disableWhen: [generateDialogOpen, reactivateDialogOpen, deleteDialogOpen] 
+  });
 
   const [settings, setSettings] = useState({
     allowDemoAccounts: true,

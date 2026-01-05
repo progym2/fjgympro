@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   Activity, Search, Calendar, User, Dumbbell, Shield, 
   Clock, Loader2, RefreshCw, Filter, Download, Users, TrendingUp, BarChart3
@@ -7,6 +8,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -49,6 +51,7 @@ interface AccessStats {
 }
 
 const AccessLogs: React.FC = () => {
+  const navigate = useNavigate();
   const { role } = useAuth();
   const { playClickSound } = useAudio();
   const [logs, setLogs] = useState<AccessLog[]>([]);
@@ -58,6 +61,9 @@ const AccessLogs: React.FC = () => {
   const [filterPeriod, setFilterPeriod] = useState<'today' | 'week' | 'month' | 'all'>('week');
   const [stats, setStats] = useState<AccessStats>({ total: 0, clients: 0, instructors: 0, admins: 0, today: 0 });
   const [activeTab, setActiveTab] = useState<'chart' | 'list'>('chart');
+
+  // ESC para voltar ao menu admin
+  useEscapeBack({ to: '/admin' });
 
   const isMaster = role === 'master';
 

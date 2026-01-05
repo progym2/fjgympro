@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, Search, Send, Loader2, Phone, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -31,6 +32,9 @@ const Defaulters: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sendingAlert, setSendingAlert] = useState<string | null>(null);
+
+  // ESC para voltar ao menu admin
+  useEscapeBack({ to: '/admin' });
 
   useEffect(() => {
     loadDefaulters();

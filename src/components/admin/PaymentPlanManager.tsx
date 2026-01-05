@@ -9,6 +9,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -77,6 +78,9 @@ const PaymentPlanManager: React.FC = () => {
   });
   
   const [payMethod, setPayMethod] = useState<'cash' | 'pix' | 'card'>('cash');
+
+  // ESC para voltar ao menu admin (desabilitado quando há dialogs abertos)
+  useEscapeBack({ to: '/admin', disableWhen: [showCreateDialog, showPayDialog] });
 
   useEffect(() => {
     loadData();

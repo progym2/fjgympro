@@ -8,6 +8,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Input } from '@/components/ui/input';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -36,6 +37,9 @@ const InstructorFinance: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedInstructor, setExpandedInstructor] = useState<string | null>(null);
+
+  // ESC para voltar ao menu admin
+  useEscapeBack({ to: '/admin' });
 
   const isMaster = role === 'master';
 
