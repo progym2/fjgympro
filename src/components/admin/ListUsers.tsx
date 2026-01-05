@@ -40,6 +40,7 @@ interface Profile {
   city: string | null;
   cref: string | null;
   avatar_url: string | null;
+  student_id: string | null;
   license_key?: string;
   license_type?: string;
   license_status?: string;
@@ -134,7 +135,7 @@ const ListUsers: React.FC = () => {
       let query = supabase
         .from('profiles')
         .select(`
-          id, username, full_name, email, phone, cpf, city, cref, avatar_url, created_by_admin, enrollment_status,
+          id, username, full_name, email, phone, cpf, city, cref, avatar_url, created_by_admin, enrollment_status, student_id,
           licenses:licenses!licenses_profile_id_fkey (id, license_key, license_type, status, expires_at)
         `)
         .order('full_name');
@@ -525,6 +526,11 @@ const ListUsers: React.FC = () => {
             )}
           </div>
           <p className="text-sm text-muted-foreground truncate">@{user.username}</p>
+          {user.student_id && (
+            <p className="text-xs text-primary font-mono">
+              ID: {user.student_id}
+            </p>
+          )}
           {user.cpf && (
             <p className="text-xs text-muted-foreground">
               CPF: {debouncedSearch && user.cpf.includes(debouncedSearch.replace(/[.-]/g, '')) ? (

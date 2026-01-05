@@ -35,6 +35,7 @@ const Profile: React.FC = () => {
     city: ''
   });
   const [licenseKey, setLicenseKey] = useState<string | null>(null);
+  const [studentId, setStudentId] = useState<string | null>(null);
   const [imc, setImc] = useState<number | null>(null);
   const [imcClassification, setImcClassification] = useState('');
   const [instructorLevel, setInstructorLevel] = useState<string | null>(null);
@@ -68,6 +69,7 @@ const Profile: React.FC = () => {
           cpf: (data as any).cpf || '',
           city: (data as any).city || ''
         });
+        setStudentId(data.student_id || null);
       }
 
       // Fetch license key for display
@@ -233,6 +235,18 @@ const Profile: React.FC = () => {
                 </p>
               </div>
             </div>
+
+            {studentId && (
+              <div className="space-y-2">
+                <Label>ID do Aluno (Matrícula)</Label>
+                <div className="p-3 bg-primary/10 border border-primary/30 rounded-lg font-mono text-lg text-center text-primary font-bold">
+                  {studentId}
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Use este código para verificar sua matrícula na consulta pública
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Personal Info Card */}
