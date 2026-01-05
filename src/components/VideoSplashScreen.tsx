@@ -51,7 +51,7 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[9999] bg-gradient-to-b from-background via-background to-primary/20 flex items-center justify-center overflow-hidden"
         >
           {/* Loading indicator while video loads */}
           {!isLoaded && (
