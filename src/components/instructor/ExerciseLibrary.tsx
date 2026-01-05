@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Dumbbell, Search, Video, Filter, Sparkles, Plus, Play, Youtube, X, Loader2
+  Dumbbell, Search, Video, Filter, Plus, Loader2, Star
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -119,6 +120,8 @@ const ExerciseLibrary: React.FC = () => {
   const [selectedMuscle, setSelectedMuscle] = useState('Todos');
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [videoDialog, setVideoDialog] = useState(false);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   
   // Create exercise dialog
   const [createDialog, setCreateDialog] = useState(false);
@@ -133,8 +136,12 @@ const ExerciseLibrary: React.FC = () => {
     difficulty: 'Intermediário'
   });
 
+  // ESC to go back
+  useEscapeBack({ to: '/instructor', disableWhen: [videoDialog, createDialog] });
+
   useEffect(() => {
     fetchExercises();
+    fetchFavorites();
   }, []);
 
   const fetchExercises = async () => {
@@ -152,6 +159,57 @@ const ExerciseLibrary: React.FC = () => {
       console.error('Error fetching exercises:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFavorites = async () => {
+    if (!profile?.profile_id) return;
+    try {
+      const { data } = await supabase
+        .from('exercise_favorites')
+        .select('exercise_id')
+        .eq('profile_id', profile.profile_id);
+      
+      if (data) {
+        setFavorites(new Set(data.map(f => f.exercise_id)));
+      }
+    } catch (error) {
+      console.error('Error fetching favorites:', error);
+    }
+  };
+
+  const toggleFavorite = async (exerciseId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!profile?.profile_id) return;
+    
+    playClickSound();
+    const isFavorite = favorites.has(exerciseId);
+    
+    try {
+      if (isFavorite) {
+        await supabase
+          .from('exercise_favorites')
+          .delete()
+          .eq('profile_id', profile.profile_id)
+          .eq('exercise_id', exerciseId);
+        
+        setFavorites(prev => {
+          const next = new Set(prev);
+          next.delete(exerciseId);
+          return next;
+        });
+        toast.success('Removido dos favoritos');
+      } else {
+        await supabase
+          .from('exercise_favorites')
+          .insert({ profile_id: profile.profile_id, exercise_id: exerciseId });
+        
+        setFavorites(prev => new Set(prev).add(exerciseId));
+        toast.success('Adicionado aos favoritos');
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error('Erro ao atualizar favoritos');
     }
   };
 
@@ -237,7 +295,8 @@ const ExerciseLibrary: React.FC = () => {
       ex.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ex.equipment?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesMuscle = selectedMuscle === 'Todos' || ex.muscle_group === selectedMuscle;
-    return matchesSearch && matchesMuscle;
+    const matchesFavorite = !showFavoritesOnly || favorites.has(ex.id);
+    return matchesSearch && matchesMuscle && matchesFavorite;
   });
 
   const groupedExercises = filteredExercises.reduce((acc, ex) => {
@@ -306,16 +365,16 @@ const ExerciseLibrary: React.FC = () => {
     >
       <InstructorPageHeader 
         title="BIBLIOTECA DE EXERCÍCIOS"
-        icon={<Dumbbell className="w-6 h-6" />}
+        icon={<Dumbbell className="w-5 h-5" />}
         iconColor="text-green-500"
         action={
           <Button 
             onClick={() => { playClickSound(); setCreateDialog(true); }}
             size="sm"
-            className="gap-2 transition-transform active:scale-95"
+            className="gap-1.5 transition-transform active:scale-95"
           >
-            <Plus size={16} />
-            <span className="hidden sm:inline">Novo Exercício</span>
+            <Plus size={14} />
+            <span className="hidden sm:inline">Novo</span>
           </Button>
         }
       />
@@ -323,29 +382,40 @@ const ExerciseLibrary: React.FC = () => {
       <FadeScrollList className="flex-1 space-y-4 pr-1 overscroll-contain">
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
             placeholder="Buscar exercício..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-background/50 border-border/50"
+            className="pl-9 bg-background/50 border-border/50 h-9 text-sm"
           />
         </div>
-        <Select value={selectedMuscle} onValueChange={setSelectedMuscle}>
-          <SelectTrigger className="w-full sm:w-48 bg-card border-border">
-            <Filter className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Filtrar por músculo" />
-          </SelectTrigger>
-          <SelectContent className="bg-card border-border">
-            {muscleGroups.map((group) => (
-              <SelectItem key={group} value={group}>
-                {group}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={selectedMuscle} onValueChange={setSelectedMuscle}>
+            <SelectTrigger className="w-full sm:w-40 bg-card border-border h-9 text-sm">
+              <Filter className="w-3.5 h-3.5 mr-1.5" />
+              <SelectValue placeholder="Filtrar músculo" />
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border">
+              {muscleGroups.map((group) => (
+                <SelectItem key={group} value={group}>
+                  {group}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant={showFavoritesOnly ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            className={`gap-1.5 h-9 px-3 ${showFavoritesOnly ? 'bg-yellow-500 hover:bg-yellow-600' : ''}`}
+          >
+            <Star className={`w-3.5 h-3.5 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+            <span className="hidden sm:inline">{favorites.size}</span>
+          </Button>
+        </div>
       </div>
 
       {/* Stats with animated numbers */}
@@ -356,18 +426,18 @@ const ExerciseLibrary: React.FC = () => {
       >
         {[
           { value: exercises.length, label: 'Total', color: 'text-primary' },
+          { value: favorites.size, label: 'Favoritos', color: 'text-yellow-500' },
           { value: exercises.filter(e => e.video_url).length, label: 'Com Vídeo', color: 'text-green-500' },
-          { value: new Set(exercises.map(e => e.muscle_group)).size, label: 'Grupos', color: 'text-blue-500' },
           { value: filteredExercises.length, label: 'Filtrados', color: 'text-purple-500' },
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
             custom={i}
             variants={statCardVariants}
-            className="bg-card/80 backdrop-blur-md rounded-xl p-4 border border-border/50 text-center hover-lift group"
+            className="bg-card/80 backdrop-blur-md rounded-lg p-3 border border-border/50 text-center hover-lift group"
           >
             <motion.p 
-              className={`text-2xl font-bold ${stat.color} group-hover:scale-110 transition-transform`}
+              className={`text-xl font-bold ${stat.color} group-hover:scale-110 transition-transform`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 + i * 0.1 }}
@@ -434,40 +504,35 @@ const ExerciseLibrary: React.FC = () => {
                       className="bg-card/80 backdrop-blur-md rounded-xl border border-border/50 overflow-hidden cursor-pointer card-interactive"
                       onClick={() => openVideoDialog(exercise)}
                     >
-                      <div className="p-4">
+                      <div className="p-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold truncate group-hover:text-primary transition-colors">{exercise.name}</h4>
+                            <h4 className="font-semibold text-sm truncate group-hover:text-primary transition-colors">{exercise.name}</h4>
                             {exercise.equipment && (
-                              <p className="text-xs text-muted-foreground mt-1 truncate">
+                              <p className="text-xs text-muted-foreground mt-0.5 truncate">
                                 {exercise.equipment}
                               </p>
                             )}
                           </div>
-                          <div className="flex flex-col items-end gap-1">
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={(e) => toggleFavorite(exercise.id, e)}
+                              className="p-1 rounded-full hover:bg-yellow-500/20 transition-colors"
+                            >
+                              <Star className={`w-3.5 h-3.5 ${favorites.has(exercise.id) ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'}`} />
+                            </button>
                             {exercise.difficulty && (
-                              <Badge variant="outline" className={`text-xs ${difficultyColors[exercise.difficulty] || ''}`}>
+                              <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${difficultyColors[exercise.difficulty] || ''}`}>
                                 {exercise.difficulty}
                               </Badge>
                             )}
                             {exercise.video_url && (
-                              <motion.div
-                                initial={{ scale: 1 }}
-                                whileHover={{ scale: 1.2 }}
-                                className="relative"
-                              >
-                                <Video className="w-4 h-4 text-primary" />
-                                <motion.div 
-                                  className="absolute inset-0 bg-primary/20 rounded-full"
-                                  animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
-                                  transition={{ duration: 2, repeat: Infinity }}
-                                />
-                              </motion.div>
+                              <Video className="w-3.5 h-3.5 text-primary" />
                             )}
                           </div>
                         </div>
                         {exercise.description && (
-                          <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                          <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">
                             {exercise.description}
                           </p>
                         )}
@@ -634,7 +699,7 @@ const ExerciseLibrary: React.FC = () => {
             {/* Video URL */}
             <div className="space-y-2">
               <Label htmlFor="video" className="flex items-center gap-2">
-                <Youtube size={16} className="text-red-500" />
+                <Video size={14} className="text-red-500" />
                 URL do Vídeo (YouTube)
               </Label>
               <Input
