@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Dumbbell, Shield, Info, Search } from 'lucide-react';
+import { User, Dumbbell, Shield, Info, Volume2, VolumeX } from 'lucide-react';
 
 import DigitalClock from '@/components/DigitalClock';
 import GymButton from '@/components/GymButton';
@@ -24,7 +24,7 @@ const Home: React.FC = () => {
 
   const navigate = useNavigate();
   const { licenseExpired } = useAuth();
-  const { playClickSound, setOnHomeScreen, setSplashComplete, stopMusicImmediately, tryAutoPlay } = useAudio();
+  const { playClickSound, setOnHomeScreen, setSplashComplete, stopMusicImmediately, tryAutoPlay, isSfxEnabled, toggleSfx } = useAudio();
 
   // Marcar que está na tela inicial
   useEffect(() => {
@@ -129,11 +129,14 @@ const Home: React.FC = () => {
       </button>
 
       <button
-        onClick={() => { playClickSound(); navigate('/consulta-aluno'); }}
-        className="fixed bottom-16 left-3 z-50 p-2 rounded-full bg-black/40 text-white/70 hover:text-green-400"
-        aria-label="Consultar aluno"
+        onClick={() => { playClickSound(); toggleSfx(); }}
+        className={`fixed bottom-16 left-3 z-50 p-2 rounded-full bg-black/40 transition-colors ${
+          isSfxEnabled ? 'text-green-400' : 'text-white/50'
+        }`}
+        aria-label={isSfxEnabled ? 'Desativar sons' : 'Ativar sons'}
+        title={isSfxEnabled ? 'Sons de hover ativos' : 'Sons de hover desativados'}
       >
-        <Search size={16} />
+        {isSfxEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
       </button>
 
       {/* Mini Music Player */}
