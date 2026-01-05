@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MousePointer, MousePointerClick } from 'lucide-react';
+import { Volume2, VolumeX } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -31,14 +31,14 @@ const HoverEffectsToggle: React.FC = () => {
             aria-label={hoverEffectsEnabled ? 'Desativar efeitos de hover' : 'Ativar efeitos de hover'}
           >
             {hoverEffectsEnabled ? (
-              <MousePointerClick className="w-3.5 h-3.5" />
+              <Volume2 className="w-3.5 h-3.5" />
             ) : (
-              <MousePointer className="w-3.5 h-3.5 opacity-50" />
+              <VolumeX className="w-3.5 h-3.5 opacity-50" />
             )}
           </motion.button>
         </TooltipTrigger>
         <TooltipContent side="right" className="text-xs">
-          {hoverEffectsEnabled ? 'Desativar efeitos' : 'Ativar efeitos'}
+          {hoverEffectsEnabled ? 'Som e efeitos: ON' : 'Som e efeitos: OFF'}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
