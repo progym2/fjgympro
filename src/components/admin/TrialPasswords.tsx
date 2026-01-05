@@ -269,7 +269,7 @@ const TrialPasswords: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-medium">{master.username}</p>
-                    <p className="text-sm text-muted-foreground font-mono">{master.password}</p>
+                    <p className="text-sm text-muted-foreground">Senha protegida (hash)</p>
                     {master.full_name && (
                       <p className="text-xs text-muted-foreground">{master.full_name}</p>
                     )}
@@ -282,14 +282,6 @@ const TrialPasswords: React.FC = () => {
                   <Badge variant="outline" className="border-green-500/50 text-green-500">
                     Todos Painéis
                   </Badge>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => copyCredentials(master.username, master.password)}
-                    className="hover:bg-yellow-500/20"
-                  >
-                    <Copy size={14} className="text-yellow-500" />
-                  </Button>
                 </div>
               </div>
             ))}
