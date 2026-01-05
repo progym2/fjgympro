@@ -6,6 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -53,6 +55,7 @@ const PendingLinkRequests: React.FC = () => {
   const [processing, setProcessing] = useState<string | null>(null);
   const [unlinking, setUnlinking] = useState(false);
   const [showComponent, setShowComponent] = useState(false);
+  const [unlinkReason, setUnlinkReason] = useState('');
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     action: 'accept' | 'reject' | 'unlink';
@@ -229,16 +232,22 @@ const PendingLinkRequests: React.FC = () => {
 
       if (error) throw error;
 
+      // Build notification message with reason if provided
+      const reasonText = unlinkReason.trim() 
+        ? `\n\nMotivo informado: "${unlinkReason.trim()}"` 
+        : '';
+
       // Notify instructor
       await supabase.from('notifications').insert({
         profile_id: currentInstructor.instructor_id,
         title: 'Aluno desvinculado',
-        message: `O aluno ${profile?.full_name || profile?.username} se desvinculou de você.`,
+        message: `O aluno ${profile?.full_name || profile?.username} se desvinculou de você.${reasonText}`,
         type: 'link_removed',
       });
 
       toast.success('Você foi desvinculado do instrutor com sucesso.');
       setCurrentInstructor(null);
+      setUnlinkReason('');
       fetchPendingRequests(); // Refresh data
     } catch (err) {
       console.error('Error unlinking:', err);
@@ -507,7 +516,12 @@ const PendingLinkRequests: React.FC = () => {
       {/* Confirmation Dialog */}
       <AlertDialog 
         open={confirmDialog.open} 
-        onOpenChange={(open) => !open && setConfirmDialog({ open: false, action: 'accept', request: null })}
+        onOpenChange={(open) => { 
+          if (!open) {
+            setConfirmDialog({ open: false, action: 'accept', request: null });
+            setUnlinkReason('');
+          }
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -525,26 +539,47 @@ const PendingLinkRequests: React.FC = () => {
                   ? 'Desvincular Instrutor'
                   : 'Rejeitar Vínculo'}
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmDialog.action === 'accept' ? (
-                <>
-                  Ao aceitar, o instrutor{' '}
-                  <strong>{confirmDialog.request?.instructor.full_name || confirmDialog.request?.instructor.username}</strong>{' '}
-                  poderá criar treinos e planos alimentares personalizados para você.
-                </>
-              ) : confirmDialog.action === 'unlink' ? (
-                <>
-                  Tem certeza que deseja se desvincular do instrutor{' '}
-                  <strong>{currentInstructor?.instructor.full_name || currentInstructor?.instructor.username}</strong>?
-                  Você perderá acesso aos treinos criados por ele e o instrutor será notificado.
-                </>
-              ) : (
-                <>
-                  Tem certeza que deseja rejeitar a solicitação do instrutor{' '}
-                  <strong>{confirmDialog.request?.instructor.full_name || confirmDialog.request?.instructor.username}</strong>?
-                  O instrutor será notificado.
-                </>
-              )}
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                {confirmDialog.action === 'accept' ? (
+                  <p>
+                    Ao aceitar, o instrutor{' '}
+                    <strong>{confirmDialog.request?.instructor.full_name || confirmDialog.request?.instructor.username}</strong>{' '}
+                    poderá criar treinos e planos alimentares personalizados para você.
+                  </p>
+                ) : confirmDialog.action === 'unlink' ? (
+                  <>
+                    <p>
+                      Tem certeza que deseja se desvincular do instrutor{' '}
+                      <strong>{currentInstructor?.instructor.full_name || currentInstructor?.instructor.username}</strong>?
+                      Você perderá acesso aos treinos criados por ele.
+                    </p>
+                    
+                    <div className="space-y-2 pt-2">
+                      <Label htmlFor="unlink-reason-pending" className="text-foreground">
+                        Motivo da desvinculação (opcional)
+                      </Label>
+                      <Textarea
+                        id="unlink-reason-pending"
+                        placeholder="Informe o motivo para ajudar o instrutor a melhorar..."
+                        value={unlinkReason}
+                        onChange={(e) => setUnlinkReason(e.target.value)}
+                        className="min-h-[80px]"
+                        maxLength={500}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        O instrutor será notificado{unlinkReason.trim() ? ' com o motivo informado' : ''}.
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <p>
+                    Tem certeza que deseja rejeitar a solicitação do instrutor{' '}
+                    <strong>{confirmDialog.request?.instructor.full_name || confirmDialog.request?.instructor.username}</strong>?
+                    O instrutor será notificado.
+                  </p>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
