@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -463,6 +463,9 @@ const PaymentPlanManager: React.FC = () => {
             <DialogTitle className="flex items-center gap-2">
               <FileText className="text-blue-500" /> Criar Novo Carnê
             </DialogTitle>
+            <DialogDescription>
+              Preencha os dados para criar um carnê de pagamento parcelado
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -550,12 +553,12 @@ const PaymentPlanManager: React.FC = () => {
               </div>
             )}
           </div>
-          <DialogFooter>
+          <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancelar</Button>
             <Button onClick={handleCreatePlan} className="bg-blue-600 hover:bg-blue-700">
               <Printer size={16} className="mr-1" /> Criar e Imprimir
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -566,6 +569,9 @@ const PaymentPlanManager: React.FC = () => {
             <DialogTitle className="flex items-center gap-2">
               <DollarSign className="text-green-500" /> Registrar Pagamento
             </DialogTitle>
+            <DialogDescription>
+              Registre o pagamento desta parcela
+            </DialogDescription>
           </DialogHeader>
           {selectedPayment && selectedPlan && (
             <div className="space-y-4">
@@ -598,12 +604,12 @@ const PaymentPlanManager: React.FC = () => {
               </div>
             </div>
           )}
-          <DialogFooter>
+          <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setShowPayDialog(false)}>Cancelar</Button>
             <Button onClick={handlePayInstallment} className="bg-green-600 hover:bg-green-700">
               <Printer size={16} className="mr-1" /> Pagar e Imprimir
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </motion.div>
