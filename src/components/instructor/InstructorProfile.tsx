@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { filterPhoneOnly } from '@/lib/inputValidation';
+import { filterPhoneOnly, formatCPF, validateCPF, getCPFDigits } from '@/lib/inputValidation';
+import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,10 +34,9 @@ const InstructorProfile: React.FC = () => {
     cpf: '',
     city: ''
   });
-  const [originalUsername, setOriginalUsername] = useState('');
   const [licenseKey, setLicenseKey] = useState<string | null>(null);
-  const [usernameError, setUsernameError] = useState('');
   const [linkedStudentsCount, setLinkedStudentsCount] = useState(0);
+  const [cpfError, setCpfError] = useState('');
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -61,7 +61,6 @@ const InstructorProfile: React.FC = () => {
           cpf: (data as any).cpf || '',
           city: (data as any).city || ''
         });
-        setOriginalUsername(data.username || '');
       }
 
       // Fetch license key for display
@@ -90,101 +89,24 @@ const InstructorProfile: React.FC = () => {
     loadProfile();
   }, [profile?.profile_id]);
 
-  const validateUsername = (username: string): boolean => {
-    if (!username.trim()) {
-      setUsernameError('Nome de usuário é obrigatório');
-      return false;
-    }
-    if (username.length < 3) {
-      setUsernameError('Nome de usuário deve ter pelo menos 3 caracteres');
-      return false;
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      setUsernameError('Use apenas letras, números e underline');
-      return false;
-    }
-    setUsernameError('');
-    return true;
-  };
-
-  const checkUsernameAvailable = async (username: string): Promise<boolean> => {
-    if (username.toLowerCase() === originalUsername.toLowerCase()) return true;
-    
-    const { data } = await supabase
-      .from('profiles')
-      .select('id')
-      .ilike('username', username)
-      .neq('id', profile?.profile_id || '')
-      .maybeSingle();
-    
-    return !data;
-  };
-
-  // Notify admins about profile update
-  const notifyAdmins = async (oldUsername: string, newUsername: string, usernameChanged: boolean) => {
-    try {
-      // Get all admin and master user_ids
-      const { data: adminRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .in('role', ['admin', 'master']);
-
-      if (!adminRoles || adminRoles.length === 0) return;
-
-      // Get profile_ids for admins
-      const { data: adminProfiles } = await supabase
-        .from('profiles')
-        .select('id')
-        .in('user_id', adminRoles.map(r => r.user_id));
-
-      if (!adminProfiles || adminProfiles.length === 0) return;
-
-      // Create notifications for all admins
-      const message = usernameChanged
-        ? `O instrutor "${oldUsername.toUpperCase()}" alterou seu nome de usuário para "${newUsername.toUpperCase()}". Nome: ${formData.full_name || 'Não informado'}, CREF: ${formData.cref || 'Não informado'}`
-        : `O instrutor "${newUsername.toUpperCase()}" atualizou seus dados cadastrais. Nome: ${formData.full_name || 'Não informado'}, CREF: ${formData.cref || 'Não informado'}`;
-
-      const notifications = adminProfiles.map(mp => ({
-        profile_id: mp.id,
-        title: usernameChanged ? 'Instrutor Alterou Nome de Usuário' : 'Instrutor Atualizou Cadastro',
-        message,
-        type: usernameChanged ? 'username_change' : 'profile_update'
-      }));
-
-      await supabase.from('notifications').insert(notifications);
-    } catch (error) {
-      console.error('Error notifying admins:', error);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile?.profile_id) return;
 
-    // Validate username
-    if (!validateUsername(formData.username)) {
-      return;
+    // Validate CPF if provided
+    if (formData.cpf && getCPFDigits(formData.cpf).length === 11) {
+      if (!validateCPF(formData.cpf)) {
+        setCpfError('CPF inválido - verifique os dígitos');
+        toast.error('CPF inválido');
+        return;
+      }
     }
-
-    const newUsername = formData.username.toLowerCase().trim();
-    const usernameChanged = newUsername !== originalUsername.toLowerCase();
 
     setLoading(true);
     try {
-      // Check if username is available (if changed)
-      if (usernameChanged) {
-        const isAvailable = await checkUsernameAvailable(newUsername);
-        if (!isAvailable) {
-          setUsernameError('Este nome de usuário já está em uso');
-          setLoading(false);
-          return;
-        }
-      }
-
       const { error } = await supabase
         .from('profiles')
         .update({
-          username: newUsername,
           full_name: formData.full_name,
           email: formData.email,
           phone: formData.phone,
@@ -199,15 +121,7 @@ const InstructorProfile: React.FC = () => {
 
       if (error) throw error;
 
-      // Notify admins about the update
-      await notifyAdmins(originalUsername, newUsername, usernameChanged);
-
-      if (usernameChanged) {
-        setOriginalUsername(newUsername);
-        toast.success('Perfil atualizado! Agora você pode fazer login com o novo nome de usuário. Os gerentes foram notificados.');
-      } else {
-        toast.success('Perfil atualizado com sucesso! Os gerentes foram notificados.');
-      }
+      toast.success('Perfil atualizado com sucesso!');
     } catch (error: any) {
       console.error('Error updating profile:', error);
       toast.error('Erro ao atualizar perfil');
@@ -279,34 +193,22 @@ const InstructorProfile: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Alert className="bg-green-500/10 border-green-500/30">
-                <Info className="h-4 w-4 text-green-500" />
+              <Alert className="bg-muted/50 border-border">
+                <Info className="h-4 w-4" />
                 <AlertDescription>
-                  Você pode alterar seu nome de usuário. Após salvar, use o novo nome para fazer login. 
-                  Os gerentes serão notificados sobre qualquer alteração no seu perfil.
+                  O nome de usuário é definido no cadastro e não pode ser alterado. Use-o junto com sua chave de licença para fazer login.
                 </AlertDescription>
               </Alert>
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Nome de Usuário (Login)</Label>
-                  <Input
-                    value={formData.username}
-                    onChange={(e) => {
-                      setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/\s/g, '') });
-                      setUsernameError('');
-                    }}
-                    placeholder="seu_usuario"
-                    className={usernameError ? 'border-destructive' : ''}
-                  />
-                  {usernameError && (
-                    <p className="text-xs text-destructive">{usernameError}</p>
-                  )}
-                  {formData.username !== originalUsername && formData.username && !usernameError && (
-                    <p className="text-xs text-amber-500">
-                      Após salvar, faça login com: <strong>{formData.username}</strong>
-                    </p>
-                  )}
+                  <div className="p-3 bg-muted/50 border border-border rounded-lg font-mono text-sm uppercase">
+                    {formData.username || '—'}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Este é seu identificador único de acesso
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label>Sua Senha (Chave de Licença)</Label>
@@ -411,19 +313,41 @@ const InstructorProfile: React.FC = () => {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>CPF</Label>
-                  <Input
-                    value={formData.cpf}
-                    onChange={(e) => {
-                      const nums = e.target.value.replace(/\D/g, '');
-                      let formatted = nums;
-                      if (nums.length > 3) formatted = `${nums.slice(0, 3)}.${nums.slice(3)}`;
-                      if (nums.length > 6) formatted = `${nums.slice(0, 3)}.${nums.slice(3, 6)}.${nums.slice(6)}`;
-                      if (nums.length > 9) formatted = `${nums.slice(0, 3)}.${nums.slice(3, 6)}.${nums.slice(6, 9)}-${nums.slice(9, 11)}`;
-                      setFormData({ ...formData, cpf: formatted });
-                    }}
-                    placeholder="000.000.000-00"
-                    maxLength={14}
-                  />
+                  <div className="relative">
+                    <Input
+                      value={formData.cpf}
+                      onChange={(e) => {
+                        const formatted = formatCPF(e.target.value);
+                        setFormData({ ...formData, cpf: formatted });
+                        // Validate when complete
+                        const digits = getCPFDigits(formatted);
+                        if (digits.length === 11) {
+                          if (!validateCPF(formatted)) {
+                            setCpfError('CPF inválido - verifique os dígitos');
+                          } else {
+                            setCpfError('');
+                          }
+                        } else {
+                          setCpfError('');
+                        }
+                      }}
+                      placeholder="000.000.000-00"
+                      maxLength={14}
+                      className={cpfError ? 'border-destructive pr-10' : getCPFDigits(formData.cpf).length === 11 && !cpfError ? 'border-green-500 pr-10' : ''}
+                    />
+                    {getCPFDigits(formData.cpf).length === 11 && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {cpfError ? (
+                          <XCircle className="w-4 h-4 text-destructive" />
+                        ) : (
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {cpfError && (
+                    <p className="text-xs text-destructive">{cpfError}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Cidade</Label>
@@ -450,7 +374,7 @@ const InstructorProfile: React.FC = () => {
           {/* Submit Button */}
           <Button
             type="submit"
-            disabled={loading}
+            disabled={loading || !!cpfError}
             className="w-full bg-green-600 hover:bg-green-700 text-white"
             size="lg"
           >
