@@ -230,23 +230,47 @@ const FloatingLinkRequests: React.FC = () => {
     setConfirmDialog({ open: false, action: 'accept', request: null });
 
     try {
-      // If accepting, check if user already has an instructor
+      // If accepting, deactivate any existing links first
       if (action === 'accept') {
-        const { data: existingLink, error: checkError } = await supabase
+        // Deactivate all existing active links (accepted or pending from other instructors)
+        const { data: existingLinks, error: fetchError } = await supabase
           .from('instructor_clients')
-          .select('id, instructor:profiles!instructor_clients_instructor_id_fkey(full_name, username)')
+          .select('id, instructor_id, link_status, instructor:profiles!instructor_clients_instructor_id_fkey(full_name, username)')
           .eq('client_id', profile.profile_id)
-          .eq('link_status', 'accepted')
           .eq('is_active', true)
-          .maybeSingle();
+          .neq('id', request.id);
 
-        if (checkError) throw checkError;
+        if (fetchError) throw fetchError;
 
-        if (existingLink) {
-          const instructorName = (existingLink.instructor as any)?.full_name || (existingLink.instructor as any)?.username || 'outro instrutor';
-          toast.error(`Você já está vinculado a ${instructorName}. Só é permitido um instrutor por aluno.`);
-          setProcessing(null);
-          return;
+        if (existingLinks && existingLinks.length > 0) {
+          // Deactivate all existing links
+          const { error: deactivateError } = await supabase
+            .from('instructor_clients')
+            .update({
+              is_active: false,
+              unlinked_at: new Date().toISOString(),
+            })
+            .eq('client_id', profile.profile_id)
+            .eq('is_active', true)
+            .neq('id', request.id);
+
+          if (deactivateError) throw deactivateError;
+
+          // Notify previous instructors about automatic deactivation
+          const acceptedLinks = existingLinks.filter(link => link.link_status === 'accepted');
+          for (const link of acceptedLinks) {
+            const instructorName = (link.instructor as any)?.full_name || (link.instructor as any)?.username;
+            await supabase.from('notifications').insert({
+              profile_id: link.instructor_id,
+              title: 'Vínculo Desativado',
+              message: `O cliente ${profile?.full_name || profile?.username} aceitou outro instrutor e seu vínculo foi desativado automaticamente.`,
+              type: 'link_deactivated',
+            });
+
+            if (instructorName) {
+              console.log(`Vínculo com ${instructorName} desativado automaticamente`);
+            }
+          }
         }
       }
 
@@ -280,9 +304,8 @@ const FloatingLinkRequests: React.FC = () => {
       );
 
       setRequests((prev) => prev.filter((r) => r.id !== request.id));
-      if (action === 'accept') {
-        fetchPendingRequests();
-      }
+      setHasCurrentInstructor(action === 'accept');
+      fetchPendingRequests();
     } catch (err) {
       console.error('Error processing request:', err);
       toast.error('Erro ao processar solicitação.');
@@ -340,13 +363,13 @@ const FloatingLinkRequests: React.FC = () => {
                 className="overflow-hidden"
               >
                 <div className="px-3 pb-3 space-y-2 max-h-[40vh] overflow-y-auto">
-                  {/* Warning if already has instructor */}
+                  {/* Info if already has instructor */}
                   {hasCurrentInstructor && (
-                    <div className="p-2 bg-red-500/30 rounded-lg">
+                    <div className="p-2 bg-blue-500/30 rounded-lg">
                       <div className="flex items-start gap-2 text-white">
                         <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
                         <p className="text-xs">
-                          Você já tem um instrutor vinculado. Desvincule-se primeiro para aceitar outro.
+                          Ao aceitar um novo instrutor, o vínculo anterior será desativado automaticamente.
                         </p>
                       </div>
                     </div>
@@ -407,7 +430,7 @@ const FloatingLinkRequests: React.FC = () => {
                           <Button
                             size="sm"
                             onClick={() => handleAction(request, 'accept')}
-                            disabled={processing === request.id || hasCurrentInstructor}
+                            disabled={processing === request.id}
                             className="h-8 bg-green-500 hover:bg-green-600 text-white px-2"
                           >
                             {processing === request.id ? (
