@@ -100,6 +100,42 @@ export type Database = {
           },
         ]
       }
+      deleted_items_trash: {
+        Row: {
+          auto_purge_at: string
+          deleted_at: string
+          deleted_by: string | null
+          id: string
+          item_data: Json
+          original_id: string
+          original_table: string
+          permanently_deleted_at: string | null
+          restore_attempted_at: string | null
+        }
+        Insert: {
+          auto_purge_at?: string
+          deleted_at?: string
+          deleted_by?: string | null
+          id?: string
+          item_data: Json
+          original_id: string
+          original_table: string
+          permanently_deleted_at?: string | null
+          restore_attempted_at?: string | null
+        }
+        Update: {
+          auto_purge_at?: string
+          deleted_at?: string
+          deleted_by?: string | null
+          id?: string
+          item_data?: Json
+          original_id?: string
+          original_table?: string
+          permanently_deleted_at?: string | null
+          restore_attempted_at?: string | null
+        }
+        Relationships: []
+      }
       evolution_photos: {
         Row: {
           body_fat_percentage: number | null
@@ -1378,6 +1414,7 @@ export type Database = {
       }
       is_admin_or_higher: { Args: { _user_id: string }; Returns: boolean }
       is_master: { Args: { _user_id: string }; Returns: boolean }
+      purge_expired_trash_items: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "master" | "admin" | "instructor" | "client"
