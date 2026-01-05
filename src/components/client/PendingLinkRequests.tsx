@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserPlus, Check, X, Loader2, AlertCircle, Clock, Bell } from 'lucide-react';
+import { UserPlus, Check, X, Loader2, AlertCircle, Clock, Bell, UserMinus, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
@@ -29,16 +29,28 @@ interface PendingRequest {
   };
 }
 
+interface CurrentInstructor {
+  link_id: string;
+  instructor_id: string;
+  instructor: {
+    username: string;
+    full_name: string | null;
+    cref: string | null;
+  };
+}
+
 const PendingLinkRequests: React.FC = () => {
   const { profile } = useAuth();
   const { playClickSound } = useAudio();
   const { sendLinkRequestNotification, permission, requestPermission, isSupported } = usePushNotifications();
   const [requests, setRequests] = useState<PendingRequest[]>([]);
+  const [currentInstructor, setCurrentInstructor] = useState<CurrentInstructor | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
+  const [unlinking, setUnlinking] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
-    action: 'accept' | 'reject';
+    action: 'accept' | 'reject' | 'unlink';
     request: PendingRequest | null;
   }>({ open: false, action: 'accept', request: null });
   
@@ -49,6 +61,7 @@ const PendingLinkRequests: React.FC = () => {
     if (!profile?.profile_id) return;
 
     try {
+      // Fetch pending requests
       const { data, error } = await supabase
         .from('instructor_clients')
         .select(`
@@ -66,6 +79,33 @@ const PendingLinkRequests: React.FC = () => {
         .eq('is_active', true);
 
       if (error) throw error;
+
+      // Fetch current instructor (if any)
+      const { data: currentLink, error: currentError } = await supabase
+        .from('instructor_clients')
+        .select(`
+          id,
+          instructor_id,
+          instructor:profiles!instructor_clients_instructor_id_fkey(
+            username,
+            full_name,
+            cref
+          )
+        `)
+        .eq('client_id', profile.profile_id)
+        .eq('link_status', 'accepted')
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (!currentError && currentLink && currentLink.instructor) {
+        setCurrentInstructor({
+          link_id: currentLink.id,
+          instructor_id: currentLink.instructor_id,
+          instructor: currentLink.instructor as any,
+        });
+      } else {
+        setCurrentInstructor(null);
+      }
 
       // Transform the data to match our interface, filtering out items with null instructor
       const transformedData = (data || [])
@@ -133,8 +173,57 @@ const PendingLinkRequests: React.FC = () => {
     setConfirmDialog({ open: true, action, request });
   };
 
+  const handleUnlink = () => {
+    playClickSound();
+    setConfirmDialog({ open: true, action: 'unlink', request: null });
+  };
+
+  const confirmUnlink = async () => {
+    if (!currentInstructor || !profile?.profile_id) return;
+
+    setUnlinking(true);
+    setConfirmDialog({ open: false, action: 'accept', request: null });
+
+    try {
+      const { error } = await supabase
+        .from('instructor_clients')
+        .update({
+          is_active: false,
+          link_status: 'unlinked',
+          unlinked_at: new Date().toISOString(),
+        })
+        .eq('id', currentInstructor.link_id);
+
+      if (error) throw error;
+
+      // Notify instructor
+      await supabase.from('notifications').insert({
+        profile_id: currentInstructor.instructor_id,
+        title: 'Aluno desvinculado',
+        message: `O aluno ${profile?.full_name || profile?.username} se desvinculou de você.`,
+        type: 'link_removed',
+      });
+
+      toast.success('Você foi desvinculado do instrutor com sucesso.');
+      setCurrentInstructor(null);
+      fetchPendingRequests(); // Refresh data
+    } catch (err) {
+      console.error('Error unlinking:', err);
+      toast.error('Erro ao desvincular.');
+    } finally {
+      setUnlinking(false);
+    }
+  };
+
   const confirmAction = async () => {
     const { action, request } = confirmDialog;
+    
+    // Handle unlink action
+    if (action === 'unlink') {
+      await confirmUnlink();
+      return;
+    }
+
     if (!request || !profile?.profile_id) return;
 
     setProcessing(request.id);
@@ -190,8 +279,11 @@ const PendingLinkRequests: React.FC = () => {
           : 'Vínculo rejeitado.'
       );
 
-      // Remove from list
+      // Remove from list and refresh
       setRequests((prev) => prev.filter((r) => r.id !== request.id));
+      if (action === 'accept') {
+        fetchPendingRequests(); // Refresh to get new current instructor
+      }
     } catch (err) {
       console.error('Error processing request:', err);
       toast.error('Erro ao processar solicitação.');
@@ -208,109 +300,171 @@ const PendingLinkRequests: React.FC = () => {
     );
   }
 
-  if (requests.length === 0) {
+  // Show if there are pending requests OR if there's a current instructor to display
+  if (requests.length === 0 && !currentInstructor) {
     return null;
   }
 
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
-      >
-        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-yellow-500" />
-              <h3 className="font-bebas text-lg text-yellow-500 tracking-wider">
-                SOLICITAÇÕES DE VÍNCULO PENDENTES
-              </h3>
-            </div>
-            
-            {/* Push notification prompt */}
-            {isSupported && permission !== 'granted' && (
+      {/* Current Instructor Card */}
+      {currentInstructor && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4"
+        >
+          <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-green-500/20 border-2 border-green-500/50 flex items-center justify-center">
+                  <User className="h-6 w-6 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Seu Instrutor Atual</p>
+                  <p className="font-semibold text-foreground">
+                    {currentInstructor.instructor.full_name || currentInstructor.instructor.username}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    @{currentInstructor.instructor.username}
+                    {currentInstructor.instructor.cref && ` • CREF: ${currentInstructor.instructor.cref}`}
+                  </p>
+                </div>
+              </div>
               <Button
                 size="sm"
                 variant="outline"
-                onClick={requestPermission}
-                className="border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10 text-xs"
+                onClick={handleUnlink}
+                disabled={unlinking}
+                className="border-destructive/50 text-destructive hover:bg-destructive/10"
               >
-                <Bell className="h-3 w-3 mr-1" />
-                Ativar alertas
+                {unlinking ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <UserMinus className="h-4 w-4" />
+                )}
+                <span className="ml-1">Desvincular</span>
               </Button>
-            )}
+            </div>
           </div>
+        </motion.div>
+      )}
 
-          <div className="space-y-3">
-            <AnimatePresence>
-              {requests.map((request) => (
-                <motion.div
-                  key={request.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="bg-card/80 backdrop-blur-md rounded-lg p-4 border border-border/50"
+      {/* Pending Requests */}
+      {requests.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
+        >
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-yellow-500" />
+                <h3 className="font-bebas text-lg text-yellow-500 tracking-wider">
+                  SOLICITAÇÕES DE VÍNCULO PENDENTES
+                </h3>
+              </div>
+              
+              {/* Push notification prompt */}
+              {isSupported && permission !== 'granted' && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={requestPermission}
+                  className="border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10 text-xs"
                 >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center">
-                        <UserPlus className="h-5 w-5 text-green-500" />
+                  <Bell className="h-3 w-3 mr-1" />
+                  Ativar alertas
+                </Button>
+              )}
+            </div>
+
+            {/* Warning if already has instructor */}
+            {currentInstructor && (
+              <div className="mb-3 p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+                <div className="flex items-start gap-2 text-orange-500">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium">Você já tem um instrutor vinculado</p>
+                    <p className="text-xs opacity-80">
+                      Para aceitar uma nova solicitação, você precisa primeiro se desvincular do instrutor atual ({currentInstructor.instructor.full_name || currentInstructor.instructor.username}).
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <AnimatePresence>
+                {requests.map((request) => (
+                  <motion.div
+                    key={request.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="bg-card/80 backdrop-blur-md rounded-lg p-4 border border-border/50"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center">
+                          <UserPlus className="h-5 w-5 text-green-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {request.instructor.full_name || request.instructor.username}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            @{request.instructor.username}
+                            {request.instructor.cref && ` • CREF: ${request.instructor.cref}`}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {request.instructor.full_name || request.instructor.username}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          @{request.instructor.username}
-                          {request.instructor.cref && ` • CREF: ${request.instructor.cref}`}
-                        </p>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleAction(request, 'reject')}
+                          disabled={processing === request.id}
+                          className="border-destructive/50 text-destructive hover:bg-destructive/10"
+                        >
+                          {processing === request.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <X className="h-4 w-4" />
+                          )}
+                          <span className="hidden sm:inline ml-1">Rejeitar</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleAction(request, 'accept')}
+                          disabled={processing === request.id || !!currentInstructor}
+                          className="bg-green-500 hover:bg-green-600 disabled:opacity-50"
+                        >
+                          {processing === request.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Check className="h-4 w-4" />
+                          )}
+                          <span className="hidden sm:inline ml-1">Aceitar</span>
+                        </Button>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleAction(request, 'reject')}
-                        disabled={processing === request.id}
-                        className="border-destructive/50 text-destructive hover:bg-destructive/10"
-                      >
-                        {processing === request.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <X className="h-4 w-4" />
-                        )}
-                        <span className="hidden sm:inline ml-1">Rejeitar</span>
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleAction(request, 'accept')}
-                        disabled={processing === request.id}
-                        className="bg-green-500 hover:bg-green-600"
-                      >
-                        {processing === request.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Check className="h-4 w-4" />
-                        )}
-                        <span className="hidden sm:inline ml-1">Aceitar</span>
-                      </Button>
+                    <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                      <AlertCircle className="h-3 w-3" />
+                      <span>
+                        Aceitar permitirá que este instrutor crie treinos e planos alimentares para você.
+                      </span>
                     </div>
-                  </div>
-
-                  <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                    <AlertCircle className="h-3 w-3" />
-                    <span>
-                      Aceitar permitirá que este instrutor crie treinos e planos alimentares para você.
-                    </span>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
 
       {/* Confirmation Dialog */}
       <AlertDialog 
@@ -322,10 +476,16 @@ const PendingLinkRequests: React.FC = () => {
             <AlertDialogTitle className="flex items-center gap-2">
               {confirmDialog.action === 'accept' ? (
                 <Check className="h-5 w-5 text-green-500" />
+              ) : confirmDialog.action === 'unlink' ? (
+                <UserMinus className="h-5 w-5 text-destructive" />
               ) : (
                 <X className="h-5 w-5 text-destructive" />
               )}
-              {confirmDialog.action === 'accept' ? 'Aceitar Vínculo' : 'Rejeitar Vínculo'}
+              {confirmDialog.action === 'accept' 
+                ? 'Aceitar Vínculo' 
+                : confirmDialog.action === 'unlink' 
+                  ? 'Desvincular Instrutor'
+                  : 'Rejeitar Vínculo'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDialog.action === 'accept' ? (
@@ -333,6 +493,12 @@ const PendingLinkRequests: React.FC = () => {
                   Ao aceitar, o instrutor{' '}
                   <strong>{confirmDialog.request?.instructor.full_name || confirmDialog.request?.instructor.username}</strong>{' '}
                   poderá criar treinos e planos alimentares personalizados para você.
+                </>
+              ) : confirmDialog.action === 'unlink' ? (
+                <>
+                  Tem certeza que deseja se desvincular do instrutor{' '}
+                  <strong>{currentInstructor?.instructor.full_name || currentInstructor?.instructor.username}</strong>?
+                  Você perderá acesso aos treinos criados por ele e o instrutor será notificado.
                 </>
               ) : (
                 <>
@@ -353,7 +519,11 @@ const PendingLinkRequests: React.FC = () => {
                   : 'bg-destructive hover:bg-destructive/90'
               }
             >
-              {confirmDialog.action === 'accept' ? 'Sim, Aceitar' : 'Sim, Rejeitar'}
+              {confirmDialog.action === 'accept' 
+                ? 'Sim, Aceitar' 
+                : confirmDialog.action === 'unlink'
+                  ? 'Sim, Desvincular'
+                  : 'Sim, Rejeitar'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
