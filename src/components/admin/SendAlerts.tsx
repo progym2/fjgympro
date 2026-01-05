@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Bell, Send, Users, Loader2, CheckCircle, Shield, History, 
   Trash2, Eye, Calendar, Clock, AlertTriangle, Info, BellRing,
-  BarChart3
+  BarChart3, MessageCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
@@ -27,6 +27,7 @@ interface Profile {
   full_name: string;
   username: string;
   role?: string;
+  phone?: string | null;
 }
 
 interface Notification {
@@ -136,10 +137,10 @@ const SendAlerts: React.FC = () => {
   const loadProfiles = async () => {
     setLoading(true);
     
-    // First get profiles
+    // First get profiles with phone
     let query = supabase
       .from('profiles')
-      .select('id, full_name, username')
+      .select('id, full_name, username, phone')
       .order('full_name');
     
     // Se não for master, filtra apenas os cadastrados pelo gerente atual
@@ -167,7 +168,8 @@ const SendAlerts: React.FC = () => {
         const userRole = rolesData?.find(r => r.user_id === profileWithUserId?.user_id);
         return {
           ...p,
-          role: userRole?.role || 'client'
+          role: userRole?.role || 'client',
+          phone: p.phone
         };
       });
       
@@ -175,6 +177,56 @@ const SendAlerts: React.FC = () => {
     }
     
     setLoading(false);
+  };
+
+  const sendWhatsAppMessage = (phone: string | null, name: string, title: string, message: string) => {
+    if (!phone) {
+      toast.error('Usuário sem telefone cadastrado');
+      return;
+    }
+    
+    const cleanPhone = phone.replace(/\D/g, '');
+    const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+    
+    const whatsappMessage = encodeURIComponent(
+      `Olá ${name}! 👋\n\n` +
+      `📢 *${title}*\n\n` +
+      `${message}\n\n` +
+      `Atenciosamente,\nEquipe da Academia 🏋️`
+    );
+    
+    window.open(`https://wa.me/${formattedPhone}?text=${whatsappMessage}`, '_blank');
+    toast.success('WhatsApp aberto!');
+  };
+
+  const sendWhatsAppToSelected = () => {
+    playClickSound();
+    
+    let targetProfiles: Profile[] = [];
+    if (formData.target === 'all') {
+      targetProfiles = filteredProfiles.filter(p => p.phone);
+    } else {
+      const profile = filteredProfiles.find(p => p.id === formData.target);
+      if (profile?.phone) targetProfiles = [profile];
+    }
+
+    if (targetProfiles.length === 0) {
+      toast.error('Nenhum destinatário com telefone cadastrado');
+      return;
+    }
+
+    if (!formData.title.trim() || !formData.message.trim()) {
+      toast.error('Preencha título e mensagem primeiro');
+      return;
+    }
+
+    // Send to first one
+    const first = targetProfiles[0];
+    sendWhatsAppMessage(first.phone || null, first.full_name || first.username, formData.title, formData.message);
+    
+    if (targetProfiles.length > 1) {
+      toast.info(`Mais ${targetProfiles.length - 1} usuário(s) com telefone para enviar`);
+    }
   };
 
   // Filter profiles based on userType
@@ -603,18 +655,29 @@ const SendAlerts: React.FC = () => {
                   />
                 </div>
 
-                <Button
-                  onClick={handleSend}
-                  disabled={sending}
-                  className="w-full bg-pink-600 hover:bg-pink-700"
-                >
-                  {sending ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <Send className="w-4 h-4 mr-2" />
-                  )}
-                  {sending ? 'Enviando...' : 'Enviar Alerta'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={sendWhatsAppToSelected}
+                    variant="outline"
+                    className="flex-1 border-green-500/50 text-green-500 hover:bg-green-500/10"
+                    disabled={!formData.title.trim() || !formData.message.trim()}
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    WhatsApp
+                  </Button>
+                  <Button
+                    onClick={handleSend}
+                    disabled={sending}
+                    className="flex-1 bg-pink-600 hover:bg-pink-700"
+                  >
+                    {sending ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Send className="w-4 h-4 mr-2" />
+                    )}
+                    {sending ? 'Enviando...' : 'Enviar Alerta'}
+                  </Button>
+                </div>
               </>
             )}
           </div>

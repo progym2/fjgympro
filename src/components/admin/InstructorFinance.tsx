@@ -3,21 +3,27 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, DollarSign, Loader2, Search, 
-  TrendingUp, ChevronDown, ChevronUp, User
+  TrendingUp, ChevronDown, ChevronUp, User,
+  MessageCircle, Calendar, CreditCard, Banknote, Smartphone
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Input } from '@/components/ui/input';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/printUtils';
 
-interface InstructorFinance {
+interface InstructorFinanceData {
   id: string;
   full_name: string;
   username: string;
   cref: string | null;
+  phone: string | null;
   clientCount: number;
   totalReceived: number;
   totalPending: number;
@@ -26,6 +32,8 @@ interface InstructorFinance {
     amount: number;
     status: string;
     paid_at: string | null;
+    payment_method: string | null;
+    description: string | null;
   }[];
 }
 
@@ -33,50 +41,47 @@ const InstructorFinance: React.FC = () => {
   const navigate = useNavigate();
   const { playClickSound } = useAudio();
   const { role } = useAuth();
-  const [instructors, setInstructors] = useState<InstructorFinance[]>([]);
+  const [instructors, setInstructors] = useState<InstructorFinanceData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedInstructor, setExpandedInstructor] = useState<string | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState('1');
 
-  // ESC para voltar ao menu admin
   useEscapeBack({ to: '/admin' });
 
   const isMaster = role === 'master';
 
   useEffect(() => {
     loadInstructorFinance();
-  }, []);
+  }, [selectedPeriod]);
 
   const loadInstructorFinance = async () => {
     setLoading(true);
     try {
-      // Get all instructors (profiles with CREF)
       const { data: instructorProfiles, error: instructorError } = await supabase
         .from('profiles')
-        .select('id, full_name, username, cref')
+        .select('id, full_name, username, cref, phone')
         .not('cref', 'is', null);
 
       if (instructorError) throw instructorError;
 
-      const now = new Date();
-      const monthStart = startOfMonth(now);
-      const monthEnd = endOfMonth(now);
+      const months = parseInt(selectedPeriod);
+      const monthStart = startOfMonth(subMonths(new Date(), months - 1));
+      const monthEnd = endOfMonth(new Date());
 
-      const instructorFinanceData: InstructorFinance[] = [];
+      const instructorFinanceData: InstructorFinanceData[] = [];
 
       for (const instructor of instructorProfiles || []) {
-        // Get linked clients count
         const { count: clientCount } = await supabase
           .from('instructor_clients')
           .select('id', { count: 'exact', head: true })
           .eq('instructor_id', instructor.id)
           .eq('is_active', true);
 
-        // Get payments for this instructor's clients
         const { data: payments } = await supabase
           .from('payments')
           .select(`
-            amount, status, paid_at,
+            amount, status, paid_at, payment_method, description,
             profiles!payments_client_id_fkey (full_name)
           `)
           .eq('instructor_id', instructor.id)
@@ -96,6 +101,8 @@ const InstructorFinance: React.FC = () => {
           amount: p.amount,
           status: p.status,
           paid_at: p.paid_at,
+          payment_method: p.payment_method,
+          description: p.description,
         }));
 
         instructorFinanceData.push({
@@ -103,6 +110,7 @@ const InstructorFinance: React.FC = () => {
           full_name: instructor.full_name || instructor.username,
           username: instructor.username,
           cref: instructor.cref,
+          phone: instructor.phone,
           clientCount: clientCount || 0,
           totalReceived,
           totalPending,
@@ -110,14 +118,44 @@ const InstructorFinance: React.FC = () => {
         });
       }
 
-      // Sort by total received (descending)
       instructorFinanceData.sort((a, b) => b.totalReceived - a.totalReceived);
 
       setInstructors(instructorFinanceData);
     } catch (err) {
       console.error('Error loading instructor finance:', err);
+      toast.error('Erro ao carregar dados financeiros');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const sendWhatsAppMessage = (phone: string | null, instructorName: string, totalReceived: number, totalPending: number) => {
+    if (!phone) {
+      toast.error('Instrutor sem telefone cadastrado');
+      return;
+    }
+    
+    const cleanPhone = phone.replace(/\D/g, '');
+    const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+    
+    const message = encodeURIComponent(
+      `Olá ${instructorName}! 👋\n\n` +
+      `📊 *Resumo Financeiro*\n\n` +
+      `✅ Total Recebido: ${formatCurrency(totalReceived)}\n` +
+      `⏳ Pendente: ${formatCurrency(totalPending)}\n` +
+      `💰 Total: ${formatCurrency(totalReceived + totalPending)}\n\n` +
+      `Qualquer dúvida, entre em contato! 🏋️`
+    );
+    
+    window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
+    toast.success('WhatsApp aberto!');
+  };
+
+  const getMethodIcon = (method: string | null) => {
+    switch (method) {
+      case 'pix': return <Smartphone size={14} className="text-green-500" />;
+      case 'card': return <CreditCard size={14} className="text-blue-500" />;
+      default: return <Banknote size={14} className="text-emerald-500" />;
     }
   };
 
@@ -154,14 +192,28 @@ const InstructorFinance: React.FC = () => {
             FINANCEIRO POR INSTRUTOR
           </h2>
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar instrutor..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-background/50 border-border/50 w-full sm:w-64"
-          />
+        <div className="flex items-center gap-2">
+          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+            <SelectTrigger className="w-32 bg-background/50">
+              <Calendar size={14} className="mr-1" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Este mês</SelectItem>
+              <SelectItem value="3">3 meses</SelectItem>
+              <SelectItem value="6">6 meses</SelectItem>
+              <SelectItem value="12">12 meses</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar instrutor..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-background/50 border-border/50 w-full sm:w-64"
+            />
+          </div>
         </div>
       </div>
 
@@ -184,8 +236,8 @@ const InstructorFinance: React.FC = () => {
               <DollarSign className="w-5 h-5 text-green-500" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Total Recebido (Mês)</p>
-              <p className="text-lg font-bebas text-green-500">R$ {totalReceived.toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground">Total Recebido</p>
+              <p className="text-lg font-bebas text-green-500">{formatCurrency(totalReceived)}</p>
             </div>
           </div>
         </div>
@@ -196,7 +248,7 @@ const InstructorFinance: React.FC = () => {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Total Pendente</p>
-              <p className="text-lg font-bebas text-yellow-500">R$ {totalPending.toFixed(2)}</p>
+              <p className="text-lg font-bebas text-yellow-500">{formatCurrency(totalPending)}</p>
             </div>
           </div>
         </div>
@@ -207,7 +259,7 @@ const InstructorFinance: React.FC = () => {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Total Geral</p>
-              <p className="text-lg font-bebas text-emerald-500">R$ {(totalReceived + totalPending).toFixed(2)}</p>
+              <p className="text-lg font-bebas text-emerald-500">{formatCurrency(totalReceived + totalPending)}</p>
             </div>
           </div>
         </div>
@@ -256,7 +308,7 @@ const InstructorFinance: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-4">
                     <div className="text-center hidden sm:block">
                       <p className="text-xs text-muted-foreground">Alunos</p>
                       <p className="font-bebas text-lg">{instructor.clientCount}</p>
@@ -264,15 +316,33 @@ const InstructorFinance: React.FC = () => {
                     <div className="text-center">
                       <p className="text-xs text-muted-foreground">Recebido</p>
                       <p className="font-bebas text-lg text-green-500">
-                        R$ {instructor.totalReceived.toFixed(2)}
+                        {formatCurrency(instructor.totalReceived)}
                       </p>
                     </div>
                     <div className="text-center hidden sm:block">
                       <p className="text-xs text-muted-foreground">Pendente</p>
                       <p className="font-bebas text-lg text-yellow-500">
-                        R$ {instructor.totalPending.toFixed(2)}
+                        {formatCurrency(instructor.totalPending)}
                       </p>
                     </div>
+                    {instructor.phone && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-green-500 hover:bg-green-500/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          sendWhatsAppMessage(
+                            instructor.phone, 
+                            instructor.full_name, 
+                            instructor.totalReceived, 
+                            instructor.totalPending
+                          );
+                        }}
+                      >
+                        <MessageCircle size={18} />
+                      </Button>
+                    )}
                     {expandedInstructor === instructor.id ? (
                       <ChevronUp className="w-5 h-5 text-muted-foreground" />
                     ) : (
@@ -292,30 +362,38 @@ const InstructorFinance: React.FC = () => {
                   <div className="p-4">
                     <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
                       <DollarSign className="w-4 h-4 text-green-500" />
-                      Pagamentos dos Alunos (Mês Atual)
+                      Pagamentos Recebidos (Período Selecionado)
                     </h4>
                     {instructor.payments.length === 0 ? (
                       <p className="text-sm text-muted-foreground text-center py-4">
-                        Nenhum pagamento registrado este mês
+                        Nenhum pagamento registrado no período
                       </p>
                     ) : (
-                      <div className="space-y-2">
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
                         {instructor.payments.map((payment, idx) => (
                           <div
                             key={idx}
                             className="flex items-center justify-between p-3 bg-background/50 rounded-lg"
                           >
                             <div>
-                              <p className="font-medium text-sm">{payment.client_name}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-sm">{payment.client_name}</p>
+                                {payment.description && (
+                                  <span className="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded">
+                                    {payment.description}
+                                  </span>
+                                )}
+                              </div>
                               {payment.paid_at && (
                                 <p className="text-xs text-muted-foreground">
-                                  Pago em {format(new Date(payment.paid_at), 'dd/MM/yyyy', { locale: ptBR })}
+                                  Pago em {format(new Date(payment.paid_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                                 </p>
                               )}
                             </div>
                             <div className="flex items-center gap-3">
+                              {payment.payment_method && getMethodIcon(payment.payment_method)}
                               <span className="font-bebas text-lg">
-                                R$ {payment.amount.toFixed(2)}
+                                {formatCurrency(payment.amount)}
                               </span>
                               <span
                                 className={`px-2 py-1 text-xs rounded-full ${
