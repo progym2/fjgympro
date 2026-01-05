@@ -9,6 +9,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
   const [isVideoEnded, setIsVideoEnded] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [videoError, setVideoError] = useState(false);
+  const [needsUserInteraction, setNeedsUserInteraction] = useState(false);
   const [showSkipButton, setShowSkipButton] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hasCompletedRef = useRef(false);
@@ -29,10 +30,11 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
       try {
         video.muted = true; // Sempre mudo para garantir autoplay
         await video.play();
+        setNeedsUserInteraction(false);
       } catch (err) {
-        console.error('Falha ao reproduzir vídeo:', err);
-        setVideoError(true);
-        handleComplete();
+        console.error('Autoplay bloqueado (aguardando toque):', err);
+        setNeedsUserInteraction(true);
+        setShowSkipButton(true);
       }
     };
 
@@ -61,20 +63,25 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
     };
   }, []);
 
-  // Fallback se o vídeo não carregar em 5 segundos
-  useEffect(() => {
-    const fallbackTimer = setTimeout(() => {
-      if (!videoLoaded && !hasCompletedRef.current) {
-        console.log('Vídeo não carregou - pulando splash');
-        handleComplete();
-      }
-    }, 5000);
-
-    return () => clearTimeout(fallbackTimer);
-  }, [videoLoaded]);
 
   const handleVideoCanPlay = () => {
     setVideoLoaded(true);
+  };
+
+  const handleManualPlay = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    try {
+      // Com gesto do usuário, podemos tocar normalmente
+      video.muted = false;
+      await video.play();
+      setNeedsUserInteraction(false);
+    } catch (err) {
+      console.error('Falha ao iniciar vídeo manualmente:', err);
+      // Mantém o overlay visível para nova tentativa
+      setNeedsUserInteraction(true);
+    }
   };
 
   const handleVideoError = () => {
@@ -105,6 +112,28 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               >
                 <source src="/videos/intro-app.mp4" type="video/mp4" />
               </video>
+
+              {/* Se autoplay for bloqueado, pedir toque do usuário */}
+              <AnimatePresence>
+                {needsUserInteraction && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 flex items-center justify-center bg-black/50"
+                  >
+                    <motion.button
+                      initial={{ scale: 0.96, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.96, opacity: 0 }}
+                      onClick={handleManualPlay}
+                      className="px-6 py-3 rounded-full bg-white/15 backdrop-blur-md border border-white/25 text-white font-medium hover:bg-white/25 transition-all"
+                    >
+                      Toque para iniciar
+                    </motion.button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               
               {/* Botão de Pular */}
               <AnimatePresence>
