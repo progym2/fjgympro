@@ -235,7 +235,10 @@ const UnlinkInstructor: React.FC = () => {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={unlinking}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleUnlink}
+              onClick={(e) => {
+                e.preventDefault();
+                handleUnlink();
+              }}
               disabled={unlinking}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
