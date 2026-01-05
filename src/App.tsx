@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +12,7 @@ import { clearExpiredCache } from "@/hooks/useOfflineStorage";
 import { initializeCache } from "@/hooks/useIndexedDBCache";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import InstallBanner from "@/components/InstallBanner";
+import VideoSplashScreen from "@/components/VideoSplashScreen";
 import { Loader2 } from "lucide-react";
 
 // Lazy load heavy dashboard pages for faster initial load
@@ -75,25 +76,42 @@ const AppRoutes = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <ThemeProvider>
-        <AudioProvider>
-          <TooltipProvider>
-            <NightModeHandler />
-            <Toaster />
-            <Sonner />
-            <OfflineIndicator />
-            <BrowserRouter>
-              <InstallBanner />
-              <AppRoutes />
-            </BrowserRouter>
-          </TooltipProvider>
-        </AudioProvider>
-      </ThemeProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [splashComplete, setSplashComplete] = useState(() => {
+    // Check if splash was already shown
+    return sessionStorage.getItem('splashShown') === 'true';
+  });
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ThemeProvider>
+          <AudioProvider>
+            <TooltipProvider>
+              {/* Video Splash Screen */}
+              {!splashComplete && (
+                <VideoSplashScreen onComplete={() => setSplashComplete(true)} />
+              )}
+              
+              {/* Main App - render after splash or immediately if splash shown */}
+              {splashComplete && (
+                <>
+                  <NightModeHandler />
+                  <Toaster />
+                  <Sonner />
+                  <OfflineIndicator />
+                  <BrowserRouter>
+                    <InstallBanner />
+                    <AppRoutes />
+                  </BrowserRouter>
+                </>
+              )}
+            </TooltipProvider>
+          </AudioProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
