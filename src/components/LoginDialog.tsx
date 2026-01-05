@@ -194,13 +194,65 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
     }
   }, [isOpen, loadLockoutData]);
 
-  // Auto-trigger biometric login when dialog opens and biometric is enabled
-  // Only if biometric is supported on this device
+  // Auto-login when dialog opens and credentials are saved
+  // Priority: biometric > auto-login with saved credentials
   useEffect(() => {
-    if (isOpen && biometricEnabled && biometricSupported && hasSavedCredentials && !isLoading) {
+    if (!isOpen || isLoading) return;
+    
+    // If biometric is enabled and supported, try biometric first
+    if (biometricEnabled && biometricSupported && hasSavedCredentials) {
       handleBiometricLogin();
+      return;
     }
-  }, [isOpen, biometricEnabled, biometricSupported, hasSavedCredentials]);
+    
+    // Otherwise, auto-login with saved credentials
+    if (hasSavedCredentials && username && password) {
+      handleAutoLogin();
+    }
+  }, [isOpen, biometricEnabled, biometricSupported, hasSavedCredentials, username, password]);
+
+  // Auto-login with saved credentials (no user interaction needed)
+  const handleAutoLogin = async () => {
+    if (!username || !password || isLoading) return;
+    
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const result = await signIn(username.trim(), password.trim(), panelType);
+
+      if (result.error) {
+        // If auto-login fails, just show error and let user retry manually
+        const errorLower = result.error.toLowerCase();
+        if (errorLower.includes('senha') && (errorLower.includes('incorreta') || errorLower.includes('inválid'))) {
+          setError('🔐 Credenciais salvas incorretas. Digite novamente.');
+          // Clear saved credentials since they're wrong
+          localStorage.removeItem(STORAGE_KEY);
+          setHasSavedCredentials(false);
+        } else if (errorLower.includes('expirou') || errorLower.includes('expirada')) {
+          setError('⏰ Sua licença expirou. Entre em contato para renovar.');
+        } else {
+          setError('❌ Erro ao entrar automaticamente. Tente manualmente.');
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      // Success - navigate immediately
+      toast({
+        title: '✅ Login automático!',
+        description: 'Bem-vindo de volta',
+        duration: 1500,
+      });
+
+      setIsLoading(false);
+      onSuccess(result.role ?? panelType);
+    } catch (err) {
+      console.error('Auto-login error:', err);
+      setError('❌ Erro ao entrar. Tente manualmente.');
+      setIsLoading(false);
+    }
+  };
 
   const handleBiometricLogin = async () => {
     if (!hasSavedCredentials) {
