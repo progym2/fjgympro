@@ -118,6 +118,19 @@ const RegisterClient: React.FC = () => {
 
     setSaving(true);
     try {
+      // Check for duplicate full_name (case insensitive)
+      const { data: existingName } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .ilike('full_name', formData.full_name.trim())
+        .maybeSingle();
+
+      if (existingName) {
+        toast.error(`Já existe um cliente cadastrado com este nome: ${existingName.full_name}`);
+        setSaving(false);
+        return;
+      }
+
       // CPF check already done in real-time validation, just double-check
       const { data: existingCPF } = await supabase
         .from('profiles')
