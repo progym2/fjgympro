@@ -129,7 +129,26 @@ const ScanInstructor: React.FC = () => {
     setLinkingInProgress(true);
 
     try {
-      // Check if already linked
+      // Check if client is already linked to ANY instructor
+      const { data: existingLink } = await supabase
+        .from('instructor_clients')
+        .select('id, instructor_id, is_active, link_status')
+        .eq('client_id', profile.profile_id)
+        .eq('is_active', true)
+        .eq('link_status', 'accepted')
+        .maybeSingle();
+
+      if (existingLink) {
+        if (existingLink.instructor_id === scannedInstructor.id) {
+          toast.info('Você já está vinculado a este instrutor');
+          setScannedInstructor({ ...scannedInstructor, isAlreadyLinked: true });
+        } else {
+          toast.error('⚠️ Você já está vinculado a outro instrutor! Desvincule-se primeiro antes de vincular a outro.');
+        }
+        return;
+      }
+
+      // Check if already linked to this specific instructor
       const { data: existing } = await supabase
         .from('instructor_clients')
         .select('id, is_active')
