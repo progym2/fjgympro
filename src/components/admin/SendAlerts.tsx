@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -26,6 +26,7 @@ interface Profile {
   id: string;
   full_name: string;
   username: string;
+  role?: string;
 }
 
 interface Notification {
@@ -64,11 +65,58 @@ const SendAlerts: React.FC = () => {
   
   const [formData, setFormData] = useState({
     target: 'all',
+    userType: 'all', // 'all', 'clients', 'instructors'
     title: '',
     message: '',
     type: 'info',
     sendPush: true
   });
+
+  // Templates de mensagens pré-definidas
+  const messageTemplates = [
+    { 
+      id: 'payment_reminder', 
+      label: '💰 Lembrete de Pagamento',
+      title: 'Lembrete de Pagamento',
+      message: 'Olá! Este é um lembrete amigável de que sua mensalidade está próxima do vencimento. Por favor, efetue o pagamento para manter seu acesso ativo.',
+      type: 'warning'
+    },
+    { 
+      id: 'payment_overdue', 
+      label: '⚠️ Pagamento em Atraso',
+      title: 'Pagamento em Atraso',
+      message: 'Identificamos que sua mensalidade está em atraso. Por favor, regularize seu pagamento o mais breve possível para evitar a suspensão do acesso.',
+      type: 'alert'
+    },
+    { 
+      id: 'welcome', 
+      label: '👋 Boas-vindas',
+      title: 'Bem-vindo(a)!',
+      message: 'Seja bem-vindo(a) à nossa academia! Estamos muito felizes em ter você conosco. Qualquer dúvida, não hesite em nos procurar.',
+      type: 'success'
+    },
+    { 
+      id: 'schedule_change', 
+      label: '📅 Mudança de Horário',
+      title: 'Alteração de Horário',
+      message: 'Informamos que haverá alteração nos horários de funcionamento. Fique atento às novas programações.',
+      type: 'info'
+    },
+    { 
+      id: 'maintenance', 
+      label: '🔧 Manutenção',
+      title: 'Aviso de Manutenção',
+      message: 'Informamos que realizaremos manutenção em nossas instalações. Agradecemos a compreensão.',
+      type: 'info'
+    },
+    { 
+      id: 'promotion', 
+      label: '🎉 Promoção',
+      title: 'Promoção Especial',
+      message: 'Temos uma promoção especial para você! Entre em contato conosco para saber mais detalhes.',
+      type: 'success'
+    }
+  ];
 
   useEffect(() => {
     // Check push notification support
@@ -88,6 +136,7 @@ const SendAlerts: React.FC = () => {
   const loadProfiles = async () => {
     setLoading(true);
     
+    // First get profiles
     let query = supabase
       .from('profiles')
       .select('id, full_name, username')
@@ -98,9 +147,55 @@ const SendAlerts: React.FC = () => {
       query = query.eq('created_by_admin', currentProfile.profile_id);
     }
     
-    const { data } = await query;
-    setProfiles(data || []);
+    const { data: profilesData } = await query;
+    
+    if (profilesData) {
+      // Get roles for each profile
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+      
+      // Get user_id mapping from profiles
+      const { data: profilesWithUserId } = await supabase
+        .from('profiles')
+        .select('id, user_id')
+        .in('id', profilesData.map(p => p.id));
+      
+      // Map roles to profiles
+      const profilesWithRoles = profilesData.map(p => {
+        const profileWithUserId = profilesWithUserId?.find(pu => pu.id === p.id);
+        const userRole = rolesData?.find(r => r.user_id === profileWithUserId?.user_id);
+        return {
+          ...p,
+          role: userRole?.role || 'client'
+        };
+      });
+      
+      setProfiles(profilesWithRoles);
+    }
+    
     setLoading(false);
+  };
+
+  // Filter profiles based on userType
+  const filteredProfiles = useMemo(() => {
+    if (formData.userType === 'all') return profiles;
+    if (formData.userType === 'clients') return profiles.filter(p => p.role === 'client');
+    if (formData.userType === 'instructors') return profiles.filter(p => p.role === 'instructor');
+    return profiles;
+  }, [profiles, formData.userType]);
+
+  const applyTemplate = (templateId: string) => {
+    const template = messageTemplates.find(t => t.id === templateId);
+    if (template) {
+      setFormData(prev => ({
+        ...prev,
+        title: template.title,
+        message: template.message,
+        type: template.type
+      }));
+      toast.success('Template aplicado!');
+    }
   };
 
   const loadNotificationHistory = async () => {
@@ -211,9 +306,9 @@ const SendAlerts: React.FC = () => {
       let targetProfiles: Profile[] = [];
 
       if (formData.target === 'all') {
-        targetProfiles = profiles;
+        targetProfiles = filteredProfiles;
       } else {
-        const profile = profiles.find(p => p.id === formData.target);
+        const profile = filteredProfiles.find(p => p.id === formData.target);
         if (profile) targetProfiles = [profile];
       }
 
@@ -246,7 +341,7 @@ const SendAlerts: React.FC = () => {
       loadNotificationHistory();
       
       setTimeout(() => {
-        setFormData({ target: 'all', title: '', message: '', type: 'info', sendPush: true });
+        setFormData({ target: 'all', userType: 'all', title: '', message: '', type: 'info', sendPush: true });
         setSent(false);
       }, 2000);
     } catch (err) {
@@ -392,6 +487,38 @@ const SendAlerts: React.FC = () => {
               </div>
             ) : (
               <>
+                {/* Templates de Mensagem */}
+                <div>
+                  <label className="text-sm text-muted-foreground mb-2 block">📋 Templates Rápidos</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {messageTemplates.map(template => (
+                      <button
+                        key={template.id}
+                        type="button"
+                        onClick={() => applyTemplate(template.id)}
+                        className="p-2 text-xs bg-background/50 border border-border/50 rounded-lg hover:border-primary/50 hover:bg-primary/10 transition-colors text-left"
+                      >
+                        {template.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Filtro por Tipo de Usuário */}
+                <div>
+                  <label className="text-sm text-muted-foreground mb-2 block">Tipo de Usuário</label>
+                  <Select value={formData.userType} onValueChange={(v) => setFormData({ ...formData, userType: v, target: 'all' })}>
+                    <SelectTrigger className="bg-background/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">👥 Todos ({profiles.length})</SelectItem>
+                      <SelectItem value="clients">🏋️ Apenas Clientes ({profiles.filter(p => p.role === 'client').length})</SelectItem>
+                      <SelectItem value="instructors">💪 Apenas Instrutores ({profiles.filter(p => p.role === 'instructor').length})</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div>
                   <label className="text-sm text-muted-foreground mb-2 block">Destinatário</label>
                   <Select value={formData.target} onValueChange={(v) => setFormData({ ...formData, target: v })}>
@@ -402,12 +529,17 @@ const SendAlerts: React.FC = () => {
                       <SelectItem value="all">
                         <div className="flex items-center gap-2">
                           <Users className="w-4 h-4" />
-                          {isMaster ? 'Todos os Usuários' : 'Meus Usuários'} ({profiles.length})
+                          {formData.userType === 'clients' ? 'Todos os Clientes' : 
+                           formData.userType === 'instructors' ? 'Todos os Instrutores' : 
+                           isMaster ? 'Todos os Usuários' : 'Meus Usuários'} ({filteredProfiles.length})
                         </div>
                       </SelectItem>
-                      {profiles.map(p => (
+                      {filteredProfiles.map(p => (
                         <SelectItem key={p.id} value={p.id}>
-                          {p.full_name || p.username}
+                          <span className="flex items-center gap-2">
+                            {p.role === 'instructor' ? '💪' : '🏋️'}
+                            {p.full_name || p.username}
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -415,7 +547,7 @@ const SendAlerts: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="text-sm text-muted-foreground mb-2 block">Tipo</label>
+                  <label className="text-sm text-muted-foreground mb-2 block">Tipo de Notificação</label>
                   <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
                     <SelectTrigger className="bg-background/50">
                       <SelectValue />
@@ -423,7 +555,7 @@ const SendAlerts: React.FC = () => {
                     <SelectContent>
                       <SelectItem value="info">ℹ️ Informação</SelectItem>
                       <SelectItem value="warning">⚠️ Aviso</SelectItem>
-                      <SelectItem value="alert">🚨 Alerta</SelectItem>
+                      <SelectItem value="alert">🚨 Alerta/Cobrança</SelectItem>
                       <SelectItem value="success">✅ Sucesso</SelectItem>
                     </SelectContent>
                   </Select>
