@@ -9,12 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { filterNumericOnly, filterDecimalOnly, filterPhoneOnly, preventNonNumericInput, preventNonDecimalInput } from '@/lib/inputValidation';
+import { filterNumericOnly, filterDecimalOnly, filterPhoneOnly, preventNonNumericInput, preventNonDecimalInput, formatCPF, validateCPF, getCPFDigits } from '@/lib/inputValidation';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import ClientPageHeader from './ClientPageHeader';
 import ProfilePhotoUploader from '@/components/shared/ProfilePhotoUploader';
 import { useEscapeBack } from '@/hooks/useEscapeBack';
+import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
@@ -38,6 +39,7 @@ const Profile: React.FC = () => {
   const [imcClassification, setImcClassification] = useState('');
   const [instructorLevel, setInstructorLevel] = useState<string | null>(null);
   const [instructorName, setInstructorName] = useState<string | null>(null);
+  const [cpfError, setCpfError] = useState('');
 
   // ESC volta para /client
   useEscapeBack({ to: '/client' });
@@ -134,6 +136,15 @@ const Profile: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile?.profile_id) return;
+
+    // Validate CPF if provided
+    if (formData.cpf && getCPFDigits(formData.cpf).length === 11) {
+      if (!validateCPF(formData.cpf)) {
+        setCpfError('CPF inválido - verifique os dígitos');
+        toast.error('CPF inválido');
+        return;
+      }
+    }
 
     setLoading(true);
     try {
@@ -259,19 +270,41 @@ const Profile: React.FC = () => {
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>CPF</Label>
-                <Input
-                  value={formData.cpf}
-                  onChange={(e) => {
-                    const nums = e.target.value.replace(/\D/g, '');
-                    let formatted = nums;
-                    if (nums.length > 3) formatted = `${nums.slice(0, 3)}.${nums.slice(3)}`;
-                    if (nums.length > 6) formatted = `${nums.slice(0, 3)}.${nums.slice(3, 6)}.${nums.slice(6)}`;
-                    if (nums.length > 9) formatted = `${nums.slice(0, 3)}.${nums.slice(3, 6)}.${nums.slice(6, 9)}-${nums.slice(9, 11)}`;
-                    setFormData({ ...formData, cpf: formatted });
-                  }}
-                  placeholder="000.000.000-00"
-                  maxLength={14}
-                />
+                <div className="relative">
+                  <Input
+                    value={formData.cpf}
+                    onChange={(e) => {
+                      const formatted = formatCPF(e.target.value);
+                      setFormData({ ...formData, cpf: formatted });
+                      // Validate when complete
+                      const digits = getCPFDigits(formatted);
+                      if (digits.length === 11) {
+                        if (!validateCPF(formatted)) {
+                          setCpfError('CPF inválido - verifique os dígitos');
+                        } else {
+                          setCpfError('');
+                        }
+                      } else {
+                        setCpfError('');
+                      }
+                    }}
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    className={cpfError ? 'border-destructive pr-10' : getCPFDigits(formData.cpf).length === 11 && !cpfError ? 'border-green-500 pr-10' : ''}
+                  />
+                  {getCPFDigits(formData.cpf).length === 11 && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {cpfError ? (
+                        <XCircle className="w-4 h-4 text-destructive" />
+                      ) : (
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                      )}
+                    </div>
+                  )}
+                </div>
+                {cpfError && (
+                  <p className="text-xs text-destructive">{cpfError}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Cidade</Label>
@@ -380,7 +413,7 @@ const Profile: React.FC = () => {
             </div>
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full">
+          <Button type="submit" disabled={loading || !!cpfError} className="w-full">
             <Save size={18} className="mr-2" />
             {loading ? 'Salvando...' : 'Salvar Alterações'}
           </Button>
