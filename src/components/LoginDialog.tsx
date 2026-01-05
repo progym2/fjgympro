@@ -670,34 +670,38 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
                 transition: { duration: 0.5 }
               } : {}}
             >
-              {/* Error Message */}
+              {/* Error Message - Clean and intuitive */}
               <AnimatePresence>
-                {error && (
+                {error && !isLockedOut && (
                   <MotionErrorBox
-                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    className="flex items-start gap-3 p-4 rounded-xl bg-destructive/20 border-2 border-destructive/50 text-destructive shadow-lg shadow-destructive/20"
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/30"
                   >
-                    <AlertCircle size={22} className="shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm">Erro no Login</p>
-                      <p className="text-sm opacity-90 mt-0.5">{error}</p>
+                    <div className="w-8 h-8 rounded-full bg-destructive/20 flex items-center justify-center shrink-0">
+                      <AlertCircle size={16} className="text-destructive" />
                     </div>
+                    <p className="text-sm text-destructive font-medium leading-snug">{error}</p>
                   </MotionErrorBox>
                 )}
                 
-                {/* Lockout Warning */}
+                {/* Lockout Warning - Clean style */}
                 {isLockedOut && (
                   <MotionErrorBox
-                    initial={{ opacity: 0, y: -10 }}
+                    initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-3 p-4 rounded-xl bg-orange-500/20 border-2 border-orange-500/50 text-orange-400"
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-orange-500/10 border border-orange-500/30"
                   >
-                    <Lock size={22} className="shrink-0" />
+                    <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
+                      <Lock size={16} className="text-orange-400" />
+                    </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-sm">Conta Bloqueada</p>
-                      <p className="text-sm opacity-90">Aguarde {formatLockoutTime(lockoutTimeRemaining)} para tentar novamente</p>
+                      <p className="text-sm text-orange-400 font-medium">
+                        🔒 Aguarde {formatLockoutTime(lockoutTimeRemaining)}
+                      </p>
                     </div>
                   </MotionErrorBox>
                 )}
