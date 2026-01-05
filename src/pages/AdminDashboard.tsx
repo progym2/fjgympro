@@ -148,8 +148,6 @@ const AdminDashboard: React.FC = () => {
       }}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background/90" />
-      <LicenseTimer />
-      
       <div className="relative z-10 min-h-screen min-h-[100dvh] flex flex-col pb-14">
         <ThemedHeader className="sticky top-0">
           <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
@@ -165,6 +163,7 @@ const AdminDashboard: React.FC = () => {
                     <h1 className="text-base sm:text-lg md:text-xl font-bebas text-primary tracking-wider truncate">
                       PAINEL GERENTE
                     </h1>
+                    <LicenseTimer />
                     {isMaster && (
                       <span className="px-1 py-0.5 bg-primary/20 text-primary text-[9px] sm:text-[10px] font-bold rounded-full border border-primary/50 whitespace-nowrap">
                         MASTER
