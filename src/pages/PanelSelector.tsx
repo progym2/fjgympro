@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Dumbbell, Shield, Loader2, ArrowLeft } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import AnimatedLogo from '@/components/AnimatedLogo';
+import ThemedParticles from '@/components/ThemedParticles';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import bgHome from '@/assets/bg-home.png';
@@ -244,6 +245,9 @@ const PanelSelector: React.FC = () => {
       }}
     >
       <div className="absolute inset-0 bg-black/70" />
+      
+      {/* Partículas temáticas animadas */}
+      <ThemedParticles particleCount={25} />
 
       <div className="relative z-10 flex flex-col items-center px-4 w-full max-w-md">
         <AnimatedLogo size="md" showGlow />

@@ -89,6 +89,11 @@
   }
 }
 
+/* Theme transition styles */
+.theme-transitioning * {
+  transition: background-color 0.4s ease, border-color 0.4s ease, color 0.3s ease, box-shadow 0.4s ease !important;
+}
+
 @layer base {
   * {
     @apply border-border;
