@@ -761,96 +761,201 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
           }}
         >
           <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ duration: 0.15 }}
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 10 }}
+            transition={{ 
+              duration: 0.4, 
+              ease: [0.16, 1, 0.3, 1],
+              opacity: { duration: 0.3 }
+            }}
             className="relative w-full max-w-md bg-card rounded-2xl border border-primary/30 shadow-2xl shadow-primary/20 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Animated border glow */}
+            <motion.div
+              className="absolute inset-0 rounded-2xl pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              style={{
+                background: 'linear-gradient(135deg, hsl(var(--primary)/0.3) 0%, transparent 50%, hsl(var(--primary)/0.2) 100%)',
+                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                maskComposite: 'exclude',
+                padding: '1px',
+              }}
+            />
+
             {/* Loading Overlay */}
             <LoginLoadingOverlay isVisible={isLoading} message="Autenticando..." />
-            {/* Background Image with overlay */}
-            <div className="absolute inset-0 z-0">
+            
+            {/* Background Image with animated reveal */}
+            <motion.div 
+              className="absolute inset-0 z-0"
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            >
               <img 
                 src={heroGym} 
                 alt="" 
                 className="w-full h-full object-cover opacity-20"
               />
               <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/90 to-background" />
-            </div>
+            </motion.div>
 
-            {/* Theme Selector - Top Right */}
-            <div className="absolute top-4 right-4 z-10">
+            {/* Animated particles/sparkles on entry */}
+            <motion.div
+              className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              {[...Array(6)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-1 h-1 rounded-full bg-primary/60"
+                  style={{
+                    left: `${20 + i * 12}%`,
+                    top: '50%',
+                  }}
+                  initial={{ y: 0, opacity: 0, scale: 0 }}
+                  animate={{ 
+                    y: [-20, -60, -100],
+                    opacity: [0, 1, 0],
+                    scale: [0, 1, 0.5],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    delay: 0.4 + i * 0.1,
+                    ease: 'easeOut',
+                  }}
+                />
+              ))}
+            </motion.div>
+
+            {/* Theme Selector - Top Right with slide-in animation */}
+            <motion.div 
+              className="absolute top-4 right-4 z-10"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4, duration: 0.3 }}
+            >
               <SportThemeSelector compact />
-            </div>
+            </motion.div>
 
-            {/* Back Button - Discrete ESC option */}
-            <button
+            {/* Back Button - Discrete ESC option with slide-in animation */}
+            <motion.button
               onClick={handleClose}
               disabled={isLoading}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4, duration: 0.3 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background/60 hover:bg-background/80 border border-border/50 text-muted-foreground hover:text-foreground transition-all text-xs font-medium backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ArrowLeft size={14} />
               <span>Voltar</span>
               <kbd className="ml-1 px-1.5 py-0.5 rounded bg-muted/50 text-[10px] font-mono">ESC</kbd>
-            </button>
+            </motion.button>
 
-            {/* Header with professional design */}
+            {/* Header with professional design and staggered reveal */}
             <div className="relative z-10 p-8 pt-12 text-center bg-gradient-to-b from-primary/10 via-transparent to-transparent">
-              {/* Gym Icon Badge */}
+              {/* Gym Icon Badge with bounce animation */}
               <motion.div
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.1, type: 'spring' }}
+                initial={{ scale: 0, opacity: 0, rotate: -180 }}
+                animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                transition={{ 
+                  delay: 0.15, 
+                  type: 'spring',
+                  stiffness: 200,
+                  damping: 15
+                }}
                 className="mx-auto mb-4 w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 flex items-center justify-center backdrop-blur-sm shadow-lg shadow-primary/10"
               >
                 <motion.img
                   src={logomarca}
                   alt="FrancGymPro"
                   className="w-16 h-16 object-contain"
+                  initial={{ scale: 0 }}
                   animate={{ 
+                    scale: 1,
                     filter: ['drop-shadow(0 0 10px hsl(var(--primary)/0.3))', 'drop-shadow(0 0 20px hsl(var(--primary)/0.6))', 'drop-shadow(0 0 10px hsl(var(--primary)/0.3))']
                   }}
-                  transition={{ duration: 3, repeat: Infinity }}
+                  transition={{ 
+                    scale: { delay: 0.3, type: 'spring', stiffness: 300 },
+                    filter: { duration: 3, repeat: Infinity, delay: 0.5 }
+                  }}
                 />
               </motion.div>
               
+              {/* Title with letter reveal effect */}
               <motion.h1 
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
+                transition={{ delay: 0.25, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 className="text-2xl font-bebas text-foreground tracking-wider"
               >
-                PAINEL DO <span className="text-primary">{panelLabels[panelType]}</span>
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  PAINEL DO{' '}
+                </motion.span>
+                <motion.span 
+                  className="text-primary inline-block"
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.4, type: 'spring', stiffness: 300 }}
+                >
+                  {panelLabels[panelType]}
+                </motion.span>
               </motion.h1>
               
               <motion.p 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+                transition={{ delay: 0.35, duration: 0.3 }}
                 className="text-sm text-muted-foreground mt-1"
               >
                 Digite suas credenciais para acessar
               </motion.p>
 
-              {/* Decorative line */}
+              {/* Decorative line with expand animation */}
               <motion.div
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ delay: 0.4, duration: 0.5 }}
-                className="mt-4 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"
+                initial={{ scaleX: 0, opacity: 0 }}
+                animate={{ scaleX: 1, opacity: 1 }}
+                transition={{ delay: 0.45, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="mt-4 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent origin-center"
               />
+
+              {/* Decorative dots */}
+              <div className="flex justify-center gap-1.5 mt-3">
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="w-1.5 h-1.5 rounded-full bg-primary/40"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.5 + i * 0.08, type: 'spring', stiffness: 400 }}
+                  />
+                ))}
+              </div>
             </div>
 
-            {/* Form with shake animation */}
+            {/* Form with shake animation and staggered field reveal */}
             <motion.form 
               onSubmit={handleSubmit} 
               className="relative z-10 p-8 pt-4 space-y-5"
+              initial={{ opacity: 0 }}
               animate={shakeForm ? {
+                opacity: 1,
                 x: [0, -10, 10, -10, 10, -5, 5, 0],
                 transition: { duration: 0.5 }
-              } : {}}
+              } : { opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.3 }}
             >
               {/* Error Message - Clean and intuitive */}
               <AnimatePresence>
@@ -889,8 +994,13 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
                 )}
               </AnimatePresence>
 
-              {/* Username Field */}
-              <div className="space-y-2">
+              {/* Username Field with slide-up animation */}
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              >
                 <label className="text-xs font-medium text-foreground flex items-center gap-2">
                   <User size={12} className="text-primary" />
                   Usuário ou CPF
@@ -918,10 +1028,15 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
                 <p className="text-[10px] text-muted-foreground">
                   Você pode usar seu nome de usuário ou CPF (apenas números)
                 </p>
-              </div>
+              </motion.div>
 
-              {/* Password Field */}
-              <div className="space-y-2">
+              {/* Password Field with slide-up animation (staggered) */}
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              >
                 <label className="text-xs font-medium text-foreground flex items-center gap-2">
                   <Lock size={12} className="text-primary" />
                   Senha / Chave de Acesso
@@ -952,10 +1067,15 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
                 <p className="text-[10px] text-muted-foreground">
                   Cadastrado pela academia? Use a chave de acesso fornecida.
                 </p>
-              </div>
+              </motion.div>
 
-              {/* Remember Credentials & Clear Option */}
-              <div className="flex flex-col gap-2">
+              {/* Remember Credentials & Clear Option with fade animation */}
+              <motion.div 
+                className="flex flex-col gap-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7, duration: 0.3 }}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Checkbox
@@ -1014,10 +1134,15 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
                 >
                   Limpar sessão deste dispositivo
                 </Button>
-              </div>
+              </motion.div>
 
-              {/* Biometric Login Option */}
-              <div className="space-y-2">
+              {/* Biometric Login Option with fade animation */}
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.75, duration: 0.3 }}
+              >
                 {biometricSupported ? (
                   <>
                     {biometricEnabled ? (
@@ -1066,12 +1191,15 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
                     <span>Biometria não disponível neste dispositivo</span>
                   </div>
                 )}
-              </div>
+              </motion.div>
 
-              {/* Submit Button */}
+              {/* Submit Button with scale-up animation */}
               <motion.button
                 type="submit"
                 disabled={isLoading || isLockedOut}
+                initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: 0.85, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 whileHover={{ scale: isLoading || isLockedOut ? 1 : 1.02 }}
                 whileTap={{ scale: isLoading || isLockedOut ? 1 : 0.98 }}
                 className={`w-full py-3 font-bebas text-lg tracking-wider rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
