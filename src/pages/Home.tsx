@@ -65,8 +65,27 @@ const Home: React.FC = memo(() => {
     setSelectedPanel(panel);
     stopMusicImmediately();
     setIsExiting(true);
-    // Delay dialog opening for exit animation
+    // Delay dialog opening for exit animation and play transition sound
     setTimeout(() => {
+      // Play transition/whoosh sound when dialog opens
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Sweep frequency for whoosh effect
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.15);
+      
+      gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+      
+      oscillator.type = 'sine';
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.15);
+      
       setLoginDialogOpen(true);
       setIsExiting(false);
     }, 300);
