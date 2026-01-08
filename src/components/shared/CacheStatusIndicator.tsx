@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { getCacheSize, clearAllCaches } from '@/lib/indexedDB';
 import { useEnhancedOfflineSync } from '@/hooks/useEnhancedOfflineSync';
-import { getCacheLimitMb, setCacheLimitMb, getCacheLimitBytes } from '@/hooks/useCacheSizeMonitor';
+import { getCacheLimitMb, setCacheLimitMb, getCacheLimitBytes, isAutoCleanupEnabled, setAutoCleanupEnabled } from '@/hooks/useCacheSizeMonitor';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
@@ -34,6 +35,7 @@ const CacheStatusIndicator: React.FC<CacheStatusIndicatorProps> = ({
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [cacheLimit, setCacheLimit] = useState<number>(getCacheLimitMb());
   const [showSettings, setShowSettings] = useState(false);
+  const [autoCleanup, setAutoCleanup] = useState<boolean>(isAutoCleanupEnabled());
 
   const loadCacheInfo = useCallback(async () => {
     try {
@@ -80,6 +82,12 @@ const CacheStatusIndicator: React.FC<CacheStatusIndicatorProps> = ({
     setCacheLimit(newLimit);
     setCacheLimitMb(newLimit);
     toast.success(`Limite de cache alterado para ${value} MB`);
+  };
+
+  const handleAutoCleanupChange = (enabled: boolean) => {
+    setAutoCleanup(enabled);
+    setAutoCleanupEnabled(enabled);
+    toast.success(enabled ? 'Limpeza automática ativada' : 'Limpeza automática desativada');
   };
 
   const formatCacheSize = (items: number) => {
@@ -206,9 +214,19 @@ const CacheStatusIndicator: React.FC<CacheStatusIndicatorProps> = ({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[10px] text-muted-foreground">
-                Você será notificado quando o cache ultrapassar este limite.
-              </p>
+
+              <div className="flex items-center justify-between pt-2">
+                <div className="space-y-0.5">
+                  <Label className="text-xs">Limpeza automática</Label>
+                  <p className="text-[10px] text-muted-foreground">
+                    Remove itens antigos ao atingir 90% do limite
+                  </p>
+                </div>
+                <Switch
+                  checked={autoCleanup}
+                  onCheckedChange={handleAutoCleanupChange}
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
