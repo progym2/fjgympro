@@ -1137,6 +1137,51 @@ export type Database = {
           },
         ]
       }
+      username_history: {
+        Row: {
+          change_reason: string | null
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_username: string
+          old_username: string
+          profile_id: string
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_username: string
+          old_username: string
+          profile_id: string
+        }
+        Update: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_username?: string
+          old_username?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "username_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "username_history_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weight_records: {
         Row: {
           body_fat_percentage: number | null

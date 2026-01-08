@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search, Trash2, Key, Loader2, User, Dumbbell, Edit2, Shield, Eye, Unlink, RotateCcw, RefreshCw, CheckCircle, FileSpreadsheet, FileText, Download, X, AlertCircle, UserCheck, Link2Off } from 'lucide-react';
+import { Users, Search, Trash2, Key, Loader2, User, Dumbbell, Edit2, Shield, Eye, Unlink, RotateCcw, RefreshCw, CheckCircle, FileSpreadsheet, FileText, Download, X, AlertCircle, UserCheck, Link2Off, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -88,6 +88,10 @@ const ListUsers: React.FC = () => {
   const [unlinking, setUnlinking] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [reactivating, setReactivating] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [userHistory, setUserHistory] = useState<{ id: string; old_username: string; new_username: string; change_reason: string; changed_at: string }[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [selectedUserForHistory, setSelectedUserForHistory] = useState<Profile | null>(null);
   
   const isMaster = role === 'master';
 
@@ -425,6 +429,30 @@ const ListUsers: React.FC = () => {
     setShowKeyDialog(true);
   };
 
+  const showUsernameHistory = async (user: Profile) => {
+    playClickSound();
+    setSelectedUserForHistory(user);
+    setShowHistoryDialog(true);
+    setLoadingHistory(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('username_history')
+        .select('*')
+        .eq('profile_id', user.id)
+        .order('changed_at', { ascending: false });
+      
+      if (error) throw error;
+      setUserHistory(data || []);
+    } catch (err) {
+      console.error('Error loading username history:', err);
+      toast.error('Erro ao carregar histórico');
+      setUserHistory([]);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   const filterUsers = (users: Profile[]) => {
     if (!debouncedSearch.trim()) return users;
     const search = debouncedSearch.toLowerCase().trim();
@@ -607,6 +635,17 @@ const ListUsers: React.FC = () => {
           >
             <Edit2 className="w-4 h-4" />
           </Button>
+          {isMaster && (
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => showUsernameHistory(user)}
+              className="h-8 w-8 text-amber-500 hover:bg-amber-500/10"
+              title="Ver histórico de username"
+            >
+              <History className="w-4 h-4" />
+            </Button>
+          )}
           
           {/* Master can delete, non-master can only unlink */}
           {!showRestore && !showReactivate && (
@@ -1158,6 +1197,58 @@ const ListUsers: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Username History Dialog */}
+      <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-amber-500 flex items-center gap-2">
+              <History className="w-5 h-5" />
+              Histórico de Username
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="text-sm text-muted-foreground">Usuário:</p>
+              <p className="font-semibold">{selectedUserForHistory?.full_name || selectedUserForHistory?.username}</p>
+              <p className="text-sm text-muted-foreground mt-1">Username atual:</p>
+              <p className="font-mono text-primary">{selectedUserForHistory?.username}</p>
+            </div>
+            
+            {loadingHistory ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+              </div>
+            ) : userHistory.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <History className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                <p>Nenhuma alteração de username registrada.</p>
+                <p className="text-xs mt-1">O histórico é registrado quando o CPF é vinculado automaticamente.</p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {userHistory.map((entry) => (
+                  <div key={entry.id} className="p-3 bg-card border border-border rounded-lg">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-red-400 font-mono">{entry.old_username}</span>
+                      <span className="text-muted-foreground">→</span>
+                      <span className="text-green-400 font-mono">{entry.new_username}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
+                      <span>
+                        {entry.change_reason === 'cpf_auto_link' ? 'Vinculação automática CPF' : entry.change_reason}
+                      </span>
+                      <span>
+                        {new Date(entry.changed_at).toLocaleDateString('pt-BR')} {new Date(entry.changed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };
