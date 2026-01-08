@@ -1,15 +1,9 @@
 import React, { memo, useMemo, useState, useRef, useCallback } from 'react';
 import { LucideIcon } from 'lucide-react';
-import { useTheme, SportTheme, ThemeConfig } from '@/contexts/ThemeContext';
+import { useTheme, SportTheme } from '@/contexts/ThemeContext';
 import { useAudio } from '@/contexts/AudioContext';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface RippleType {
-  id: number;
-  x: number;
-  y: number;
-}
 
 interface ParticleType {
   id: number;
@@ -29,158 +23,6 @@ interface ThemedHomeButtonProps {
   disabled?: boolean;
 }
 
-// Theme-specific button styles
-const getButtonStyle = (theme: SportTheme, themeConfig: ThemeConfig) => {
-  const styles: Record<SportTheme, {
-    shape: string;
-    containerClass: string;
-    innerClass: string;
-    iconContainerClass: string;
-    accentClass: string;
-  }> = {
-    // Fire: Angular/sharp with flame-like edges
-    fire: {
-      shape: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-      containerClass: 'bg-gradient-to-b from-orange-950/90 via-black/95 to-red-950/90 border-orange-500/30',
-      innerClass: 'from-orange-500/20 via-transparent to-red-500/20',
-      iconContainerClass: 'bg-gradient-to-br from-orange-500/30 to-red-600/20 border-orange-400/40',
-      accentClass: 'bg-gradient-to-r from-orange-400 via-red-500 to-orange-400',
-    },
-    // Ocean: Smooth, wave-like curves
-    ocean: {
-      shape: 'ellipse(50% 50% at 50% 50%)',
-      containerClass: 'bg-gradient-to-b from-cyan-950/90 via-black/95 to-blue-950/90 border-cyan-500/30 rounded-[2rem]',
-      innerClass: 'from-cyan-500/20 via-transparent to-blue-500/20',
-      iconContainerClass: 'bg-gradient-to-br from-cyan-500/30 to-blue-600/20 border-cyan-400/40 rounded-full',
-      accentClass: 'bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-400',
-    },
-    // Forest: Organic, leaf-like shape
-    forest: {
-      shape: 'polygon(50% 0%, 90% 20%, 100% 60%, 75% 100%, 25% 100%, 0% 60%, 10% 20%)',
-      containerClass: 'bg-gradient-to-b from-emerald-950/90 via-black/95 to-green-950/90 border-emerald-500/30',
-      innerClass: 'from-emerald-500/20 via-transparent to-green-500/20',
-      iconContainerClass: 'bg-gradient-to-br from-emerald-500/30 to-green-600/20 border-emerald-400/40 rounded-2xl',
-      accentClass: 'bg-gradient-to-r from-emerald-400 via-green-500 to-emerald-400',
-    },
-    // Lightning: Electric, zigzag edges
-    lightning: {
-      shape: 'polygon(50% 0%, 100% 10%, 90% 50%, 100% 90%, 50% 100%, 0% 90%, 10% 50%, 0% 10%)',
-      containerClass: 'bg-gradient-to-b from-yellow-950/90 via-black/95 to-amber-950/90 border-yellow-500/30',
-      innerClass: 'from-yellow-500/20 via-transparent to-amber-500/20',
-      iconContainerClass: 'bg-gradient-to-br from-yellow-500/30 to-amber-600/20 border-yellow-400/40',
-      accentClass: 'bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400',
-    },
-    // Galaxy: Star-like, cosmic
-    galaxy: {
-      shape: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-      containerClass: 'bg-gradient-to-b from-purple-950/90 via-black/95 to-violet-950/90 border-purple-500/30',
-      innerClass: 'from-purple-500/20 via-transparent to-violet-500/20',
-      iconContainerClass: 'bg-gradient-to-br from-purple-500/30 to-violet-600/20 border-purple-400/40 rounded-xl',
-      accentClass: 'bg-gradient-to-r from-purple-400 via-violet-500 to-purple-400',
-    },
-    // Iron: Industrial, mechanical
-    iron: {
-      shape: 'polygon(10% 0%, 90% 0%, 100% 10%, 100% 90%, 90% 100%, 10% 100%, 0% 90%, 0% 10%)',
-      containerClass: 'bg-gradient-to-b from-slate-900/95 via-black/95 to-zinc-900/95 border-slate-500/30',
-      innerClass: 'from-slate-500/20 via-transparent to-zinc-500/20',
-      iconContainerClass: 'bg-gradient-to-br from-slate-500/30 to-zinc-600/20 border-slate-400/40',
-      accentClass: 'bg-gradient-to-r from-slate-400 via-zinc-500 to-slate-400',
-    },
-    // Blood: Heart/drop shape
-    blood: {
-      shape: 'polygon(50% 0%, 100% 35%, 80% 100%, 50% 85%, 20% 100%, 0% 35%)',
-      containerClass: 'bg-gradient-to-b from-red-950/90 via-black/95 to-rose-950/90 border-red-500/30',
-      innerClass: 'from-red-500/20 via-transparent to-rose-500/20',
-      iconContainerClass: 'bg-gradient-to-br from-red-500/30 to-rose-600/20 border-red-400/40 rounded-xl',
-      accentClass: 'bg-gradient-to-r from-red-400 via-rose-500 to-red-400',
-    },
-    // Neon: Glowing, rounded with strong glow
-    neon: {
-      shape: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
-      containerClass: 'bg-gradient-to-b from-pink-950/90 via-black/95 to-fuchsia-950/90 border-pink-500/50',
-      innerClass: 'from-pink-500/30 via-transparent to-fuchsia-500/30',
-      iconContainerClass: 'bg-gradient-to-br from-pink-500/40 to-fuchsia-600/30 border-pink-400/50 rounded-xl',
-      accentClass: 'bg-gradient-to-r from-pink-400 via-fuchsia-500 to-pink-400',
-    },
-    // Gold: Crown/trophy shape
-    gold: {
-      shape: 'polygon(20% 0%, 80% 0%, 100% 20%, 100% 100%, 0% 100%, 0% 20%)',
-      containerClass: 'bg-gradient-to-b from-yellow-950/90 via-black/95 to-amber-950/90 border-yellow-500/40',
-      innerClass: 'from-yellow-500/20 via-transparent to-amber-500/20',
-      iconContainerClass: 'bg-gradient-to-br from-yellow-500/30 to-amber-600/20 border-yellow-400/40 rounded-lg',
-      accentClass: 'bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400',
-    },
-    // AMOLED: Minimal, pure black with subtle edges
-    amoled: {
-      shape: 'inset(0 round 0.5rem)',
-      containerClass: 'bg-black border-gray-700/30',
-      innerClass: 'from-gray-800/20 via-transparent to-gray-900/20',
-      iconContainerClass: 'bg-gradient-to-br from-gray-700/30 to-gray-800/20 border-gray-600/30',
-      accentClass: 'bg-gradient-to-r from-gray-500 via-gray-400 to-gray-500',
-    },
-  };
-
-  return styles[theme];
-};
-
-// Color variants per button type
-const getColorVariant = (theme: SportTheme, color: 'primary' | 'secondary' | 'accent') => {
-  const colorMap: Record<SportTheme, Record<string, { icon: string; glow: string; border: string }>> = {
-    fire: {
-      primary: { icon: 'text-orange-400', glow: 'shadow-orange-500/50', border: 'border-orange-500/40' },
-      secondary: { icon: 'text-emerald-400', glow: 'shadow-emerald-500/50', border: 'border-emerald-500/40' },
-      accent: { icon: 'text-cyan-400', glow: 'shadow-cyan-500/50', border: 'border-cyan-500/40' },
-    },
-    ocean: {
-      primary: { icon: 'text-cyan-400', glow: 'shadow-cyan-500/50', border: 'border-cyan-500/40' },
-      secondary: { icon: 'text-teal-400', glow: 'shadow-teal-500/50', border: 'border-teal-500/40' },
-      accent: { icon: 'text-indigo-400', glow: 'shadow-indigo-500/50', border: 'border-indigo-500/40' },
-    },
-    forest: {
-      primary: { icon: 'text-emerald-400', glow: 'shadow-emerald-500/50', border: 'border-emerald-500/40' },
-      secondary: { icon: 'text-lime-400', glow: 'shadow-lime-500/50', border: 'border-lime-500/40' },
-      accent: { icon: 'text-teal-400', glow: 'shadow-teal-500/50', border: 'border-teal-500/40' },
-    },
-    lightning: {
-      primary: { icon: 'text-yellow-400', glow: 'shadow-yellow-500/50', border: 'border-yellow-500/40' },
-      secondary: { icon: 'text-orange-400', glow: 'shadow-orange-500/50', border: 'border-orange-500/40' },
-      accent: { icon: 'text-amber-400', glow: 'shadow-amber-500/50', border: 'border-amber-500/40' },
-    },
-    galaxy: {
-      primary: { icon: 'text-purple-400', glow: 'shadow-purple-500/50', border: 'border-purple-500/40' },
-      secondary: { icon: 'text-pink-400', glow: 'shadow-pink-500/50', border: 'border-pink-500/40' },
-      accent: { icon: 'text-indigo-400', glow: 'shadow-indigo-500/50', border: 'border-indigo-500/40' },
-    },
-    iron: {
-      primary: { icon: 'text-slate-300', glow: 'shadow-slate-500/40', border: 'border-slate-500/40' },
-      secondary: { icon: 'text-zinc-300', glow: 'shadow-zinc-500/40', border: 'border-zinc-500/40' },
-      accent: { icon: 'text-gray-300', glow: 'shadow-gray-500/40', border: 'border-gray-500/40' },
-    },
-    blood: {
-      primary: { icon: 'text-red-400', glow: 'shadow-red-500/50', border: 'border-red-500/40' },
-      secondary: { icon: 'text-rose-400', glow: 'shadow-rose-500/50', border: 'border-rose-500/40' },
-      accent: { icon: 'text-pink-400', glow: 'shadow-pink-500/50', border: 'border-pink-500/40' },
-    },
-    neon: {
-      primary: { icon: 'text-pink-400', glow: 'shadow-pink-500/60', border: 'border-pink-500/50' },
-      secondary: { icon: 'text-violet-400', glow: 'shadow-violet-500/60', border: 'border-violet-500/50' },
-      accent: { icon: 'text-cyan-400', glow: 'shadow-cyan-500/60', border: 'border-cyan-500/50' },
-    },
-    gold: {
-      primary: { icon: 'text-yellow-400', glow: 'shadow-yellow-500/50', border: 'border-yellow-500/40' },
-      secondary: { icon: 'text-amber-400', glow: 'shadow-amber-500/50', border: 'border-amber-500/40' },
-      accent: { icon: 'text-orange-400', glow: 'shadow-orange-500/50', border: 'border-orange-500/40' },
-    },
-    amoled: {
-      primary: { icon: 'text-gray-300', glow: 'shadow-gray-600/30', border: 'border-gray-600/30' },
-      secondary: { icon: 'text-gray-400', glow: 'shadow-gray-600/30', border: 'border-gray-600/30' },
-      accent: { icon: 'text-gray-500', glow: 'shadow-gray-600/30', border: 'border-gray-600/30' },
-    },
-  };
-  
-  return colorMap[theme][color];
-};
-
 // Cores das partículas por tema
 const getParticleColors = (theme: SportTheme): string[] => {
   const colorMap: Record<SportTheme, string[]> = {
@@ -198,6 +40,64 @@ const getParticleColors = (theme: SportTheme): string[] => {
   return colorMap[theme] || colorMap.fire;
 };
 
+// Color variants per button type
+const getColorVariant = (theme: SportTheme, color: 'primary' | 'secondary' | 'accent') => {
+  const colorMap: Record<SportTheme, Record<string, { bg: string; border: string; glow: string; text: string }>> = {
+    fire: {
+      primary: { bg: 'from-orange-500 to-red-600', border: 'border-orange-400/50', glow: 'shadow-orange-500/40', text: 'text-orange-100' },
+      secondary: { bg: 'from-emerald-500 to-green-600', border: 'border-emerald-400/50', glow: 'shadow-emerald-500/40', text: 'text-emerald-100' },
+      accent: { bg: 'from-cyan-500 to-blue-600', border: 'border-cyan-400/50', glow: 'shadow-cyan-500/40', text: 'text-cyan-100' },
+    },
+    ocean: {
+      primary: { bg: 'from-cyan-500 to-blue-600', border: 'border-cyan-400/50', glow: 'shadow-cyan-500/40', text: 'text-cyan-100' },
+      secondary: { bg: 'from-teal-500 to-emerald-600', border: 'border-teal-400/50', glow: 'shadow-teal-500/40', text: 'text-teal-100' },
+      accent: { bg: 'from-indigo-500 to-violet-600', border: 'border-indigo-400/50', glow: 'shadow-indigo-500/40', text: 'text-indigo-100' },
+    },
+    forest: {
+      primary: { bg: 'from-emerald-500 to-green-600', border: 'border-emerald-400/50', glow: 'shadow-emerald-500/40', text: 'text-emerald-100' },
+      secondary: { bg: 'from-lime-500 to-green-600', border: 'border-lime-400/50', glow: 'shadow-lime-500/40', text: 'text-lime-100' },
+      accent: { bg: 'from-teal-500 to-cyan-600', border: 'border-teal-400/50', glow: 'shadow-teal-500/40', text: 'text-teal-100' },
+    },
+    lightning: {
+      primary: { bg: 'from-yellow-400 to-amber-500', border: 'border-yellow-400/50', glow: 'shadow-yellow-500/40', text: 'text-yellow-100' },
+      secondary: { bg: 'from-orange-500 to-red-500', border: 'border-orange-400/50', glow: 'shadow-orange-500/40', text: 'text-orange-100' },
+      accent: { bg: 'from-amber-500 to-orange-600', border: 'border-amber-400/50', glow: 'shadow-amber-500/40', text: 'text-amber-100' },
+    },
+    galaxy: {
+      primary: { bg: 'from-purple-500 to-violet-600', border: 'border-purple-400/50', glow: 'shadow-purple-500/40', text: 'text-purple-100' },
+      secondary: { bg: 'from-pink-500 to-rose-600', border: 'border-pink-400/50', glow: 'shadow-pink-500/40', text: 'text-pink-100' },
+      accent: { bg: 'from-indigo-500 to-blue-600', border: 'border-indigo-400/50', glow: 'shadow-indigo-500/40', text: 'text-indigo-100' },
+    },
+    iron: {
+      primary: { bg: 'from-slate-500 to-zinc-600', border: 'border-slate-400/50', glow: 'shadow-slate-500/40', text: 'text-slate-100' },
+      secondary: { bg: 'from-zinc-500 to-gray-600', border: 'border-zinc-400/50', glow: 'shadow-zinc-500/40', text: 'text-zinc-100' },
+      accent: { bg: 'from-gray-500 to-slate-600', border: 'border-gray-400/50', glow: 'shadow-gray-500/40', text: 'text-gray-100' },
+    },
+    blood: {
+      primary: { bg: 'from-red-500 to-rose-600', border: 'border-red-400/50', glow: 'shadow-red-500/40', text: 'text-red-100' },
+      secondary: { bg: 'from-rose-500 to-pink-600', border: 'border-rose-400/50', glow: 'shadow-rose-500/40', text: 'text-rose-100' },
+      accent: { bg: 'from-pink-500 to-fuchsia-600', border: 'border-pink-400/50', glow: 'shadow-pink-500/40', text: 'text-pink-100' },
+    },
+    neon: {
+      primary: { bg: 'from-pink-500 to-fuchsia-600', border: 'border-pink-400/60', glow: 'shadow-pink-500/50', text: 'text-pink-100' },
+      secondary: { bg: 'from-violet-500 to-purple-600', border: 'border-violet-400/60', glow: 'shadow-violet-500/50', text: 'text-violet-100' },
+      accent: { bg: 'from-cyan-400 to-blue-500', border: 'border-cyan-400/60', glow: 'shadow-cyan-500/50', text: 'text-cyan-100' },
+    },
+    gold: {
+      primary: { bg: 'from-yellow-500 to-amber-600', border: 'border-yellow-400/50', glow: 'shadow-yellow-500/40', text: 'text-yellow-100' },
+      secondary: { bg: 'from-amber-500 to-orange-600', border: 'border-amber-400/50', glow: 'shadow-amber-500/40', text: 'text-amber-100' },
+      accent: { bg: 'from-orange-500 to-red-500', border: 'border-orange-400/50', glow: 'shadow-orange-500/40', text: 'text-orange-100' },
+    },
+    amoled: {
+      primary: { bg: 'from-gray-600 to-gray-700', border: 'border-gray-500/40', glow: 'shadow-gray-600/30', text: 'text-gray-100' },
+      secondary: { bg: 'from-gray-700 to-gray-800', border: 'border-gray-600/40', glow: 'shadow-gray-600/30', text: 'text-gray-200' },
+      accent: { bg: 'from-gray-600 to-gray-700', border: 'border-gray-500/40', glow: 'shadow-gray-600/30', text: 'text-gray-100' },
+    },
+  };
+  
+  return colorMap[theme][color];
+};
+
 const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
   onClick,
   icon: Icon,
@@ -205,45 +105,14 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
   color = 'primary',
   disabled = false,
 }) => {
-  const { currentTheme, themeConfig, hoverEffectsEnabled } = useTheme();
+  const { currentTheme, hoverEffectsEnabled } = useTheme();
   const { playHoverSound, playClickSound } = useAudio();
-  const [ripples, setRipples] = useState<RippleType[]>([]);
   const [particles, setParticles] = useState<ParticleType[]>([]);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const particleIdRef = useRef(0);
   
-  const style = useMemo(() => getButtonStyle(currentTheme, themeConfig), [currentTheme, themeConfig]);
   const colorVariant = useMemo(() => getColorVariant(currentTheme, color), [currentTheme, color]);
   const particleColors = useMemo(() => getParticleColors(currentTheme), [currentTheme]);
-  
-  // Get theme icon based on button type
-  const ThemeIcon = useMemo(() => {
-    if (color === 'primary') return themeConfig.icons.main;
-    if (color === 'secondary') return themeConfig.icons.secondary;
-    return themeConfig.icons.accent;
-  }, [themeConfig, color]);
-
-  const createRipple = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
-    if (!buttonRef.current) return;
-    
-    const button = buttonRef.current;
-    const rect = button.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    
-    const newRipple: RippleType = {
-      id: Date.now(),
-      x,
-      y,
-    };
-    
-    setRipples(prev => [...prev, newRipple]);
-    
-    // Remove ripple after animation
-    setTimeout(() => {
-      setRipples(prev => prev.filter(r => r.id !== newRipple.id));
-    }, 600);
-  }, []);
 
   // Criar partículas que emanam do clique
   const createParticles = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -255,7 +124,7 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
     const y = event.clientY - rect.top;
     
     const newParticles: ParticleType[] = [];
-    const particleCount = 12;
+    const particleCount = 10;
     
     for (let i = 0; i < particleCount; i++) {
       const angle = (i / particleCount) * 360 + Math.random() * 20 - 10;
@@ -264,15 +133,14 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
         x,
         y,
         angle,
-        speed: 40 + Math.random() * 30,
-        size: 3 + Math.random() * 3,
+        speed: 30 + Math.random() * 25,
+        size: 2 + Math.random() * 2,
         color: particleColors[Math.floor(Math.random() * particleColors.length)],
       });
     }
     
     setParticles(prev => [...prev, ...newParticles]);
     
-    // Remove particles after animation
     setTimeout(() => {
       setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
     }, 500);
@@ -280,12 +148,11 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
 
   const handleClick = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     if (!disabled) {
-      createRipple(event);
       createParticles(event);
       playClickSound();
       onClick();
     }
-  }, [disabled, createRipple, createParticles, playClickSound, onClick]);
+  }, [disabled, createParticles, playClickSound, onClick]);
 
   const handleHover = () => {
     if (hoverEffectsEnabled && !disabled) {
@@ -293,38 +160,25 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
     }
   };
 
-  // Use circular shape for ocean theme
-  const isCircular = currentTheme === 'ocean';
-  const isStarShape = currentTheme === 'galaxy';
-
   return (
     <motion.button
       ref={buttonRef}
       onClick={handleClick}
       onMouseEnter={handleHover}
       disabled={disabled}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
       whileHover={hoverEffectsEnabled ? { 
-        scale: 1.08, 
-        y: -5,
-        transition: { duration: 0.2 }
+        scale: 1.1, 
+        transition: { duration: 0.2, type: 'spring', stiffness: 400 }
       } : undefined}
-      whileTap={{ scale: 0.95 }}
+      whileTap={{ scale: 0.9 }}
       className={cn(
-        'relative group overflow-hidden',
-        'flex flex-col items-center justify-center',
-        isCircular ? 'w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full' :
-        isStarShape ? 'w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36' :
-        'w-24 h-28 sm:w-28 sm:h-32 md:w-32 md:h-36',
+        'relative group overflow-visible',
+        'flex flex-col items-center justify-center gap-2',
         'transition-all duration-300 ease-out',
-        'border',
-        style.containerClass,
         disabled && 'opacity-50 cursor-not-allowed pointer-events-none'
       )}
-      style={{
-        clipPath: isCircular ? undefined : style.shape,
-      }}
     >
       {/* Particle effects */}
       <AnimatePresence>
@@ -358,123 +212,58 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
           );
         })}
       </AnimatePresence>
-      
-      {/* Ripple effects */}
-      <AnimatePresence>
-        {ripples.map(ripple => (
-          <motion.span
-            key={ripple.id}
-            className={cn(
-              'absolute rounded-full pointer-events-none',
-              colorVariant.icon.replace('text-', 'bg-'),
-              'opacity-30'
-            )}
-            style={{
-              left: ripple.x,
-              top: ripple.y,
-            }}
-            initial={{ width: 0, height: 0, x: 0, y: 0, opacity: 0.5 }}
-            animate={{ 
-              width: 200, 
-              height: 200, 
-              x: -100, 
-              y: -100, 
-              opacity: 0 
-            }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-          />
-        ))}
-      </AnimatePresence>
-      {/* Inner gradient overlay */}
-      <div 
-        className={cn(
-          'absolute inset-[2px]',
-          'bg-gradient-to-b',
-          style.innerClass,
-          'pointer-events-none'
-        )}
-        style={{
-          clipPath: isCircular ? undefined : style.shape,
-        }}
-      />
 
-      {/* Animated accent line */}
+      {/* Circular button with gradient */}
       <motion.div 
         className={cn(
-          'absolute top-3 left-1/2 -translate-x-1/2',
-          'h-0.5 rounded-full',
-          style.accentClass,
-          'opacity-60'
+          'relative',
+          'w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20',
+          'rounded-full',
+          'bg-gradient-to-br',
+          colorVariant.bg,
+          'border-2',
+          colorVariant.border,
+          'flex items-center justify-center',
+          'shadow-lg',
+          hoverEffectsEnabled && `group-hover:shadow-xl group-hover:${colorVariant.glow}`,
+          'transition-shadow duration-300'
         )}
-        initial={{ width: '2rem' }}
-        whileHover={{ width: '3rem', opacity: 1 }}
-        transition={{ duration: 0.2 }}
-      />
-
-      {/* Icon container with theme-specific icon */}
-      <div className={cn(
-        'relative z-10',
-        isCircular ? 'mt-0' : 'mt-2',
-        'w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16',
-        'flex items-center justify-center',
-        'border',
-        style.iconContainerClass,
-        colorVariant.border,
-        'transition-all duration-300',
-        hoverEffectsEnabled && `group-hover:shadow-lg ${colorVariant.glow}`
-      )}>
-        {/* Main button icon */}
-        <Icon
-          className={cn(
-            'w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9',
-            colorVariant.icon,
-            'transition-all duration-300',
-            hoverEffectsEnabled && 'group-hover:scale-110'
-          )}
-          strokeWidth={themeConfig.icons.style === 'filled' ? 2.5 : 1.5}
-        />
+        whileHover={hoverEffectsEnabled ? { 
+          boxShadow: '0 0 25px rgba(255,255,255,0.2)'
+        } : undefined}
+      >
+        {/* Inner glow ring */}
+        <div className="absolute inset-1 rounded-full bg-white/10 blur-sm" />
         
-        {/* Small theme icon indicator */}
-        <div className="absolute -bottom-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-black/60 flex items-center justify-center">
-          <ThemeIcon 
-            className={cn('w-3.5 h-3.5 sm:w-4 sm:h-4', colorVariant.icon, 'opacity-70')} 
-            strokeWidth={2}
-          />
-        </div>
-      </div>
+        {/* Shine effect */}
+        <div className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent via-white/5 to-white/20 pointer-events-none" />
+        
+        {/* Icon */}
+        <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white drop-shadow-lg relative z-10" strokeWidth={2} />
+        
+        {/* Pulse ring on hover */}
+        <motion.div 
+          className={cn(
+            'absolute -inset-1 rounded-full border-2',
+            colorVariant.border,
+            'opacity-0 group-hover:opacity-100'
+          )}
+          initial={{ scale: 1 }}
+          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      </motion.div>
 
       {/* Label */}
       <span className={cn(
-        'relative z-10',
-        isCircular ? 'mt-1' : 'mt-2',
-        'font-bebas text-sm sm:text-base md:text-lg tracking-widest',
-        'text-white/80 group-hover:text-white',
+        'font-bebas text-xs sm:text-sm tracking-wider',
+        'text-white/90 group-hover:text-white',
         'uppercase text-center',
-        'transition-colors duration-300'
+        'transition-colors duration-300',
+        'drop-shadow-sm'
       )}>
         {label}
       </span>
-
-      {/* Bottom accent dots */}
-      {!isCircular && (
-        <div className="absolute bottom-3 flex gap-1">
-          <div className={cn('w-1 h-1 rounded-full', colorVariant.icon, 'opacity-40 group-hover:opacity-80 transition-opacity')} />
-          <div className={cn('w-1.5 h-1.5 rounded-full', colorVariant.icon, 'opacity-60 group-hover:opacity-100 transition-opacity')} />
-          <div className={cn('w-1 h-1 rounded-full', colorVariant.icon, 'opacity-40 group-hover:opacity-80 transition-opacity')} />
-        </div>
-      )}
-
-      {/* Outer glow on hover */}
-      <div className={cn(
-        'absolute -inset-3 -z-10',
-        'rounded-3xl blur-xl',
-        'bg-gradient-to-br',
-        style.innerClass,
-        'opacity-0 group-hover:opacity-40',
-        'transition-opacity duration-500',
-        colorVariant.glow
-      )} />
     </motion.button>
   );
 });
