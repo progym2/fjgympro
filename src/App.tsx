@@ -126,7 +126,7 @@ const App = () => {
                 <>
                   <NightModeHandler />
                   <OfflineDataLoader />
-                  <ThemeTransitionOverlay duration={600} />
+                  <ThemeTransitionOverlay />
                   <Toaster />
                   <Sonner />
                   <OfflineIndicator />
