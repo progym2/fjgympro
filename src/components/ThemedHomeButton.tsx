@@ -1,5 +1,5 @@
 import React, { memo, useMemo, useCallback, useState, useRef } from 'react';
-import { LucideIcon, Dumbbell, User, Shield, Heart, Flame, Waves, TreePine, Zap, Sparkles, Trophy, Target, Activity, Crown } from 'lucide-react';
+import { LucideIcon, Dumbbell, User, Shield, Heart, Flame, Waves, TreePine, Zap, Sparkles, Trophy, Target, Activity, Crown, Hexagon, Circle, Square, Star, Octagon } from 'lucide-react';
 import { useTheme, SportTheme } from '@/contexts/ThemeContext';
 import { useAudio } from '@/contexts/AudioContext';
 import { cn } from '@/lib/utils';
@@ -19,104 +19,751 @@ interface RippleType {
   y: number;
 }
 
-// Cores do tema para cada botão
-const getThemeColors = (theme: SportTheme, color: 'primary' | 'secondary' | 'accent') => {
-  const themeColors: Record<SportTheme, Record<string, { main: string; glow: string; text: string; border: string; accent: string }>> = {
-    fire: {
-      primary: { main: 'from-orange-500 to-red-600', glow: 'rgba(255,107,53,0.5)', text: 'text-orange-100', border: 'border-orange-400/50', accent: '#ff6b35' },
-      secondary: { main: 'from-emerald-500 to-teal-600', glow: 'rgba(16,185,129,0.5)', text: 'text-emerald-100', border: 'border-emerald-400/50', accent: '#10b981' },
-      accent: { main: 'from-blue-500 to-indigo-600', glow: 'rgba(59,130,246,0.5)', text: 'text-blue-100', border: 'border-blue-400/50', accent: '#3b82f6' },
-    },
-    ocean: {
-      primary: { main: 'from-cyan-400 to-blue-600', glow: 'rgba(34,211,238,0.5)', text: 'text-cyan-100', border: 'border-cyan-400/50', accent: '#22d3ee' },
-      secondary: { main: 'from-teal-400 to-cyan-600', glow: 'rgba(20,184,166,0.5)', text: 'text-teal-100', border: 'border-teal-400/50', accent: '#14b8a6' },
-      accent: { main: 'from-indigo-400 to-purple-600', glow: 'rgba(129,140,248,0.5)', text: 'text-indigo-100', border: 'border-indigo-400/50', accent: '#818cf8' },
-    },
-    forest: {
-      primary: { main: 'from-emerald-400 to-green-600', glow: 'rgba(52,211,153,0.5)', text: 'text-emerald-100', border: 'border-emerald-400/50', accent: '#34d399' },
-      secondary: { main: 'from-lime-400 to-green-600', glow: 'rgba(163,230,53,0.5)', text: 'text-lime-100', border: 'border-lime-400/50', accent: '#a3e635' },
-      accent: { main: 'from-teal-400 to-emerald-600', glow: 'rgba(45,212,191,0.5)', text: 'text-teal-100', border: 'border-teal-400/50', accent: '#2dd4bf' },
-    },
-    lightning: {
-      primary: { main: 'from-yellow-400 to-amber-600', glow: 'rgba(251,191,36,0.5)', text: 'text-yellow-100', border: 'border-yellow-400/50', accent: '#fbbf24' },
-      secondary: { main: 'from-orange-400 to-amber-600', glow: 'rgba(251,146,60,0.5)', text: 'text-orange-100', border: 'border-orange-400/50', accent: '#fb923c' },
-      accent: { main: 'from-red-400 to-orange-600', glow: 'rgba(248,113,113,0.5)', text: 'text-red-100', border: 'border-red-400/50', accent: '#f87171' },
-    },
-    galaxy: {
-      primary: { main: 'from-purple-400 to-violet-600', glow: 'rgba(192,132,252,0.5)', text: 'text-purple-100', border: 'border-purple-400/50', accent: '#c084fc' },
-      secondary: { main: 'from-pink-400 to-purple-600', glow: 'rgba(244,114,182,0.5)', text: 'text-pink-100', border: 'border-pink-400/50', accent: '#f472b6' },
-      accent: { main: 'from-indigo-400 to-blue-600', glow: 'rgba(129,140,248,0.5)', text: 'text-indigo-100', border: 'border-indigo-400/50', accent: '#818cf8' },
-    },
-    iron: {
-      primary: { main: 'from-slate-400 to-zinc-600', glow: 'rgba(148,163,184,0.4)', text: 'text-slate-100', border: 'border-slate-400/50', accent: '#94a3b8' },
-      secondary: { main: 'from-zinc-400 to-slate-600', glow: 'rgba(161,161,170,0.4)', text: 'text-zinc-100', border: 'border-zinc-400/50', accent: '#a1a1aa' },
-      accent: { main: 'from-gray-400 to-zinc-600', glow: 'rgba(156,163,175,0.4)', text: 'text-gray-100', border: 'border-gray-400/50', accent: '#9ca3af' },
-    },
-    blood: {
-      primary: { main: 'from-red-500 to-rose-700', glow: 'rgba(239,68,68,0.5)', text: 'text-red-100', border: 'border-red-400/50', accent: '#ef4444' },
-      secondary: { main: 'from-rose-400 to-red-600', glow: 'rgba(251,113,133,0.5)', text: 'text-rose-100', border: 'border-rose-400/50', accent: '#fb7185' },
-      accent: { main: 'from-pink-400 to-rose-600', glow: 'rgba(244,114,182,0.5)', text: 'text-pink-100', border: 'border-pink-400/50', accent: '#f472b6' },
-    },
-    neon: {
-      primary: { main: 'from-pink-500 to-fuchsia-600', glow: 'rgba(236,72,153,0.6)', text: 'text-pink-100', border: 'border-pink-400/60', accent: '#ec4899' },
-      secondary: { main: 'from-violet-400 to-purple-600', glow: 'rgba(167,139,250,0.6)', text: 'text-violet-100', border: 'border-violet-400/60', accent: '#a78bfa' },
-      accent: { main: 'from-cyan-400 to-blue-600', glow: 'rgba(34,211,238,0.6)', text: 'text-cyan-100', border: 'border-cyan-400/60', accent: '#22d3ee' },
-    },
-    gold: {
-      primary: { main: 'from-yellow-400 to-amber-600', glow: 'rgba(234,179,8,0.5)', text: 'text-yellow-100', border: 'border-yellow-400/50', accent: '#eab308' },
-      secondary: { main: 'from-amber-400 to-orange-600', glow: 'rgba(245,158,11,0.5)', text: 'text-amber-100', border: 'border-amber-400/50', accent: '#f59e0b' },
-      accent: { main: 'from-orange-400 to-yellow-600', glow: 'rgba(251,146,60,0.5)', text: 'text-orange-100', border: 'border-orange-400/50', accent: '#fb923c' },
-    },
-    amoled: {
-      primary: { main: 'from-gray-500 to-zinc-700', glow: 'rgba(107,114,128,0.3)', text: 'text-gray-200', border: 'border-gray-500/40', accent: '#6b7280' },
-      secondary: { main: 'from-zinc-500 to-gray-700', glow: 'rgba(113,113,122,0.3)', text: 'text-zinc-200', border: 'border-zinc-500/40', accent: '#71717a' },
-      accent: { main: 'from-slate-500 to-gray-700', glow: 'rgba(100,116,139,0.3)', text: 'text-slate-200', border: 'border-slate-500/40', accent: '#64748b' },
-    },
-  };
-  return themeColors[theme]?.[color] || themeColors.fire[color];
-};
-
-// Componente de haltere SVG personalizado
-const DumbbellShape: React.FC<{ color: string; className?: string }> = memo(({ color, className }) => (
-  <svg viewBox="0 0 120 40" className={className} fill="none">
-    {/* Peso esquerdo */}
-    <rect x="5" y="5" width="20" height="30" rx="3" fill={color} opacity="0.9" />
-    <rect x="25" y="10" width="8" height="20" rx="2" fill={color} opacity="0.7" />
-    {/* Barra central */}
-    <rect x="33" y="17" width="54" height="6" rx="3" fill={color} opacity="0.6" />
-    {/* Peso direito */}
-    <rect x="87" y="10" width="8" height="20" rx="2" fill={color} opacity="0.7" />
-    <rect x="95" y="5" width="20" height="30" rx="3" fill={color} opacity="0.9" />
-  </svg>
-));
-
-DumbbellShape.displayName = 'DumbbellShape';
-
-// Componente de kettlebell SVG
-const KettlebellShape: React.FC<{ color: string; className?: string }> = memo(({ color, className }) => (
-  <svg viewBox="0 0 40 50" className={className} fill="none">
-    <path 
-      d="M20 5 C10 5 8 12 8 12 L8 18 C8 18 2 25 2 35 C2 45 12 48 20 48 C28 48 38 45 38 35 C38 25 32 18 32 18 L32 12 C32 12 30 5 20 5 Z"
-      fill={color} 
-      opacity="0.9"
+// ==================== FIRE THEME - Hexagonal Flame Style ====================
+const FireButton: React.FC<ThemedHomeButtonProps & { colors: any; isHovered: boolean; isPressed: boolean; ripples: RippleType[]; hoverEffectsEnabled: boolean }> = memo(({
+  icon: Icon, colors, isHovered, ripples, hoverEffectsEnabled
+}) => (
+  <motion.div 
+    className={cn(
+      'relative flex items-center justify-center overflow-hidden',
+      'w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20'
+    )}
+    style={{
+      clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+      background: `linear-gradient(135deg, #ff6b35, #dc2626)`,
+      boxShadow: isHovered 
+        ? `0 0 40px 10px rgba(255,107,53,0.6)` 
+        : `0 0 20px 5px rgba(255,107,53,0.3)`,
+    }}
+  >
+    {/* Fire pattern */}
+    <div className="absolute inset-0 opacity-30">
+      <motion.div
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-16"
+        animate={{ scaleY: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 0.5, repeat: Infinity }}
+        style={{
+          background: 'radial-gradient(ellipse at bottom, #fbbf24, transparent)',
+          borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%'
+        }}
+      />
+    </div>
+    
+    {/* Inner hexagon */}
+    <div 
+      className="absolute inset-2 bg-black/20"
+      style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}
     />
-    <ellipse cx="20" cy="10" rx="6" ry="3" fill="black" opacity="0.3" />
-  </svg>
+    
+    {/* Flame icon decorations */}
+    <motion.div
+      className="absolute top-1 left-1/2 -translate-x-1/2"
+      animate={{ y: [0, -2, 0], opacity: [0.4, 0.8, 0.4] }}
+      transition={{ duration: 1, repeat: Infinity }}
+    >
+      <Flame className="w-3 h-3 text-yellow-400" />
+    </motion.div>
+    
+    <AnimatePresence>
+      {ripples.map(ripple => (
+        <motion.span
+          key={ripple.id}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            left: ripple.x, top: ripple.y,
+            backgroundColor: 'rgba(255,200,100,0.5)',
+            transform: 'translate(-50%, -50%)',
+          }}
+          initial={{ width: 0, height: 0, opacity: 0.7 }}
+          animate={{ width: 100, height: 100, opacity: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
+        />
+      ))}
+    </AnimatePresence>
+    
+    <motion.div
+      animate={isHovered && hoverEffectsEnabled ? { scale: 1.2, rotate: [0, -5, 5, 0] } : { scale: 1 }}
+      className="relative z-10"
+    >
+      <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white drop-shadow-lg" strokeWidth={2.5} />
+    </motion.div>
+  </motion.div>
 ));
 
-KettlebellShape.displayName = 'KettlebellShape';
+FireButton.displayName = 'FireButton';
 
-// Componente de placa de peso SVG
-const WeightPlateShape: React.FC<{ color: string; className?: string }> = memo(({ color, className }) => (
-  <svg viewBox="0 0 50 50" className={className} fill="none">
-    <circle cx="25" cy="25" r="23" fill={color} opacity="0.9" stroke={color} strokeWidth="2" />
-    <circle cx="25" cy="25" r="18" fill="black" opacity="0.2" />
-    <circle cx="25" cy="25" r="6" fill="black" opacity="0.4" />
-  </svg>
+// ==================== OCEAN THEME - Wave Circular Style ====================
+const OceanButton: React.FC<ThemedHomeButtonProps & { colors: any; isHovered: boolean; isPressed: boolean; ripples: RippleType[]; hoverEffectsEnabled: boolean }> = memo(({
+  icon: Icon, colors, isHovered, ripples, hoverEffectsEnabled
+}) => (
+  <motion.div 
+    className={cn(
+      'relative flex items-center justify-center overflow-hidden rounded-full',
+      'w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20',
+      'border-4 border-cyan-400/50'
+    )}
+    style={{
+      background: `linear-gradient(180deg, #0891b2, #0e7490, #164e63)`,
+      boxShadow: isHovered 
+        ? `0 0 30px 8px rgba(34,211,238,0.5), inset 0 -10px 20px rgba(0,0,0,0.3)` 
+        : `0 0 15px 3px rgba(34,211,238,0.3), inset 0 -8px 15px rgba(0,0,0,0.2)`,
+    }}
+  >
+    {/* Wave animation */}
+    <motion.div
+      className="absolute bottom-0 left-0 right-0 h-1/2 opacity-40"
+      animate={{ y: [0, -5, 0] }}
+      transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+      style={{
+        background: 'linear-gradient(to top, rgba(34,211,238,0.6), transparent)',
+        borderRadius: '50% 50% 0 0'
+      }}
+    />
+    
+    {/* Bubble decorations */}
+    {[...Array(3)].map((_, i) => (
+      <motion.div
+        key={i}
+        className="absolute w-2 h-2 bg-white/30 rounded-full"
+        style={{ left: `${20 + i * 25}%`, bottom: '20%' }}
+        animate={{ y: [0, -20, 0], opacity: [0.3, 0.7, 0.3] }}
+        transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
+      />
+    ))}
+    
+    <AnimatePresence>
+      {ripples.map(ripple => (
+        <motion.span
+          key={ripple.id}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            left: ripple.x, top: ripple.y,
+            backgroundColor: 'rgba(34,211,238,0.5)',
+            transform: 'translate(-50%, -50%)',
+          }}
+          initial={{ width: 0, height: 0, opacity: 0.7 }}
+          animate={{ width: 100, height: 100, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        />
+      ))}
+    </AnimatePresence>
+    
+    <motion.div
+      animate={isHovered && hoverEffectsEnabled ? { scale: 1.15, y: -3 } : { scale: 1, y: 0 }}
+      className="relative z-10"
+    >
+      <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white drop-shadow-lg" strokeWidth={2} />
+    </motion.div>
+  </motion.div>
 ));
 
-WeightPlateShape.displayName = 'WeightPlateShape';
+OceanButton.displayName = 'OceanButton';
 
+// ==================== FOREST THEME - Organic Leaf Shape ====================
+const ForestButton: React.FC<ThemedHomeButtonProps & { colors: any; isHovered: boolean; isPressed: boolean; ripples: RippleType[]; hoverEffectsEnabled: boolean }> = memo(({
+  icon: Icon, colors, isHovered, ripples, hoverEffectsEnabled
+}) => (
+  <motion.div 
+    className={cn(
+      'relative flex items-center justify-center overflow-hidden',
+      'w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20'
+    )}
+    style={{
+      clipPath: 'polygon(50% 0%, 90% 20%, 100% 60%, 75% 100%, 25% 100%, 0% 60%, 10% 20%)',
+      background: `linear-gradient(160deg, #34d399, #10b981, #047857)`,
+      boxShadow: isHovered 
+        ? `0 0 35px 10px rgba(52,211,153,0.5)` 
+        : `0 0 18px 4px rgba(52,211,153,0.3)`,
+    }}
+  >
+    {/* Leaf vein pattern */}
+    <div className="absolute inset-0 opacity-20">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-3/4 bg-white/40" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-white/30 rotate-12" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-white/30 -rotate-12" />
+    </div>
+    
+    {/* Tree decoration */}
+    <motion.div
+      className="absolute bottom-1 left-1/2 -translate-x-1/2"
+      animate={{ scale: [1, 1.1, 1] }}
+      transition={{ duration: 2, repeat: Infinity }}
+    >
+      <TreePine className="w-3 h-3 text-emerald-200/50" />
+    </motion.div>
+    
+    <AnimatePresence>
+      {ripples.map(ripple => (
+        <motion.span
+          key={ripple.id}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            left: ripple.x, top: ripple.y,
+            backgroundColor: 'rgba(163,230,53,0.5)',
+            transform: 'translate(-50%, -50%)',
+          }}
+          initial={{ width: 0, height: 0, opacity: 0.7 }}
+          animate={{ width: 100, height: 100, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        />
+      ))}
+    </AnimatePresence>
+    
+    <motion.div
+      animate={isHovered && hoverEffectsEnabled ? { scale: 1.2, rotate: 5 } : { scale: 1, rotate: 0 }}
+      className="relative z-10"
+    >
+      <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white drop-shadow-lg" strokeWidth={2.2} />
+    </motion.div>
+  </motion.div>
+));
+
+ForestButton.displayName = 'ForestButton';
+
+// ==================== LIGHTNING THEME - Electric Bolt Shape ====================
+const LightningButton: React.FC<ThemedHomeButtonProps & { colors: any; isHovered: boolean; isPressed: boolean; ripples: RippleType[]; hoverEffectsEnabled: boolean }> = memo(({
+  icon: Icon, colors, isHovered, ripples, hoverEffectsEnabled
+}) => (
+  <motion.div 
+    className={cn(
+      'relative flex items-center justify-center overflow-hidden',
+      'w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20'
+    )}
+    style={{
+      clipPath: 'polygon(50% 0%, 100% 38%, 80% 40%, 100% 100%, 40% 60%, 60% 58%, 0% 38%)',
+      background: `linear-gradient(135deg, #fbbf24, #f59e0b, #d97706)`,
+      boxShadow: isHovered 
+        ? `0 0 40px 12px rgba(251,191,36,0.6)` 
+        : `0 0 20px 5px rgba(251,191,36,0.3)`,
+    }}
+    animate={{ 
+      filter: isHovered ? 'brightness(1.3)' : 'brightness(1)'
+    }}
+  >
+    {/* Electric sparks */}
+    {isHovered && hoverEffectsEnabled && [...Array(4)].map((_, i) => (
+      <motion.div
+        key={i}
+        className="absolute w-1 h-4 bg-white"
+        style={{ 
+          left: `${20 + i * 20}%`, 
+          top: `${30 + (i % 2) * 20}%`,
+          rotate: `${-30 + i * 20}deg`
+        }}
+        animate={{ opacity: [0, 1, 0], scaleY: [0.5, 1, 0.5] }}
+        transition={{ duration: 0.2, repeat: Infinity, delay: i * 0.1 }}
+      />
+    ))}
+    
+    <motion.div
+      className="absolute top-0 right-2"
+      animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }}
+      transition={{ duration: 0.3, repeat: Infinity }}
+    >
+      <Zap className="w-3 h-3 text-white" fill="white" />
+    </motion.div>
+    
+    <AnimatePresence>
+      {ripples.map(ripple => (
+        <motion.span
+          key={ripple.id}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            left: ripple.x, top: ripple.y,
+            backgroundColor: 'rgba(255,255,255,0.6)',
+            transform: 'translate(-50%, -50%)',
+          }}
+          initial={{ width: 0, height: 0, opacity: 0.8 }}
+          animate={{ width: 80, height: 80, opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        />
+      ))}
+    </AnimatePresence>
+    
+    <motion.div
+      animate={isHovered && hoverEffectsEnabled ? { scale: 1.25, filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.8))' } : { scale: 1 }}
+      className="relative z-10"
+    >
+      <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" strokeWidth={2.5} />
+    </motion.div>
+  </motion.div>
+));
+
+LightningButton.displayName = 'LightningButton';
+
+// ==================== GALAXY THEME - Cosmic Star Shape ====================
+const GalaxyButton: React.FC<ThemedHomeButtonProps & { colors: any; isHovered: boolean; isPressed: boolean; ripples: RippleType[]; hoverEffectsEnabled: boolean }> = memo(({
+  icon: Icon, colors, isHovered, ripples, hoverEffectsEnabled
+}) => (
+  <motion.div 
+    className={cn(
+      'relative flex items-center justify-center overflow-hidden',
+      'w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-xl'
+    )}
+    style={{
+      background: `radial-gradient(ellipse at 30% 30%, #7c3aed, #5b21b6, #1e1b4b)`,
+      boxShadow: isHovered 
+        ? `0 0 40px 10px rgba(192,132,252,0.5), inset 0 0 20px rgba(192,132,252,0.3)` 
+        : `0 0 20px 5px rgba(192,132,252,0.3)`,
+    }}
+    animate={{ rotate: isHovered ? 5 : 0 }}
+  >
+    {/* Orbiting stars */}
+    <motion.div
+      className="absolute inset-0"
+      animate={{ rotate: 360 }}
+      transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+    >
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-1.5 h-1.5 bg-white rounded-full"
+          style={{
+            left: `${50 + 35 * Math.cos((i * 60 * Math.PI) / 180)}%`,
+            top: `${50 + 35 * Math.sin((i * 60 * Math.PI) / 180)}%`,
+            transform: 'translate(-50%, -50%)'
+          }}
+          animate={{ opacity: [0.3, 1, 0.3], scale: [0.5, 1, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
+        />
+      ))}
+    </motion.div>
+    
+    {/* Center glow */}
+    <motion.div
+      className="absolute inset-4 rounded-full bg-purple-400/20"
+      animate={{ scale: [0.8, 1.1, 0.8], opacity: [0.3, 0.6, 0.3] }}
+      transition={{ duration: 2, repeat: Infinity }}
+    />
+    
+    <motion.div
+      className="absolute -top-1 -right-1"
+      animate={{ rotate: 360, scale: [0.8, 1, 0.8] }}
+      transition={{ duration: 3, repeat: Infinity }}
+    >
+      <Sparkles className="w-4 h-4 text-purple-300" />
+    </motion.div>
+    
+    <AnimatePresence>
+      {ripples.map(ripple => (
+        <motion.span
+          key={ripple.id}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            left: ripple.x, top: ripple.y,
+            backgroundColor: 'rgba(192,132,252,0.5)',
+            transform: 'translate(-50%, -50%)',
+          }}
+          initial={{ width: 0, height: 0, opacity: 0.7 }}
+          animate={{ width: 100, height: 100, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        />
+      ))}
+    </AnimatePresence>
+    
+    <motion.div
+      animate={isHovered && hoverEffectsEnabled ? { scale: 1.2 } : { scale: 1 }}
+      className="relative z-10"
+    >
+      <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white drop-shadow-lg" strokeWidth={2} />
+    </motion.div>
+  </motion.div>
+));
+
+GalaxyButton.displayName = 'GalaxyButton';
+
+// ==================== IRON THEME - Industrial Gear Shape ====================
+const IronButton: React.FC<ThemedHomeButtonProps & { colors: any; isHovered: boolean; isPressed: boolean; ripples: RippleType[]; hoverEffectsEnabled: boolean }> = memo(({
+  icon: Icon, colors, isHovered, ripples, hoverEffectsEnabled
+}) => (
+  <motion.div 
+    className={cn(
+      'relative flex items-center justify-center overflow-hidden',
+      'w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20'
+    )}
+    style={{
+      clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)',
+      background: `linear-gradient(145deg, #64748b, #475569, #334155)`,
+      boxShadow: isHovered 
+        ? `0 8px 25px rgba(0,0,0,0.5), inset 2px 2px 4px rgba(255,255,255,0.2)` 
+        : `0 5px 15px rgba(0,0,0,0.4), inset 1px 1px 2px rgba(255,255,255,0.15)`,
+    }}
+    animate={{ rotate: isHovered ? 45 : 0 }}
+    transition={{ duration: 0.3 }}
+  >
+    {/* Metallic shine */}
+    <div 
+      className="absolute inset-0 opacity-30"
+      style={{
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%, rgba(0,0,0,0.2) 100%)'
+      }}
+    />
+    
+    {/* Bolts */}
+    {[0, 90, 180, 270].map((angle, i) => (
+      <div
+        key={i}
+        className="absolute w-2 h-2 bg-slate-700 rounded-full border border-slate-500"
+        style={{
+          left: `${50 + 35 * Math.cos((angle * Math.PI) / 180)}%`,
+          top: `${50 + 35 * Math.sin((angle * Math.PI) / 180)}%`,
+          transform: 'translate(-50%, -50%)'
+        }}
+      />
+    ))}
+    
+    {/* Inner circle */}
+    <div className="absolute inset-3 rounded-full bg-slate-600/50 border border-slate-500/30" />
+    
+    <motion.div
+      className="absolute bottom-1"
+      animate={isHovered ? { opacity: [0.3, 0.7, 0.3] } : { opacity: 0.3 }}
+      transition={{ duration: 0.5, repeat: Infinity }}
+    >
+      <Dumbbell className="w-4 h-2 text-slate-300" />
+    </motion.div>
+    
+    <AnimatePresence>
+      {ripples.map(ripple => (
+        <motion.span
+          key={ripple.id}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            left: ripple.x, top: ripple.y,
+            backgroundColor: 'rgba(148,163,184,0.4)',
+            transform: 'translate(-50%, -50%)',
+          }}
+          initial={{ width: 0, height: 0, opacity: 0.6 }}
+          animate={{ width: 100, height: 100, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        />
+      ))}
+    </AnimatePresence>
+    
+    <motion.div
+      animate={isHovered && hoverEffectsEnabled ? { scale: 1.15, rotate: -45 } : { scale: 1, rotate: 0 }}
+      className="relative z-10"
+      transition={{ duration: 0.3 }}
+    >
+      <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white drop-shadow-md" strokeWidth={2.2} />
+    </motion.div>
+  </motion.div>
+));
+
+IronButton.displayName = 'IronButton';
+
+// ==================== BLOOD THEME - Heart Pulse Shape ====================
+const BloodButton: React.FC<ThemedHomeButtonProps & { colors: any; isHovered: boolean; isPressed: boolean; ripples: RippleType[]; hoverEffectsEnabled: boolean }> = memo(({
+  icon: Icon, colors, isHovered, ripples, hoverEffectsEnabled
+}) => (
+  <motion.div 
+    className={cn(
+      'relative flex items-center justify-center overflow-hidden',
+      'w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-2xl',
+      'border-2 border-red-500/50'
+    )}
+    style={{
+      background: `linear-gradient(145deg, #dc2626, #b91c1c, #7f1d1d)`,
+      boxShadow: isHovered 
+        ? `0 0 35px 10px rgba(239,68,68,0.5)` 
+        : `0 0 18px 4px rgba(239,68,68,0.3)`,
+    }}
+    animate={{ scale: isHovered ? [1, 1.05, 1] : 1 }}
+    transition={{ duration: 0.8, repeat: isHovered ? Infinity : 0 }}
+  >
+    {/* Pulse lines */}
+    <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 100 100">
+      <motion.path
+        d="M0 50 L20 50 L25 30 L30 70 L35 40 L40 60 L45 50 L100 50"
+        stroke="white"
+        strokeWidth="2"
+        fill="none"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 1.5, repeat: Infinity }}
+      />
+    </svg>
+    
+    {/* Heart decoration */}
+    <motion.div
+      className="absolute top-1 right-1"
+      animate={{ scale: [1, 1.3, 1] }}
+      transition={{ duration: 0.8, repeat: Infinity }}
+    >
+      <Heart className="w-3 h-3 text-red-300" fill="currentColor" />
+    </motion.div>
+    
+    <AnimatePresence>
+      {ripples.map(ripple => (
+        <motion.span
+          key={ripple.id}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            left: ripple.x, top: ripple.y,
+            backgroundColor: 'rgba(254,202,202,0.5)',
+            transform: 'translate(-50%, -50%)',
+          }}
+          initial={{ width: 0, height: 0, opacity: 0.7 }}
+          animate={{ width: 100, height: 100, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        />
+      ))}
+    </AnimatePresence>
+    
+    <motion.div
+      animate={isHovered && hoverEffectsEnabled ? { scale: [1, 1.2, 1.1] } : { scale: 1 }}
+      transition={{ duration: 0.3 }}
+      className="relative z-10"
+    >
+      <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white drop-shadow-lg" strokeWidth={2.2} />
+    </motion.div>
+  </motion.div>
+));
+
+BloodButton.displayName = 'BloodButton';
+
+// ==================== NEON THEME - Cyberpunk Diamond Shape ====================
+const NeonButton: React.FC<ThemedHomeButtonProps & { colors: any; isHovered: boolean; isPressed: boolean; ripples: RippleType[]; hoverEffectsEnabled: boolean }> = memo(({
+  icon: Icon, colors, isHovered, ripples, hoverEffectsEnabled
+}) => (
+  <motion.div 
+    className={cn(
+      'relative flex items-center justify-center overflow-hidden',
+      'w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20'
+    )}
+    style={{
+      clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+      background: `linear-gradient(135deg, #ec4899, #d946ef, #8b5cf6)`,
+      boxShadow: isHovered 
+        ? `0 0 50px 15px rgba(236,72,153,0.6), 0 0 100px 30px rgba(139,92,246,0.3)` 
+        : `0 0 25px 8px rgba(236,72,153,0.4)`,
+    }}
+    animate={{ 
+      filter: isHovered ? 'hue-rotate(30deg)' : 'hue-rotate(0deg)'
+    }}
+    transition={{ duration: 0.5 }}
+  >
+    {/* Neon glow lines */}
+    <div className="absolute inset-1" style={{
+      clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+      border: '2px solid rgba(255,255,255,0.5)'
+    }} />
+    
+    {/* Scan line effect */}
+    <motion.div
+      className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent"
+      animate={{ y: ['-100%', '100%'] }}
+      transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+    />
+    
+    {/* Corner glows */}
+    {isHovered && (
+      <>
+        <motion.div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-white rounded-full"
+          animate={{ opacity: [0.5, 1, 0.5], scale: [0.8, 1.2, 0.8] }}
+          transition={{ duration: 0.5, repeat: Infinity }}
+        />
+        <motion.div
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-white rounded-full"
+          animate={{ opacity: [0.5, 1, 0.5], scale: [0.8, 1.2, 0.8] }}
+          transition={{ duration: 0.5, repeat: Infinity, delay: 0.25 }}
+        />
+      </>
+    )}
+    
+    <AnimatePresence>
+      {ripples.map(ripple => (
+        <motion.span
+          key={ripple.id}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            left: ripple.x, top: ripple.y,
+            backgroundColor: 'rgba(255,255,255,0.6)',
+            transform: 'translate(-50%, -50%)',
+          }}
+          initial={{ width: 0, height: 0, opacity: 0.8 }}
+          animate={{ width: 80, height: 80, opacity: 0 }}
+          transition={{ duration: 0.4 }}
+        />
+      ))}
+    </AnimatePresence>
+    
+    <motion.div
+      animate={isHovered && hoverEffectsEnabled ? { scale: 1.2, filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.8))' } : { scale: 1 }}
+      className="relative z-10"
+    >
+      <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" strokeWidth={2.5} />
+    </motion.div>
+  </motion.div>
+));
+
+NeonButton.displayName = 'NeonButton';
+
+// ==================== GOLD THEME - Trophy Shield Shape ====================
+const GoldButton: React.FC<ThemedHomeButtonProps & { colors: any; isHovered: boolean; isPressed: boolean; ripples: RippleType[]; hoverEffectsEnabled: boolean }> = memo(({
+  icon: Icon, colors, isHovered, ripples, hoverEffectsEnabled
+}) => (
+  <motion.div 
+    className={cn(
+      'relative flex items-center justify-center overflow-hidden',
+      'w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20'
+    )}
+    style={{
+      clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 70%, 50% 100%, 0% 70%, 0% 15%)',
+      background: `linear-gradient(160deg, #fcd34d, #f59e0b, #b45309)`,
+      boxShadow: isHovered 
+        ? `0 0 40px 12px rgba(234,179,8,0.5)` 
+        : `0 0 20px 6px rgba(234,179,8,0.3)`,
+    }}
+  >
+    {/* Metallic shine */}
+    <motion.div
+      className="absolute inset-0 opacity-40"
+      style={{
+        background: 'linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.6) 50%, transparent 70%)'
+      }}
+      animate={{ x: ['-100%', '100%'] }}
+      transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+    />
+    
+    {/* Crown decoration */}
+    <motion.div
+      className="absolute top-0 left-1/2 -translate-x-1/2"
+      animate={{ y: [0, -2, 0], scale: [1, 1.1, 1] }}
+      transition={{ duration: 1.5, repeat: Infinity }}
+    >
+      <Crown className="w-4 h-3 text-yellow-200" />
+    </motion.div>
+    
+    {/* Inner border */}
+    <div 
+      className="absolute inset-2"
+      style={{
+        clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 70%, 50% 100%, 0% 70%, 0% 15%)',
+        border: '1px solid rgba(255,255,255,0.3)'
+      }}
+    />
+    
+    <AnimatePresence>
+      {ripples.map(ripple => (
+        <motion.span
+          key={ripple.id}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            left: ripple.x, top: ripple.y,
+            backgroundColor: 'rgba(253,224,71,0.5)',
+            transform: 'translate(-50%, -50%)',
+          }}
+          initial={{ width: 0, height: 0, opacity: 0.7 }}
+          animate={{ width: 100, height: 100, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        />
+      ))}
+    </AnimatePresence>
+    
+    <motion.div
+      animate={isHovered && hoverEffectsEnabled ? { scale: 1.15, y: 2 } : { scale: 1, y: 0 }}
+      className="relative z-10"
+    >
+      <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white drop-shadow-lg" strokeWidth={2.2} />
+    </motion.div>
+  </motion.div>
+));
+
+GoldButton.displayName = 'GoldButton';
+
+// ==================== AMOLED THEME - Minimal Arc Shape ====================
+const AmoledButton: React.FC<ThemedHomeButtonProps & { colors: any; isHovered: boolean; isPressed: boolean; ripples: RippleType[]; hoverEffectsEnabled: boolean }> = memo(({
+  icon: Icon, colors, isHovered, ripples, hoverEffectsEnabled
+}) => (
+  <motion.div 
+    className={cn(
+      'relative flex items-center justify-center overflow-hidden',
+      'w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-full',
+      'border border-zinc-700/50'
+    )}
+    style={{
+      background: `radial-gradient(circle at 30% 30%, #27272a, #18181b, #000000)`,
+      boxShadow: isHovered 
+        ? `0 0 30px 5px rgba(113,113,122,0.3), inset 0 0 20px rgba(113,113,122,0.1)` 
+        : `0 0 15px 2px rgba(113,113,122,0.15)`,
+    }}
+  >
+    {/* Subtle arc */}
+    <svg className="absolute inset-0 w-full h-full">
+      <motion.circle
+        cx="50%"
+        cy="50%"
+        r="45%"
+        fill="none"
+        stroke="rgba(113,113,122,0.3)"
+        strokeWidth="1"
+        strokeDasharray="10 5"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+        style={{ transformOrigin: 'center' }}
+      />
+    </svg>
+    
+    {/* Progress arc */}
+    <svg className="absolute inset-0 w-full h-full -rotate-90">
+      <motion.circle
+        cx="50%"
+        cy="50%"
+        r="40%"
+        fill="none"
+        stroke="rgba(161,161,170,0.5)"
+        strokeWidth="2"
+        strokeLinecap="round"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: isHovered ? 1 : 0.7 }}
+        transition={{ duration: 0.5 }}
+        style={{ 
+          strokeDasharray: '251.2',
+          strokeDashoffset: '0'
+        }}
+      />
+    </svg>
+    
+    {/* Center dot */}
+    <motion.div
+      className="absolute w-1 h-1 bg-zinc-500 rounded-full"
+      style={{ bottom: '15%', left: '50%', transform: 'translateX(-50%)' }}
+      animate={{ opacity: [0.3, 0.8, 0.3] }}
+      transition={{ duration: 2, repeat: Infinity }}
+    />
+    
+    <AnimatePresence>
+      {ripples.map(ripple => (
+        <motion.span
+          key={ripple.id}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            left: ripple.x, top: ripple.y,
+            backgroundColor: 'rgba(161,161,170,0.3)',
+            transform: 'translate(-50%, -50%)',
+          }}
+          initial={{ width: 0, height: 0, opacity: 0.5 }}
+          animate={{ width: 100, height: 100, opacity: 0 }}
+          transition={{ duration: 0.6 }}
+        />
+      ))}
+    </AnimatePresence>
+    
+    <motion.div
+      animate={isHovered && hoverEffectsEnabled ? { scale: 1.1 } : { scale: 1 }}
+      className="relative z-10"
+    >
+      <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-zinc-300" strokeWidth={1.8} />
+    </motion.div>
+  </motion.div>
+));
+
+AmoledButton.displayName = 'AmoledButton';
+
+// ==================== MAIN COMPONENT ====================
 const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
   onClick,
   icon: Icon,
@@ -130,8 +777,6 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const rippleIdRef = useRef(0);
-  
-  const colors = useMemo(() => getThemeColors(currentTheme, color), [currentTheme, color]);
 
   const createRipple = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     const button = event.currentTarget;
@@ -166,12 +811,52 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
     setIsHovered(false);
   }, []);
 
-  // Determinar qual elemento fitness decorativo usar baseado na cor do botão
-  const FitnessDecor = useMemo(() => {
-    if (color === 'primary') return null; // Cliente - só ícone
-    if (color === 'secondary') return 'dumbbell'; // Instrutor
-    return 'crown'; // Admin
-  }, [color]);
+  const colors = useMemo(() => {
+    // Colors based on theme and button color
+    const themeAccent: Record<SportTheme, string> = {
+      fire: '#ff6b35',
+      ocean: '#22d3ee',
+      forest: '#34d399',
+      lightning: '#fbbf24',
+      galaxy: '#c084fc',
+      iron: '#94a3b8',
+      blood: '#ef4444',
+      neon: '#ec4899',
+      gold: '#eab308',
+      amoled: '#71717a'
+    };
+    return { accent: themeAccent[currentTheme] || '#ff6b35' };
+  }, [currentTheme]);
+
+  const buttonProps = {
+    icon: Icon,
+    colors,
+    isHovered,
+    isPressed,
+    ripples,
+    hoverEffectsEnabled,
+    onClick,
+    label,
+    color,
+    disabled
+  };
+
+  // Select button component based on theme
+  const ButtonComponent = useMemo(() => {
+    switch (currentTheme) {
+      case 'fire': return FireButton;
+      case 'ocean': return OceanButton;
+      case 'forest': return ForestButton;
+      case 'lightning': return LightningButton;
+      case 'galaxy': return GalaxyButton;
+      case 'iron': return IronButton;
+      case 'blood': return BloodButton;
+      case 'neon': return NeonButton;
+      case 'gold': return GoldButton;
+      case 'amoled': return AmoledButton;
+      default: return FireButton;
+    }
+  }, [currentTheme]);
 
   return (
     <motion.button
@@ -183,138 +868,25 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
       disabled={disabled}
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={hoverEffectsEnabled ? { scale: 1.05, y: -3 } : undefined}
+      whileHover={hoverEffectsEnabled ? { scale: 1.02 } : undefined}
       whileTap={{ scale: 0.95 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
+      transition={{ duration: 0.2 }}
       className={cn(
         'relative group flex flex-col items-center',
         disabled && 'opacity-50 cursor-not-allowed pointer-events-none'
       )}
     >
-      {/* Container principal - Hexagonal fitness style */}
-      <motion.div 
-        className={cn(
-          'relative flex items-center justify-center overflow-hidden',
-          'w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20',
-          'rounded-2xl',
-          `bg-gradient-to-br ${colors.main}`,
-          `border-2 ${colors.border}`,
-          'shadow-xl',
-          'transition-all duration-200'
-        )}
-        style={{
-          boxShadow: isHovered 
-            ? `0 0 30px 8px ${colors.glow}, inset 0 1px 0 0 rgba(255,255,255,0.2)` 
-            : `0 0 20px 4px ${colors.glow}, inset 0 1px 0 0 rgba(255,255,255,0.1)`,
-        }}
-        animate={{
-          boxShadow: [
-            `0 0 15px 2px ${colors.glow}`,
-            `0 0 25px 6px ${colors.glow}`,
-            `0 0 15px 2px ${colors.glow}`,
-          ],
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      >
-        {/* Background pattern - fitness lines */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.1) 4px, rgba(255,255,255,0.1) 5px)`,
-          }} />
-        </div>
+      <ButtonComponent {...buttonProps} />
 
-        {/* Ripple effects */}
-        <AnimatePresence>
-          {ripples.map(ripple => (
-            <motion.span
-              key={ripple.id}
-              className="absolute rounded-full pointer-events-none z-5"
-              style={{
-                left: ripple.x,
-                top: ripple.y,
-                backgroundColor: 'rgba(255,255,255,0.4)',
-                transform: 'translate(-50%, -50%)',
-              }}
-              initial={{ width: 0, height: 0, opacity: 0.6 }}
-              animate={{ width: 120, height: 120, opacity: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
-            />
-          ))}
-        </AnimatePresence>
-
-        {/* Inner shine effect */}
-        <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/5 to-white/20 pointer-events-none" />
-        
-        {/* Corner accent - fitness inspired */}
-        <div className="absolute top-0 right-0 w-4 h-4 overflow-hidden">
-          <div className="absolute -top-2 -right-2 w-4 h-4 bg-white/20 rotate-45" />
-        </div>
-
-        {/* Fitness decoration elements */}
-        {FitnessDecor === 'dumbbell' && (
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 opacity-30">
-            <Dumbbell className="w-8 h-2 text-white" />
-          </div>
-        )}
-
-        {FitnessDecor === 'crown' && (
-          <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 opacity-40">
-            <Crown className="w-4 h-3 text-white" />
-          </div>
-        )}
-        
-        {/* Main Icon with animation */}
-        <motion.div
-          animate={isHovered && hoverEffectsEnabled ? { 
-            scale: 1.15, 
-            rotate: [0, -5, 5, 0],
-          } : { scale: 1, rotate: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative z-10"
-        >
-          <Icon 
-            className={cn(
-              'w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9',
-              'text-white drop-shadow-lg'
-            )} 
-            strokeWidth={2.2} 
-          />
-        </motion.div>
-
-        {/* Hover glow overlay */}
-        {isHovered && hoverEffectsEnabled && (
-          <motion.div
-            className="absolute inset-0 pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            style={{
-              background: `radial-gradient(circle at center, rgba(255,255,255,0.2), transparent 70%)`,
-            }}
-          />
-        )}
-      </motion.div>
-
-      {/* Label with fitness style */}
+      {/* Label */}
       <motion.div 
         className="mt-2 flex flex-col items-center"
-        animate={isHovered && hoverEffectsEnabled ? { y: -2 } : { y: 0 }}
-        transition={{ duration: 0.2 }}
+        animate={isHovered && hoverEffectsEnabled ? { y: -1 } : { y: 0 }}
       >
-        <span className={cn(
-          'font-bebas text-xs sm:text-sm tracking-widest uppercase',
-          'text-center leading-tight',
-          colors.text,
-          'transition-all duration-150'
-        )}>
+        <span className="font-bebas text-xs sm:text-sm tracking-widest uppercase text-center leading-tight text-foreground/90">
           {label}
         </span>
         
-        {/* Decorative line under label */}
         <motion.div
           className="h-0.5 rounded-full mt-1"
           style={{ backgroundColor: colors.accent }}
@@ -326,32 +898,6 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
           transition={{ duration: 0.2 }}
         />
       </motion.div>
-
-      {/* Floating fitness icons decoration on hover */}
-      <AnimatePresence>
-        {isHovered && hoverEffectsEnabled && (
-          <>
-            <motion.div
-              className="absolute -left-2 top-1/2 -translate-y-1/2 pointer-events-none"
-              initial={{ opacity: 0, x: 10, scale: 0.5 }}
-              animate={{ opacity: 0.5, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 10, scale: 0.5 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Activity className="w-3 h-3" style={{ color: colors.accent }} />
-            </motion.div>
-            <motion.div
-              className="absolute -right-2 top-1/2 -translate-y-1/2 pointer-events-none"
-              initial={{ opacity: 0, x: -10, scale: 0.5 }}
-              animate={{ opacity: 0.5, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: -10, scale: 0.5 }}
-              transition={{ duration: 0.2, delay: 0.05 }}
-            >
-              <Target className="w-3 h-3" style={{ color: colors.accent }} />
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </motion.button>
   );
 });
