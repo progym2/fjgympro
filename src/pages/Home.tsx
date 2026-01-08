@@ -1,4 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense, memo, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { User, Dumbbell, Shield, Info, Volume2, VolumeX } from 'lucide-react';
 
@@ -119,11 +120,31 @@ const Home: React.FC = memo(() => {
           <DigitalClock />
         </div>
 
-        {/* Panel Buttons - modern cards */}
+        {/* Panel Buttons - modern cards with staggered animation */}
         <div className="mt-8 flex gap-3 sm:gap-4">
-          <ThemedHomeButton onClick={() => handlePanelClick('client')} icon={User} label="CLIENTE" color="primary" />
-          <ThemedHomeButton onClick={() => handlePanelClick('instructor')} icon={Dumbbell} label="INSTRUTOR" color="secondary" />
-          <ThemedHomeButton onClick={() => handlePanelClick('admin')} icon={Shield} label="GERENTE" color="accent" />
+          {[
+            { panel: 'client' as const, icon: User, label: 'CLIENTE', color: 'primary' as const },
+            { panel: 'instructor' as const, icon: Dumbbell, label: 'INSTRUTOR', color: 'secondary' as const },
+            { panel: 'admin' as const, icon: Shield, label: 'GERENTE', color: 'accent' as const },
+          ].map((item, index) => (
+            <motion.div
+              key={item.panel}
+              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{
+                duration: 0.5,
+                delay: 0.2 + index * 0.15,
+                ease: [0.25, 0.46, 0.45, 0.94]
+              }}
+            >
+              <ThemedHomeButton
+                onClick={() => handlePanelClick(item.panel)}
+                icon={item.icon}
+                label={item.label}
+                color={item.color}
+              />
+            </motion.div>
+          ))}
         </div>
 
         {/* Footer inline */}
