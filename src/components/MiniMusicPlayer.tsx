@@ -27,7 +27,7 @@ const themePlayerIcons: Record<SportTheme, {
   amoled: { play: Disc, pause: Disc, music: Headphones },
 };
 
-const MiniMusicPlayer: React.FC = () => {
+const MiniMusicPlayer = React.forwardRef<HTMLDivElement>((_, ref) => {
   const { 
     isMusicPlaying, 
     isOnHomeScreen, 
@@ -234,6 +234,8 @@ const MiniMusicPlayer: React.FC = () => {
       </AnimatePresence>
     </motion.div>
   );
-};
+});
+
+MiniMusicPlayer.displayName = 'MiniMusicPlayer';
 
 export default MiniMusicPlayer;
