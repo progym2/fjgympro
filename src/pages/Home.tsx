@@ -218,7 +218,7 @@ const Home: React.FC = memo(() => {
         </motion.div>
 
         {/* Panel Buttons - modern cards with staggered animation */}
-        <div className="mt-10 flex gap-4 sm:gap-6 md:gap-8">
+        <div className="mt-10 flex gap-6 sm:gap-10 md:gap-14">
           {[
             { panel: 'client' as const, icon: User, label: 'CLIENTE', color: 'primary' as const },
             { panel: 'instructor' as const, icon: Dumbbell, label: 'INSTRUTOR', color: 'secondary' as const },
