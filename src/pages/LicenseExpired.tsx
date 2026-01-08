@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Lock, Phone, Mail, ShoppingCart, Home, Timer } from 'lucide-react';
+import { Lock, Mail, ShoppingCart, Home, Timer } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
@@ -56,26 +55,14 @@ const LicenseExpired: React.FC = () => {
       <div className="absolute inset-0 bg-background/90" />
 
       {/* Content */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="relative z-10 w-full max-w-lg bg-card/90 backdrop-blur-xl rounded-2xl border border-destructive/30 shadow-2xl overflow-hidden"
-      >
+      <div className="relative z-10 w-full max-w-lg bg-card/90 backdrop-blur-xl rounded-2xl border border-destructive/30 shadow-2xl overflow-hidden animate-fade-in">
         {/* Header */}
-        <div className="p-8 text-center bg-gradient-to-b from-destructive/20 to-transparent">
-          <motion.div
-            animate={{
-              scale: [1, 1.05, 1],
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <Lock className="w-16 h-16 mx-auto text-destructive mb-4" />
-          </motion.div>
-          
-          <motion.img
+        <div className="p-6 sm:p-8 text-center bg-gradient-to-b from-destructive/20 to-transparent">
+          <Lock className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-destructive mb-4" />
+          <img
             src={logomarca}
             alt="FrancGymPro"
-            className="w-32 h-32 mx-auto object-contain opacity-50"
+            className="w-24 h-24 sm:w-32 sm:h-32 mx-auto object-contain opacity-50"
           />
         </div>
 
@@ -107,18 +94,16 @@ const LicenseExpired: React.FC = () => {
               Para continuar usando o FrancGymPro, adquira uma licença válida:
             </p>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+            <button
               onClick={() => {
                 playClickSound();
                 window.open('mailto:oficialgympro@gmail.com?subject=Solicitar Licença FrancGymPro', '_blank');
               }}
-              className="w-full py-4 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bebas text-xl tracking-wider rounded-lg flex items-center justify-center gap-3 hover:from-primary/90 hover:to-primary/70 transition-all shadow-lg shadow-primary/30"
+              className="w-full py-3 sm:py-4 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bebas text-lg sm:text-xl tracking-wider rounded-lg flex items-center justify-center gap-3 hover:from-primary/90 hover:to-primary/70 transition-all shadow-lg shadow-primary/30 active:scale-[0.98]"
             >
-              <ShoppingCart size={24} />
+              <ShoppingCart size={20} />
               ADQUIRIR LICENÇA
-            </motion.button>
+            </button>
           </div>
 
           {/* Contact Info */}
@@ -142,27 +127,23 @@ const LicenseExpired: React.FC = () => {
           </div>
 
           {/* Go Home Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             onClick={handleGoHome}
-            className="w-full py-3 bg-primary/20 text-primary font-medium rounded-lg hover:bg-primary/30 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-primary/20 text-primary font-medium rounded-lg hover:bg-primary/30 transition-colors flex items-center justify-center gap-2 active:scale-[0.98]"
           >
             <Home size={18} />
             Ir para Tela Inicial
-          </motion.button>
+          </button>
 
           {/* Logout Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             onClick={handleLogout}
             className="w-full py-2 text-muted-foreground text-sm hover:text-foreground transition-colors"
           >
             Sair da Conta
-          </motion.button>
+          </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };
