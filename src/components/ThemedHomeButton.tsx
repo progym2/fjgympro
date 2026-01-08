@@ -1,9 +1,15 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useState, useRef } from 'react';
 import { LucideIcon } from 'lucide-react';
 import { useTheme, SportTheme, ThemeConfig } from '@/contexts/ThemeContext';
 import { useAudio } from '@/contexts/AudioContext';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface RippleType {
+  id: number;
+  x: number;
+  y: number;
+}
 
 interface ThemedHomeButtonProps {
   onClick: () => void;
@@ -174,6 +180,8 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
 }) => {
   const { currentTheme, themeConfig, hoverEffectsEnabled } = useTheme();
   const { playHoverSound, playClickSound } = useAudio();
+  const [ripples, setRipples] = useState<RippleType[]>([]);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   
   const style = useMemo(() => getButtonStyle(currentTheme, themeConfig), [currentTheme, themeConfig]);
   const colorVariant = useMemo(() => getColorVariant(currentTheme, color), [currentTheme, color]);
@@ -185,8 +193,31 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
     return themeConfig.icons.accent;
   }, [themeConfig, color]);
 
-  const handleClick = () => {
+  const createRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (!buttonRef.current) return;
+    
+    const button = buttonRef.current;
+    const rect = button.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    const newRipple: RippleType = {
+      id: Date.now(),
+      x,
+      y,
+    };
+    
+    setRipples(prev => [...prev, newRipple]);
+    
+    // Remove ripple after animation
+    setTimeout(() => {
+      setRipples(prev => prev.filter(r => r.id !== newRipple.id));
+    }, 600);
+  };
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (!disabled) {
+      createRipple(event);
       playClickSound();
       onClick();
     }
@@ -204,6 +235,7 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
 
   return (
     <motion.button
+      ref={buttonRef}
       onClick={handleClick}
       onMouseEnter={handleHover}
       disabled={disabled}
@@ -216,7 +248,7 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
       } : undefined}
       whileTap={{ scale: 0.95 }}
       className={cn(
-        'relative group',
+        'relative group overflow-hidden',
         'flex flex-col items-center justify-center',
         isCircular ? 'w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-full' :
         isStarShape ? 'w-36 h-36 sm:w-40 sm:h-40 md:w-44 md:h-44' :
@@ -230,6 +262,33 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
         clipPath: isCircular ? undefined : style.shape,
       }}
     >
+      {/* Ripple effects */}
+      <AnimatePresence>
+        {ripples.map(ripple => (
+          <motion.span
+            key={ripple.id}
+            className={cn(
+              'absolute rounded-full pointer-events-none',
+              colorVariant.icon.replace('text-', 'bg-'),
+              'opacity-30'
+            )}
+            style={{
+              left: ripple.x,
+              top: ripple.y,
+            }}
+            initial={{ width: 0, height: 0, x: 0, y: 0, opacity: 0.5 }}
+            animate={{ 
+              width: 200, 
+              height: 200, 
+              x: -100, 
+              y: -100, 
+              opacity: 0 
+            }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+          />
+        ))}
+      </AnimatePresence>
       {/* Inner gradient overlay */}
       <div 
         className={cn(
