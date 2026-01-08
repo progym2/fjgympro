@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { User, Dumbbell, Shield, Info, Volume2, VolumeX } from 'lucide-react';
 
 import DigitalClock from '@/components/DigitalClock';
-import ModernGymButton from '@/components/ModernGymButton';
+import ThemedHomeButton from '@/components/ThemedHomeButton';
 import AppFooter from '@/components/AppFooter';
 import LoginDialog from '@/components/LoginDialog';
 import AboutDialog from '@/components/AboutDialog';
@@ -11,6 +11,7 @@ import SimpleParticles from '@/components/SimpleParticles';
 import SimpleLogo from '@/components/SimpleLogo';
 import SportThemeSelector from '@/components/SportThemeSelector';
 import MiniMusicPlayer from '@/components/MiniMusicPlayer';
+import OfflineModeIndicator from '@/components/OfflineModeIndicator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
 
@@ -103,9 +104,9 @@ const Home: React.FC = () => {
 
         {/* Panel Buttons - modern cards */}
         <div className="mt-8 flex gap-3 sm:gap-4">
-          <ModernGymButton onClick={() => handlePanelClick('client')} icon={User} label="CLIENTE" color="primary" />
-          <ModernGymButton onClick={() => handlePanelClick('instructor')} icon={Dumbbell} label="INSTRUTOR" color="secondary" />
-          <ModernGymButton onClick={() => handlePanelClick('admin')} icon={Shield} label="GERENTE" color="accent" />
+          <ThemedHomeButton onClick={() => handlePanelClick('client')} icon={User} label="CLIENTE" color="primary" />
+          <ThemedHomeButton onClick={() => handlePanelClick('instructor')} icon={Dumbbell} label="INSTRUTOR" color="secondary" />
+          <ThemedHomeButton onClick={() => handlePanelClick('admin')} icon={Shield} label="GERENTE" color="accent" />
         </div>
 
         {/* Footer inline */}
@@ -140,6 +141,9 @@ const Home: React.FC = () => {
 
       {/* Mini Music Player */}
       <MiniMusicPlayer />
+
+      {/* Offline Mode Indicator */}
+      <OfflineModeIndicator />
 
       {/* Dialogs */}
       <LoginDialog
