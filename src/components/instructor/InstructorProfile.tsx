@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Save, Key, Info, Award, Phone, Mail, Calendar, IdCard } from 'lucide-react';
+import { User, Save, Key, Info, Award, Phone, Mail, Calendar, IdCard, Database } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import InstructorPageHeader from './InstructorPageHeader';
 import ProfilePhotoUploader from '@/components/shared/ProfilePhotoUploader';
+import CacheStatusIndicator from '@/components/shared/CacheStatusIndicator';
 
 const InstructorProfile: React.FC = () => {
   const navigate = useNavigate();
@@ -391,6 +392,19 @@ const InstructorProfile: React.FC = () => {
             )}
           </Button>
         </form>
+
+        {/* Cache & Offline Settings */}
+        <Card className="bg-card/80 backdrop-blur-md border-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="font-bebas text-xl tracking-wider flex items-center gap-2">
+              <Database className="w-5 h-5 text-green-500" />
+              DADOS OFFLINE
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CacheStatusIndicator showActions={true} />
+          </CardContent>
+        </Card>
       </div>
     </motion.div>
   );
