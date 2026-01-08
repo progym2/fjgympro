@@ -17,6 +17,7 @@ import InstallBanner from "@/components/InstallBanner";
 import VideoSplashScreen from "@/components/VideoSplashScreen";
 import ThemeTransitionOverlay from "@/components/ThemeTransitionOverlay";
 import { Loader2 } from "lucide-react";
+import PageTransition from "@/components/PageTransition";
 
 // Lazy load heavy dashboard pages for faster initial load
 const Home = lazy(() => import("./pages/Home"));
@@ -83,23 +84,23 @@ const PageLoader = () => (
   </div>
 );
 
-// Simple Routes component without heavy animations
+// Routes with ultra-fast fade transition
 const AppRoutes = () => {
-  const location = useLocation();
-
   return (
     <Suspense fallback={<PageLoader />}>
-      <Routes location={location}>
-        <Route path="/" element={<Home />} />
-        <Route path="/install" element={<Install />} />
-        <Route path="/select-panel" element={<PanelSelector />} />
-        <Route path="/consulta-aluno" element={<StudentLookup />} />
-        <Route path="/client/*" element={<ClientDashboard />} />
-        <Route path="/instructor/*" element={<InstructorDashboard />} />
-        <Route path="/admin/*" element={<AdminDashboard />} />
-        <Route path="/license-expired" element={<LicenseExpired />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <PageTransition>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/install" element={<Install />} />
+          <Route path="/select-panel" element={<PanelSelector />} />
+          <Route path="/consulta-aluno" element={<StudentLookup />} />
+          <Route path="/client/*" element={<ClientDashboard />} />
+          <Route path="/instructor/*" element={<InstructorDashboard />} />
+          <Route path="/admin/*" element={<AdminDashboard />} />
+          <Route path="/license-expired" element={<LicenseExpired />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </PageTransition>
     </Suspense>
   );
 };
