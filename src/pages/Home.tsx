@@ -112,6 +112,16 @@ const Home: React.FC = memo(() => {
     stopMusicImmediately();
     setIsExiting(true);
     
+    // Haptic feedback on mobile devices
+    if (navigator.vibrate) {
+      const vibrationPatterns = {
+        client: [30],
+        instructor: [20, 30, 20],
+        admin: [40, 20, 40]
+      };
+      navigator.vibrate(vibrationPatterns[panel]);
+    }
+    
     setTimeout(() => {
       playPanelTransitionSound(panel);
       setLoginDialogOpen(true);
