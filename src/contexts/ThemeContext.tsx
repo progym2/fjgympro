@@ -278,9 +278,12 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const activeTheme = globalTheme || currentTheme;
   const themeConfig = SPORT_THEMES.find(t => t.id === activeTheme) || SPORT_THEMES[0];
 
-  // Aplicar tema
+  // Aplicar tema com transição suave
   useEffect(() => {
     const root = document.documentElement;
+    
+    // Adicionar classe de transição
+    root.classList.add('theme-transitioning');
     
     // Clear all theme classes
     SPORT_THEMES.forEach(t => root.classList.remove(`theme-${t.id}`));
@@ -313,6 +316,12 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     root.setAttribute('data-pattern', themeConfig.pattern);
     root.setAttribute('data-font-weight', themeConfig.fontWeight);
     
+    // Remover classe de transição após animação
+    const timer = setTimeout(() => {
+      root.classList.remove('theme-transitioning');
+    }, 400);
+    
+    return () => clearTimeout(timer);
   }, [activeTheme, themeConfig]);
 
   const setTheme = (theme: SportTheme) => {
