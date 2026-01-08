@@ -30,6 +30,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import ProfileAvatar from '@/components/shared/ProfileAvatar';
 import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
+import FitnessLoadingScreen from '@/components/FitnessLoadingScreen';
 
 import bgPanels from '@/assets/bg-panels-optimized.webp';
 
@@ -72,13 +73,22 @@ const ComponentLoader = () => (
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user, profile, role, license, signOut, licenseExpired, isLicenseValid } = useAuth();
+  const { user, profile, role, license, signOut, licenseExpired, isLicenseValid, isLoading: authLoading } = useAuth();
   const { playClickSound } = useAudio();
   const { isLoaded: bgLoaded } = useProgressiveImage(bgPanels);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const isMaster = role === 'master';
+
+  // Initial loading effect
+  useEffect(() => {
+    if (!authLoading && profile) {
+      const timer = setTimeout(() => setInitialLoading(false), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [authLoading, profile]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -142,6 +152,11 @@ const AdminDashboard: React.FC = () => {
     isMaster ? [...menuItems, ...masterItems] : menuItems,
     [isMaster, menuItems, masterItems]
   );
+
+  // Show fitness loading screen during initial load
+  if (initialLoading) {
+    return <FitnessLoadingScreen message="Carregando painel..." />;
+  }
 
   return (
     <div className="h-[100dvh] relative overflow-hidden bg-background">

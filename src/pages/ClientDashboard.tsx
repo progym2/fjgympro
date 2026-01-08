@@ -28,6 +28,7 @@ import PanelSwitcher from '@/components/PanelSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
 import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
+import FitnessLoadingScreen from '@/components/FitnessLoadingScreen';
 
 import bgPanels from '@/assets/bg-panels-optimized.webp';
 
@@ -136,11 +137,12 @@ HomeContent.displayName = 'HomeContent';
 const ClientDashboard: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, role, license, signOut, licenseExpired, isLicenseValid } = useAuth();
+  const { user, profile, role, license, signOut, licenseExpired, isLicenseValid, isLoading: authLoading } = useAuth();
   const { playClickSound } = useAudio();
   const { isLoaded: bgLoaded } = useProgressiveImage(bgPanels);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   
   // Widget visibility state
   const [hydrationVisible, setHydrationVisible] = useState(() => {
@@ -153,6 +155,14 @@ const ClientDashboard: React.FC = () => {
   const isOnHome = location.pathname === '/client';
   const showHydrationWidget = isOnHome && !location.pathname.includes('/hydration') && hydrationVisible;
   const isMaster = role === 'master';
+
+  // Initial loading effect
+  useEffect(() => {
+    if (!authLoading && profile) {
+      const timer = setTimeout(() => setInitialLoading(false), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [authLoading, profile]);
 
   const handleHydrationVisibility = useCallback((visible: boolean) => {
     setHydrationVisible(visible);
@@ -208,6 +218,11 @@ const ClientDashboard: React.FC = () => {
   }, [playClickSound]);
 
   const handleWorkoutBack = useCallback(() => navigate('/client/workouts'), [navigate]);
+
+  // Show fitness loading screen during initial load
+  if (initialLoading) {
+    return <FitnessLoadingScreen message="Carregando painel..." />;
+  }
 
   return (
     <div className="h-[100dvh] relative overflow-hidden bg-background">
