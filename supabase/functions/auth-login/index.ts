@@ -791,18 +791,41 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // Regular user login - verify using license_key as password
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("*")
-      .ilike("username", inputUsername)
-      .maybeSingle();
+    // Support login by username OR by CPF (11 digits)
+    const isCpfLogin = /^\d{11}$/.test(inputUsername.replace(/\D/g, ''));
+    const cpfDigits = inputUsername.replace(/\D/g, '');
+    
+    let profile;
+    
+    if (isCpfLogin && cpfDigits.length === 11) {
+      // Login by CPF - search by CPF field
+      const { data: cpfProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("*")
+        .eq("cpf", cpfDigits)
+        .maybeSingle();
+      
+      profile = cpfProfile;
+      console.log(`CPF login attempt: ${cpfDigits.substring(0, 3)}...`);
+    } else {
+      // Login by username (original behavior)
+      const { data: usernameProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("*")
+        .ilike("username", inputUsername)
+        .maybeSingle();
+      
+      profile = usernameProfile;
+    }
 
     if (!profile) {
       console.log(`User not found: ${inputUsername}`);
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: "Usuário não cadastrado no sistema. Você precisa de uma licença válida para acessar. Entre em contato com a administração da academia." 
+          error: isCpfLogin 
+            ? "CPF não encontrado no sistema. Verifique se digitou corretamente." 
+            : "Usuário não cadastrado no sistema. Você precisa de uma licença válida para acessar. Entre em contato com a administração da academia." 
         } as LoginResponse),
         { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );

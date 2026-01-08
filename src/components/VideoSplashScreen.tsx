@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import logomarca from '@/assets/logomarca.png';
+import splashBackground from '@/assets/splash-background.png';
 
 interface VideoSplashScreenProps {
   onComplete: () => void;
@@ -16,8 +16,11 @@ document.head.appendChild(videoPreloadLink);
 const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [showLogo, setShowLogo] = useState(false);
+  const [videoEnded, setVideoEnded] = useState(false);
+  const [showImage, setShowImage] = useState(false);
+  const [progress, setProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const progressRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check if splash was already shown in this session
   useEffect(() => {
@@ -28,25 +31,56 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
     }
   }, [onComplete]);
 
-  const handleVideoEnd = () => {
-    // Immediately show logo - no delay
-    setShowLogo(true);
-  };
+  // Start progress animation when video is loaded
+  useEffect(() => {
+    if (isLoaded && !videoEnded) {
+      progressRef.current = setInterval(() => {
+        if (videoRef.current) {
+          const duration = videoRef.current.duration || 5;
+          const currentTime = videoRef.current.currentTime || 0;
+          setProgress((currentTime / duration) * 100);
+        }
+      }, 50);
+    }
+    return () => {
+      if (progressRef.current) clearInterval(progressRef.current);
+    };
+  }, [isLoaded, videoEnded]);
 
-  const handleLogoAnimationComplete = () => {
-    sessionStorage.setItem('splashShown', 'true');
-    setIsVisible(false);
-    onComplete();
+  const handleVideoEnd = () => {
+    setProgress(100);
+    setVideoEnded(true);
+    setShowImage(true);
+    
+    // Show image for 1.5 seconds then complete
+    setTimeout(() => {
+      sessionStorage.setItem('splashShown', 'true');
+      setIsVisible(false);
+      onComplete();
+    }, 1500);
   };
 
   const handleVideoError = () => {
-    sessionStorage.setItem('splashShown', 'true');
-    setIsVisible(false);
-    onComplete();
+    // Fallback: show image directly if video fails
+    setShowImage(true);
+    setProgress(100);
+    
+    setTimeout(() => {
+      sessionStorage.setItem('splashShown', 'true');
+      setIsVisible(false);
+      onComplete();
+    }, 2000);
   };
 
   const handleCanPlay = () => {
     setIsLoaded(true);
+  };
+
+  // Skip splash on tap/click
+  const handleSkip = () => {
+    sessionStorage.setItem('splashShown', 'true');
+    setIsVisible(false);
+    onComplete();
   };
 
   if (!isVisible) return null;
@@ -57,29 +91,58 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
         <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[9999] bg-background flex items-center justify-center overflow-hidden"
+          transition={{ duration: 0.3 }}
+          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
+          onClick={handleSkip}
         >
-          {/* Subtle glow effect */}
+          {/* Background gradient */}
           <div 
-            className="absolute inset-0 opacity-20"
+            className="absolute inset-0"
             style={{
-              background: 'radial-gradient(circle at center, hsl(24 100% 50% / 0.4) 0%, transparent 60%)'
+              background: 'radial-gradient(ellipse at center, rgba(40, 20, 10, 0.9) 0%, rgba(0, 0, 0, 1) 70%)'
             }}
           />
 
+          {/* Animated fire particles effect */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {[...Array(20)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1 h-1 rounded-full"
+                style={{
+                  background: `hsl(${20 + Math.random() * 20}, 100%, ${50 + Math.random() * 30}%)`,
+                  left: `${Math.random() * 100}%`,
+                  bottom: '-5%',
+                }}
+                animate={{
+                  y: [0, -window.innerHeight * 1.2],
+                  x: [0, (Math.random() - 0.5) * 100],
+                  opacity: [0.8, 0],
+                  scale: [1, 0.5],
+                }}
+                transition={{
+                  duration: 2 + Math.random() * 2,
+                  repeat: Infinity,
+                  delay: Math.random() * 2,
+                  ease: 'easeOut',
+                }}
+              />
+            ))}
+          </div>
+
           {/* Video phase */}
           <AnimatePresence mode="wait">
-            {!showLogo && (
+            {!showImage && (
               <motion.div
                 key="video"
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.1 }}
+                transition={{ duration: 0.3 }}
                 className="relative w-full h-full flex items-center justify-center"
               >
                 {!isLoaded && (
-                  <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-4">
+                    <div className="w-12 h-12 border-3 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-orange-400 text-sm animate-pulse">Carregando...</p>
                   </div>
                 )}
 
@@ -92,7 +155,7 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
                   onEnded={handleVideoEnd}
                   onError={handleVideoError}
                   onCanPlay={handleCanPlay}
-                  className={`w-full h-full object-contain ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+                  className={`w-full h-full object-contain transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
                 >
                   <source src="/video/splash.mp4" type="video/mp4" />
                 </video>
@@ -100,61 +163,67 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
             )}
           </AnimatePresence>
 
-          {/* Logo phase - ultra fast */}
+          {/* Image phase */}
           <AnimatePresence>
-            {showLogo && (
+            {showImage && (
               <motion.div
-                key="logo"
-                className="absolute inset-0 flex flex-col items-center justify-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.1 }}
+                key="splash-image"
+                initial={{ opacity: 0, scale: 1.1 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                className="absolute inset-0 flex items-center justify-center"
               >
-                <motion.div
-                  initial={{ scale: 0.85, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.2 }}
-                  className="relative"
-                >
-                  <div 
-                    className="absolute inset-0 blur-2xl opacity-50"
-                    style={{
-                      background: 'radial-gradient(circle, hsl(24 100% 50% / 0.5) 0%, transparent 70%)'
-                    }}
-                  />
-                  <img
-                    src={logomarca}
-                    alt="fjGymPro"
-                    className="w-36 h-36 sm:w-44 sm:h-44 object-contain relative z-10"
-                    style={{ filter: 'drop-shadow(0 0 20px hsl(24 100% 50% / 0.4))' }}
-                  />
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.15, delay: 0.1 }}
-                  className="mt-4 text-center"
-                >
-                  <h1 className="text-3xl sm:text-4xl font-display tracking-wider">
-                    <span className="text-primary">fj</span>
-                    <span className="text-foreground">GymPro</span>
-                  </h1>
-                  <p className="text-muted-foreground text-xs mt-1 tracking-widest uppercase">
-                    Sua evolução começa aqui
-                  </p>
-                </motion.div>
-
-                {/* Complete after 0.5s */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  onAnimationComplete={handleLogoAnimationComplete}
+                <img
+                  src={splashBackground}
+                  alt="GymPro - Sua evolução começa aqui"
+                  className="w-full h-full object-cover"
+                  style={{
+                    filter: 'brightness(1.1) contrast(1.05)',
+                  }}
                 />
+                
+                {/* Overlay gradient for better text visibility */}
+                <div 
+                  className="absolute inset-0"
+                  style={{
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.4) 100%)'
+                  }}
+                />
+
+                {/* Tap to continue text */}
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="absolute bottom-20 text-white/80 text-sm tracking-widest uppercase"
+                >
+                  Toque para continuar
+                </motion.p>
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Progress bar at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
+            <motion.div
+              className="h-full bg-gradient-to-r from-orange-600 via-orange-500 to-yellow-500"
+              style={{ width: `${progress}%` }}
+              initial={{ width: '0%' }}
+              transition={{ duration: 0.1 }}
+            />
+          </div>
+
+          {/* Skip hint */}
+          {!showImage && isLoaded && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              transition={{ delay: 1 }}
+              className="absolute bottom-6 text-white/60 text-xs tracking-wide"
+            >
+              Toque para pular
+            </motion.p>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

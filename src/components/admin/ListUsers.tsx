@@ -524,19 +524,38 @@ const ListUsers: React.FC = () => {
             )}
           </div>
           <p className="text-sm text-muted-foreground truncate">@{user.username}</p>
-          {user.student_id && (
-            <p className="text-xs text-primary font-mono">
-              ID: {user.student_id}
-            </p>
-          )}
-          {user.cpf && (
-            <p className="text-xs text-muted-foreground">
-              CPF: {debouncedSearch && user.cpf.includes(debouncedSearch.replace(/[.-]/g, '')) ? (
-                <span className="bg-yellow-500/30 text-yellow-500 font-bold rounded px-0.5">{user.cpf}</span>
-              ) : user.cpf}
-            </p>
-          )}
-          {user.cref && <p className="text-xs text-green-500">CREF: {user.cref}</p>}
+          
+          {/* Master sees more details */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 mt-1 text-xs">
+            {user.student_id && (
+              <p className="text-primary font-mono">
+                ID: {user.student_id}
+              </p>
+            )}
+            {user.cpf && (
+              <p className="text-muted-foreground">
+                CPF: {debouncedSearch && user.cpf.includes(debouncedSearch.replace(/[.-]/g, '')) ? (
+                  <span className="bg-yellow-500/30 text-yellow-500 font-bold rounded px-0.5">{user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</span>
+                ) : user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}
+              </p>
+            )}
+            {user.phone && isMaster && (
+              <p className="text-muted-foreground">
+                Tel: {user.phone}
+              </p>
+            )}
+            {user.city && isMaster && (
+              <p className="text-muted-foreground">
+                {user.city}
+              </p>
+            )}
+            {user.cref && <p className="text-green-500">CREF: {user.cref}</p>}
+            {user.license_expires_at && (
+              <p className={`${new Date(user.license_expires_at) < new Date() ? 'text-red-400' : 'text-muted-foreground'}`}>
+                Exp: {new Date(user.license_expires_at).toLocaleDateString('pt-BR')}
+              </p>
+            )}
+          </div>
         </div>
         <div className="flex gap-1 sm:gap-2 flex-wrap">
           {showRestore && isMaster && (
