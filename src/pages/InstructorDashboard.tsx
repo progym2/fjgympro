@@ -31,7 +31,7 @@ import InstructorSelector from '@/components/instructor/InstructorSelector';
 import ProfileAvatar from '@/components/shared/ProfileAvatar';
 import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
 
-import bgPanels from '@/assets/bg-panels.png';
+import bgPanels from '@/assets/bg-panels-optimized.webp';
 
 // Lazy load heavy components
 const MyStudents = lazy(() => import('@/components/instructor/MyStudents'));
