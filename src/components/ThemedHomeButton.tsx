@@ -154,9 +154,9 @@ const getButtonStyle = (theme: SportTheme, color: 'primary' | 'secondary' | 'acc
 
   const gradient = colorGradients[color][theme] || colorGradients[color].fire;
 
-  // Tamanho padronizado para todos os temas - responsivo
-  const baseContainerClass = 'w-18 h-18 sm:w-20 sm:h-20 md:w-24 md:h-24';
-  const baseIconSize = 'w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10';
+  // Tamanho padronizado para todos os temas - responsivo - MAIOR
+  const baseContainerClass = 'w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32';
+  const baseIconSize = 'w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 lg:w-14 lg:h-14';
 
   const styles: Record<SportTheme, ButtonStyle> = {
     fire: {
@@ -383,8 +383,8 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
 
       {/* Label */}
       <span className={cn(
-        'font-bebas text-xs sm:text-sm md:text-base tracking-wider',
-        'uppercase text-center leading-tight mt-2 sm:mt-3',
+        'font-bebas text-sm sm:text-base md:text-lg lg:text-xl tracking-wider',
+        'uppercase text-center leading-tight mt-3 sm:mt-4',
         'transition-opacity duration-150',
         style.labelStyle
       )}>

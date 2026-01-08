@@ -7,10 +7,10 @@ const AppFooter: React.FC = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 1 }}
-      className="py-3 sm:py-4 flex-shrink-0"
+      className="py-4 sm:py-6"
     >
       <div className="text-center">
-        <p className="text-xs sm:text-sm text-muted-foreground">
+        <p className="text-sm sm:text-base md:text-lg text-muted-foreground">
           Desenvolvido por{' '}
           <span className="text-primary font-semibold">Franc D'nis</span>
         </p>

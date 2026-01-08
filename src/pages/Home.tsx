@@ -174,11 +174,8 @@ const Home: React.FC = memo(() => {
       </Suspense>
 
       {/* Content - centered with better spacing */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-between px-4 sm:px-6 md:px-8 py-16 sm:py-20 md:py-24">
-        {/* Top spacer */}
-        <div className="flex-shrink-0" />
-
-        {/* Center content */}
+      <div className="relative z-10 h-full flex flex-col items-center px-4 sm:px-6 md:px-8 pt-8 sm:pt-12 md:pt-16 pb-4 sm:pb-6">
+        {/* Logo section - mais acima */}
         <div className="flex flex-col items-center">
           {/* Logo - with fade-in and pulse animation */}
           <motion.div
@@ -223,7 +220,7 @@ const Home: React.FC = memo(() => {
           </motion.div>
 
           {/* Panel Buttons - larger with more spacing */}
-          <div className="mt-8 sm:mt-12 md:mt-16 flex gap-8 sm:gap-12 md:gap-16 lg:gap-20">
+          <div className="mt-10 sm:mt-14 md:mt-20 flex gap-6 sm:gap-10 md:gap-14 lg:gap-20">
             {[
               { panel: 'client' as const, icon: User, label: 'CLIENTE', color: 'primary' as const },
               { panel: 'instructor' as const, icon: Dumbbell, label: 'INSTRUTOR', color: 'secondary' as const },
@@ -254,8 +251,11 @@ const Home: React.FC = memo(() => {
           </div>
         </div>
 
-        {/* Footer - at bottom */}
-        <div className="flex-shrink-0">
+        {/* Spacer para empurrar footer para baixo */}
+        <div className="flex-grow" />
+        
+        {/* Footer - fixo na parte inferior */}
+        <div className="mt-auto pb-2 sm:pb-4">
           <AppFooter />
         </div>
       </div>
