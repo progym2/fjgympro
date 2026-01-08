@@ -1,5 +1,6 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { setCacheItem, getCacheItem, batchSetCacheItems } from '@/lib/indexedDB';
 import type { UserRole } from '@/contexts/AuthContext';
 
 interface PreloadedData {
@@ -11,14 +12,28 @@ interface PreloadedData {
   hydrationSettings?: any;
 }
 
-// Simple in-memory cache with TTL
+// Cache keys for IndexedDB
+const CACHE_KEYS = {
+  WORKOUT_PLANS: 'preload_workout_plans',
+  NOTIFICATIONS: 'preload_notifications',
+  LINKED_INSTRUCTOR: 'preload_linked_instructor',
+  LINKED_STUDENTS: 'preload_linked_students',
+  PAYMENTS: 'preload_payments',
+  HYDRATION: 'preload_hydration',
+  PRELOAD_META: 'preload_meta',
+} as const;
+
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+// Simple in-memory cache with TTL (for immediate access)
 const cache: { data: PreloadedData; timestamp: number; profileId: string } | null = null;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 let preloadedDataCache: typeof cache = null;
+let isPreloadingGlobal = false;
 
 export const useDataPreloader = () => {
   const isPreloading = useRef(false);
+  const [preloadStatus, setPreloadStatus] = useState<'idle' | 'loading' | 'done'>('idle');
 
   const preloadClientData = async (profileId: string) => {
     const [workoutPlans, notifications, linkedInstructor, hydrationSettings] = await Promise.all([
@@ -133,19 +148,51 @@ export const useDataPreloader = () => {
   };
 
   const preloadData = useCallback(async (profileId: string, role: UserRole) => {
-    // Skip if already preloading
-    if (isPreloading.current) return;
+    // Skip if already preloading globally
+    if (isPreloading.current || isPreloadingGlobal) {
+      return preloadedDataCache?.data;
+    }
     
-    // Check cache
+    // Check memory cache first
     if (
       preloadedDataCache &&
       preloadedDataCache.profileId === profileId &&
       Date.now() - preloadedDataCache.timestamp < CACHE_TTL
     ) {
+      setPreloadStatus('done');
       return preloadedDataCache.data;
     }
 
+    // Try IndexedDB cache
+    try {
+      const cachedMeta = await getCacheItem<{ profileId: string; timestamp: number }>(CACHE_KEYS.PRELOAD_META);
+      if (cachedMeta && cachedMeta.profileId === profileId && Date.now() - cachedMeta.timestamp < CACHE_TTL) {
+        // Load from IndexedDB
+        const [workoutPlans, notifications, linkedInstructor, hydrationSettings] = await Promise.all([
+          getCacheItem(CACHE_KEYS.WORKOUT_PLANS),
+          getCacheItem(CACHE_KEYS.NOTIFICATIONS),
+          getCacheItem(CACHE_KEYS.LINKED_INSTRUCTOR),
+          getCacheItem(CACHE_KEYS.HYDRATION),
+        ]);
+        
+        const data: PreloadedData = {
+          workoutPlans: workoutPlans as any[] || [],
+          notifications: notifications as any[] || [],
+          linkedInstructor,
+          hydrationSettings,
+        };
+        
+        preloadedDataCache = { data, timestamp: cachedMeta.timestamp, profileId };
+        setPreloadStatus('done');
+        return data;
+      }
+    } catch {
+      // IndexedDB failed, continue with fresh fetch
+    }
+
     isPreloading.current = true;
+    isPreloadingGlobal = true;
+    setPreloadStatus('loading');
 
     try {
       let data: PreloadedData = {};
@@ -161,27 +208,43 @@ export const useDataPreloader = () => {
           data = await preloadAdminData(profileId);
           break;
         case 'master':
-          // Master doesn't need preloading
           break;
       }
 
-      // Store in cache
+      // Store in memory cache
       preloadedDataCache = {
         data,
         timestamp: Date.now(),
         profileId,
       };
 
+      // Store in IndexedDB for offline access
+      try {
+        await batchSetCacheItems([
+          { key: CACHE_KEYS.WORKOUT_PLANS, data: data.workoutPlans || [], ttlMs: CACHE_TTL },
+          { key: CACHE_KEYS.NOTIFICATIONS, data: data.notifications || [], ttlMs: CACHE_TTL },
+          { key: CACHE_KEYS.LINKED_INSTRUCTOR, data: data.linkedInstructor, ttlMs: CACHE_TTL },
+          { key: CACHE_KEYS.HYDRATION, data: data.hydrationSettings, ttlMs: CACHE_TTL },
+          { key: CACHE_KEYS.PRELOAD_META, data: { profileId, timestamp: Date.now() }, ttlMs: CACHE_TTL },
+        ]);
+      } catch {
+        // IndexedDB storage failed - not critical
+      }
+
+      setPreloadStatus('done');
       return data;
     } catch (error) {
       console.error('Error preloading data:', error);
+      setPreloadStatus('idle');
       return {};
     } finally {
       isPreloading.current = false;
+      isPreloadingGlobal = false;
     }
   }, []);
 
-  const getCachedData = useCallback((profileId: string): PreloadedData | null => {
+  const getCachedData = useCallback(async (profileId: string): Promise<PreloadedData | null> => {
+    // Check memory first
     if (
       preloadedDataCache &&
       preloadedDataCache.profileId === profileId &&
@@ -189,6 +252,24 @@ export const useDataPreloader = () => {
     ) {
       return preloadedDataCache.data;
     }
+    
+    // Try IndexedDB
+    try {
+      const cachedMeta = await getCacheItem<{ profileId: string; timestamp: number }>(CACHE_KEYS.PRELOAD_META);
+      if (cachedMeta && cachedMeta.profileId === profileId && Date.now() - cachedMeta.timestamp < CACHE_TTL) {
+        const [workoutPlans, notifications] = await Promise.all([
+          getCacheItem(CACHE_KEYS.WORKOUT_PLANS),
+          getCacheItem(CACHE_KEYS.NOTIFICATIONS),
+        ]);
+        return {
+          workoutPlans: workoutPlans as any[] || [],
+          notifications: notifications as any[] || [],
+        };
+      }
+    } catch {
+      // IndexedDB failed
+    }
+    
     return null;
   }, []);
 
@@ -196,7 +277,10 @@ export const useDataPreloader = () => {
     preloadedDataCache = null;
   }, []);
 
-  return { preloadData, getCachedData, clearCache };
+  // Export status for UI
+  const isLoading = preloadStatus === 'loading';
+
+  return { preloadData, getCachedData, clearCache, preloadStatus, isLoading };
 };
 
 // Export function to trigger preload from outside hook context
