@@ -140,7 +140,7 @@ export async function clearExpiredCache(): Promise<number> {
   }
 }
 
-export async function getCacheStats(): Promise<{ count: number; oldestTimestamp: number | null }> {
+export async function getCacheStats(): Promise<{ count: number; oldestTimestamp: number | null; totalSize: number }> {
   try {
     const db = await openDB();
     const tx = db.transaction('cache', 'readonly');
@@ -150,6 +150,7 @@ export async function getCacheStats(): Promise<{ count: number; oldestTimestamp:
       const countReq = store.count();
       let count = 0;
       let oldestTimestamp: number | null = null;
+      let totalSize = 0;
 
       countReq.onsuccess = () => {
         count = countReq.result;
@@ -163,16 +164,54 @@ export async function getCacheStats(): Promise<{ count: number; oldestTimestamp:
           if (oldestTimestamp === null || item.timestamp < oldestTimestamp) {
             oldestTimestamp = item.timestamp;
           }
+          totalSize += JSON.stringify(item).length * 2;
           cursor.continue();
         } else {
-          resolve({ count, oldestTimestamp });
+          resolve({ count, oldestTimestamp, totalSize });
         }
       };
       cursorReq.onerror = () => reject(cursorReq.error);
     });
   } catch (error) {
     console.warn('IndexedDB getCacheStats failed:', error);
-    return { count: 0, oldestTimestamp: null };
+    return { count: 0, oldestTimestamp: null, totalSize: 0 };
+  }
+}
+
+// Delete oldest cache entries to free up space
+export async function deleteOldestCacheEntries(targetBytesToFree: number): Promise<number> {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('cache', 'readwrite');
+    const store = tx.objectStore('cache');
+    const index = store.index('timestamp');
+    
+    let freedBytes = 0;
+    let deletedCount = 0;
+
+    return new Promise((resolve, reject) => {
+      const request = index.openCursor(); // Opens in ascending order (oldest first)
+      
+      request.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest).result;
+        if (cursor && freedBytes < targetBytesToFree) {
+          const item = cursor.value;
+          const itemSize = JSON.stringify(item).length * 2;
+          cursor.delete();
+          freedBytes += itemSize;
+          deletedCount++;
+          cursor.continue();
+        } else {
+          console.log(`[IndexedDB] Auto-cleanup: deleted ${deletedCount} entries, freed ~${Math.round(freedBytes / 1024)}KB`);
+          resolve(deletedCount);
+        }
+      };
+      
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.warn('IndexedDB deleteOldestCacheEntries failed:', error);
+    return 0;
   }
 }
 
