@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Dumbbell, Shield, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,6 +10,7 @@ import ThemedParticles from '@/components/ThemedParticles';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
+import { useDataPreloader } from '@/hooks/useDataPreloader';
 import bgHomeOptimized from '@/assets/bg-home-optimized.webp';
 
 // Animação de entrada para os cards
@@ -109,6 +110,19 @@ const PanelSelector: React.FC = () => {
   const { themeConfig } = useTheme();
   const [redirecting, setRedirecting] = useState(false);
   const { src, blur } = useProgressiveImage(bgHomeOptimized);
+  const { preloadData } = useDataPreloader();
+  const hasPreloadedRef = useRef(false);
+
+  // Pré-carrega dados do dashboard durante o loading
+  useEffect(() => {
+    if (profile?.id && role && !hasPreloadedRef.current && navigator.onLine) {
+      hasPreloadedRef.current = true;
+      // Inicia preload imediatamente em background
+      preloadData(profile.id, role).catch(() => {
+        // Ignora erros de preload - não é crítico
+      });
+    }
+  }, [profile?.id, role, preloadData]);
 
   // Calcula progresso direto sem animação lenta
   const progress = useMemo(() => {
