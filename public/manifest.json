@@ -1,11 +1,11 @@
 {
   "name": "FrancGymPro - Sistema de Academia",
-  "short_name": "FrancGymPro",
+  "short_name": "GymPro",
   "description": "Sistema completo de gerenciamento de academia profissional",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",
-  "theme_color": "#dc2626",
+  "theme_color": "#ea580c",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "pt-BR",
@@ -28,6 +28,11 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
     }
   ],
   "screenshots": [
@@ -48,21 +53,26 @@
   ],
   "shortcuts": [
     {
-      "name": "Acessar como Cliente",
-      "url": "/client",
+      "name": "Cliente",
+      "short_name": "Cliente",
+      "url": "/?panel=client",
       "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Acessar como Instrutor",
-      "url": "/instructor",
+      "name": "Instrutor",
+      "short_name": "Instrutor",
+      "url": "/?panel=instructor",
       "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Acessar como Gerente",
-      "url": "/admin",
+      "name": "Gerente",
+      "short_name": "Gerente",
+      "url": "/?panel=admin",
       "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
     }
   ],
-  "related_applications": [],
-  "prefer_related_applications": false
+  "id": "francgympro-app",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "handle_links": "preferred"
 }
