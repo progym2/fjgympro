@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { LucideIcon } from 'lucide-react';
 import { useTheme, SportTheme } from '@/contexts/ThemeContext';
 import { useAudio } from '@/contexts/AudioContext';
@@ -70,7 +70,7 @@ const getColorConfig = (theme: SportTheme, color: 'primary' | 'secondary' | 'acc
   return configs[theme][color];
 };
 
-const ModernGymButton: React.FC<ModernGymButtonProps> = ({
+const ModernGymButton: React.FC<ModernGymButtonProps> = memo(({
   onClick,
   icon: Icon,
   label,
@@ -79,7 +79,7 @@ const ModernGymButton: React.FC<ModernGymButtonProps> = ({
 }) => {
   const { currentTheme, hoverEffectsEnabled } = useTheme();
   const { playHoverSound, playClickSound } = useAudio();
-  const config = getColorConfig(currentTheme, color);
+  const config = useMemo(() => getColorConfig(currentTheme, color), [currentTheme, color]);
 
   const handleClick = () => {
     if (!disabled) {
@@ -197,6 +197,8 @@ const ModernGymButton: React.FC<ModernGymButtonProps> = ({
       )} />
     </button>
   );
-};
+});
+
+ModernGymButton.displayName = 'ModernGymButton';
 
 export default ModernGymButton;

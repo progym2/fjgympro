@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { useTheme, SportTheme } from '@/contexts/ThemeContext';
 
 // Minimal CSS-only particles - very lightweight
@@ -18,13 +18,16 @@ const getThemeColor = (theme: SportTheme): string => {
   return colors[theme];
 };
 
-const SimpleParticles: React.FC = () => {
+// Reduced particle count for better performance
+const PARTICLE_COUNT = 8;
+
+const SimpleParticles: React.FC = memo(() => {
   const { currentTheme } = useTheme();
   const color = getThemeColor(currentTheme);
 
   // Generate static positions - no animation overhead
   const particles = useMemo(() => {
-    return Array.from({ length: 12 }, (_, i) => ({
+    return Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
       id: i,
       left: `${10 + (i % 4) * 25 + Math.random() * 10}%`,
       top: `${15 + Math.floor(i / 4) * 30 + Math.random() * 10}%`,
@@ -55,12 +58,14 @@ const SimpleParticles: React.FC = () => {
             width: p.size,
             height: p.size,
             animationDelay: p.animationDelay,
-            animationDuration: '3s',
+            animationDuration: '4s', // Slower animation for less CPU
           }}
         />
       ))}
     </div>
   );
-};
+});
+
+SimpleParticles.displayName = 'SimpleParticles';
 
 export default SimpleParticles;

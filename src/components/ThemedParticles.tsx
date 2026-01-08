@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, memo } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface Particle {
@@ -44,13 +44,14 @@ interface ThemedParticlesProps {
   className?: string;
 }
 
-const ThemedParticles: React.FC<ThemedParticlesProps> = ({ 
-  particleCount = 30,
+const ThemedParticles: React.FC<ThemedParticlesProps> = memo(({ 
+  particleCount = 20, // Reduced default count for performance
   className = ''
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const particlesRef = useRef<Particle[]>([]);
+  const lastFrameTimeRef = useRef<number>(0);
   const { themeConfig } = useTheme();
   
   const colors = useMemo(() => getThemeParticleColors(themeConfig.id), [themeConfig.id]);
@@ -59,28 +60,41 @@ const ThemedParticles: React.FC<ThemedParticlesProps> = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
+    // Use device pixel ratio for sharp rendering but cap at 2 for performance
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
     const resizeCanvas = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
     };
 
     resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    
+    // Debounced resize handler
+    let resizeTimeout: number;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = window.setTimeout(resizeCanvas, 100);
+    };
+    window.addEventListener('resize', handleResize);
 
     // Inicializar partículas
     const initParticles = () => {
       particlesRef.current = [];
+      const rect = canvas.getBoundingClientRect();
       for (let i = 0; i < particleCount; i++) {
         particlesRef.current.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.5,
-          vy: (Math.random() - 0.5) * 0.5,
-          size: Math.random() * 3 + 1,
-          opacity: Math.random() * 0.5 + 0.2,
+          x: Math.random() * rect.width,
+          y: Math.random() * rect.height,
+          vx: (Math.random() - 0.5) * 0.3, // Slower movement
+          vy: (Math.random() - 0.5) * 0.3,
+          size: Math.random() * 2 + 1,
+          opacity: Math.random() * 0.4 + 0.15,
           color: colors[Math.floor(Math.random() * colors.length)],
         });
       }
@@ -93,8 +107,24 @@ const ThemedParticles: React.FC<ThemedParticlesProps> = ({
       p.color = colors[Math.floor(Math.random() * colors.length)];
     });
 
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Target 30fps for performance (33ms per frame)
+    const targetFPS = 30;
+    const frameInterval = 1000 / targetFPS;
+
+    const animate = (timestamp: number) => {
+      // Throttle to target FPS
+      const elapsed = timestamp - lastFrameTimeRef.current;
+      if (elapsed < frameInterval) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+      lastFrameTimeRef.current = timestamp - (elapsed % frameInterval);
+
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      // Disable shadow for performance - use simple circles
+      ctx.shadowBlur = 0;
 
       particlesRef.current.forEach((particle) => {
         // Atualizar posição
@@ -102,38 +132,41 @@ const ThemedParticles: React.FC<ThemedParticlesProps> = ({
         particle.y += particle.vy;
 
         // Wrap around edges
-        if (particle.x < 0) particle.x = canvas.width;
-        if (particle.x > canvas.width) particle.x = 0;
-        if (particle.y < 0) particle.y = canvas.height;
-        if (particle.y > canvas.height) particle.y = 0;
+        if (particle.x < 0) particle.x = rect.width;
+        if (particle.x > rect.width) particle.x = 0;
+        if (particle.y < 0) particle.y = rect.height;
+        if (particle.y > rect.height) particle.y = 0;
 
-        // Desenhar partícula com glow
+        // Desenhar partícula simples (sem glow para performance)
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
         ctx.fillStyle = particle.color;
         ctx.globalAlpha = particle.opacity;
-        ctx.shadowColor = particle.color;
-        ctx.shadowBlur = 10;
         ctx.fill();
-        ctx.globalAlpha = 1;
-        ctx.shadowBlur = 0;
       });
 
-      // Desenhar conexões entre partículas próximas
-      ctx.globalAlpha = 0.1;
+      // Desenhar conexões - otimizado com grid spatial hash
+      ctx.globalAlpha = 0.08;
+      ctx.lineWidth = 0.5;
+      const connectionDistance = 80; // Reduced distance
+      
       for (let i = 0; i < particlesRef.current.length; i++) {
+        const p1 = particlesRef.current[i];
         for (let j = i + 1; j < particlesRef.current.length; j++) {
-          const dx = particlesRef.current[i].x - particlesRef.current[j].x;
-          const dy = particlesRef.current[i].y - particlesRef.current[j].y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < 100) {
-            ctx.beginPath();
-            ctx.strokeStyle = particlesRef.current[i].color;
-            ctx.lineWidth = 0.5;
-            ctx.moveTo(particlesRef.current[i].x, particlesRef.current[i].y);
-            ctx.lineTo(particlesRef.current[j].x, particlesRef.current[j].y);
-            ctx.stroke();
+          const p2 = particlesRef.current[j];
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          
+          // Quick distance check before sqrt
+          if (Math.abs(dx) < connectionDistance && Math.abs(dy) < connectionDistance) {
+            const distSq = dx * dx + dy * dy;
+            if (distSq < connectionDistance * connectionDistance) {
+              ctx.beginPath();
+              ctx.strokeStyle = p1.color;
+              ctx.moveTo(p1.x, p1.y);
+              ctx.lineTo(p2.x, p2.y);
+              ctx.stroke();
+            }
           }
         }
       }
@@ -142,10 +175,11 @@ const ThemedParticles: React.FC<ThemedParticlesProps> = ({
       animationRef.current = requestAnimationFrame(animate);
     };
 
-    animate();
+    animationRef.current = requestAnimationFrame(animate);
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimeout);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
@@ -159,6 +193,8 @@ const ThemedParticles: React.FC<ThemedParticlesProps> = ({
       style={{ width: '100%', height: '100%' }}
     />
   );
-};
+});
+
+ThemedParticles.displayName = 'ThemedParticles';
 
 export default ThemedParticles;
