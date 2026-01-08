@@ -202,35 +202,35 @@ const Profile: React.FC = () => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="md:col-span-2 space-y-4">
           {/* Login Credentials Card */}
-          <div className="bg-card/80 backdrop-blur-md rounded-xl p-6 border border-primary/30 space-y-4">
+          <div className="bg-card/80 backdrop-blur-md rounded-xl p-4 sm:p-6 border border-primary/30 space-y-3 sm:space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <Key className="w-5 h-5 text-primary" />
-              <h3 className="font-bebas text-xl tracking-wider text-primary">DADOS DE ACESSO</h3>
+              <h3 className="font-bebas text-lg sm:text-xl tracking-wider text-primary">DADOS DE ACESSO</h3>
             </div>
             
             <Alert className="bg-muted/50 border-border">
               <Info className="h-4 w-4" />
-              <AlertDescription>
-                O nome de usuário é definido no cadastro e não pode ser alterado. Use-o junto com sua chave de licença para fazer login.
+              <AlertDescription className="text-xs sm:text-sm">
+                O nome de usuário é fixo e não pode ser alterado. Você pode editar todos os outros dados do seu perfil.
               </AlertDescription>
             </Alert>
 
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
-                <Label>Nome de Usuário (Login)</Label>
-                <div className="p-3 bg-muted/50 border border-border rounded-lg font-mono text-sm uppercase">
+                <Label className="text-xs sm:text-sm">Nome de Usuário (Login)</Label>
+                <div className="p-2.5 sm:p-3 bg-muted/50 border border-border rounded-lg font-mono text-xs sm:text-sm uppercase">
                   {formData.username || '—'}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">
                   Este é seu identificador único de acesso
                 </p>
               </div>
               <div className="space-y-2">
-                <Label>Sua Senha (Chave de Licença)</Label>
-                <div className="p-3 bg-muted/50 border border-border rounded-lg font-mono text-sm">
+                <Label className="text-xs sm:text-sm">Sua Senha (Chave de Licença)</Label>
+                <div className="p-2.5 sm:p-3 bg-muted/50 border border-border rounded-lg font-mono text-xs sm:text-sm">
                   {licenseKey || '••••-••••-••••'}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">
                   Use esta chave como senha ao fazer login
                 </p>
               </div>
@@ -238,11 +238,11 @@ const Profile: React.FC = () => {
 
             {studentId && (
               <div className="space-y-2">
-                <Label>ID do Aluno (Matrícula)</Label>
-                <div className="p-3 bg-primary/10 border border-primary/30 rounded-lg font-mono text-lg text-center text-primary font-bold">
+                <Label className="text-xs sm:text-sm">ID do Aluno (Matrícula)</Label>
+                <div className="p-2.5 sm:p-3 bg-primary/10 border border-primary/30 rounded-lg font-mono text-base sm:text-lg text-center text-primary font-bold">
                   {studentId}
                 </div>
-                <p className="text-xs text-muted-foreground text-center">
+                <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
                   Use este código para verificar sua matrícula na consulta pública
                 </p>
               </div>
@@ -250,33 +250,38 @@ const Profile: React.FC = () => {
           </div>
 
           {/* Personal Info Card */}
-          <div className="bg-card/80 backdrop-blur-md rounded-xl p-6 border border-border/50 space-y-4">
+          <div className="bg-card/80 backdrop-blur-md rounded-xl p-4 sm:p-6 border border-border/50 space-y-3 sm:space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <User className="w-5 h-5 text-primary" />
-              <h3 className="font-bebas text-xl tracking-wider">DADOS PESSOAIS</h3>
+              <h3 className="font-bebas text-lg sm:text-xl tracking-wider">DADOS PESSOAIS</h3>
+              <Badge variant="outline" className="ml-auto text-[10px] bg-green-500/10 text-green-500 border-green-500/30">
+                Editável
+              </Badge>
             </div>
 
             {/* Profile Photo */}
-            <div className="flex justify-center py-4">
+            <div className="flex justify-center py-3 sm:py-4">
               <ProfilePhotoUploader profileId={profile?.profile_id} size="lg" />
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Nome Completo</Label>
+            <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label className="text-xs sm:text-sm">Nome Completo</Label>
                 <Input
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                   placeholder="Seu nome completo"
+                  className="text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Telefone</Label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label className="text-xs sm:text-sm">Telefone</Label>
                 <Input
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: filterPhoneOnly(e.target.value) })}
                   placeholder="(00) 00000-0000"
                   inputMode="tel"
+                  className="text-sm"
                 />
               </div>
             </div>
