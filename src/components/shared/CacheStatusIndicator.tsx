@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Database, Cloud, CloudOff, Trash2, RefreshCw, Check, AlertCircle } from 'lucide-react';
+import { Database, Cloud, CloudOff, Trash2, RefreshCw, Check, AlertCircle, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { getCacheSize, clearAllCaches } from '@/lib/indexedDB';
 import { useEnhancedOfflineSync } from '@/hooks/useEnhancedOfflineSync';
+import { getCacheLimitMb, setCacheLimitMb, getCacheLimitBytes } from '@/hooks/useCacheSizeMonitor';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
 interface CacheStatusIndicatorProps {
@@ -12,6 +15,13 @@ interface CacheStatusIndicatorProps {
   showActions?: boolean;
   className?: string;
 }
+
+const CACHE_LIMIT_OPTIONS = [
+  { value: '25', label: '25 MB' },
+  { value: '50', label: '50 MB' },
+  { value: '100', label: '100 MB' },
+  { value: '200', label: '200 MB' },
+];
 
 const CacheStatusIndicator: React.FC<CacheStatusIndicatorProps> = ({
   compact = false,
@@ -22,6 +32,8 @@ const CacheStatusIndicator: React.FC<CacheStatusIndicatorProps> = ({
   const [cacheSize, setCacheSize] = useState<number>(0);
   const [isClearing, setIsClearing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [cacheLimit, setCacheLimit] = useState<number>(getCacheLimitMb());
+  const [showSettings, setShowSettings] = useState(false);
 
   const loadCacheInfo = useCallback(async () => {
     try {
@@ -63,10 +75,37 @@ const CacheStatusIndicator: React.FC<CacheStatusIndicatorProps> = ({
     toast.success('Sincronização iniciada');
   };
 
+  const handleCacheLimitChange = (value: string) => {
+    const newLimit = parseInt(value);
+    setCacheLimit(newLimit);
+    setCacheLimitMb(newLimit);
+    toast.success(`Limite de cache alterado para ${value} MB`);
+  };
+
   const formatCacheSize = (items: number) => {
     if (items === 0) return '0 itens';
     if (items === 1) return '1 item';
     return `${items} itens`;
+  };
+
+  const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+  };
+
+  const getCacheSizePercentage = (): number => {
+    const limitBytes = getCacheLimitBytes();
+    return Math.min((cacheSize / limitBytes) * 100, 100);
+  };
+
+  const getCacheSizeColor = (): string => {
+    const percentage = getCacheSizePercentage();
+    if (percentage >= 90) return 'text-red-400';
+    if (percentage >= 70) return 'text-orange-400';
+    return 'text-blue-400';
   };
 
   if (compact) {
@@ -104,21 +143,75 @@ const CacheStatusIndicator: React.FC<CacheStatusIndicatorProps> = ({
           <Database size={16} className="text-primary" />
           Cache & Sincronização
         </h3>
-        <div className={cn(
-          'flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium',
-          isOnline ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
-        )}>
-          {isOnline ? <Cloud size={12} /> : <CloudOff size={12} />}
-          <span>{isOnline ? 'Online' : 'Offline'}</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="p-1 rounded hover:bg-muted transition-colors"
+            title="Configurações"
+          >
+            <Settings size={14} className="text-muted-foreground" />
+          </button>
+          <div className={cn(
+            'flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium',
+            isOnline ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+          )}>
+            {isOnline ? <Cloud size={12} /> : <CloudOff size={12} />}
+            <span>{isOnline ? 'Online' : 'Offline'}</span>
+          </div>
         </div>
       </div>
 
       <div className="space-y-3">
-        {/* Cache size */}
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Dados em cache:</span>
-          <span className="font-medium text-blue-400">{formatCacheSize(cacheSize)}</span>
+        {/* Cache size with progress bar */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Uso do cache:</span>
+            <span className={cn('font-medium', getCacheSizeColor())}>
+              {formatBytes(cacheSize)} / {cacheLimit} MB
+            </span>
+          </div>
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <motion.div
+              className={cn(
+                'h-full rounded-full',
+                getCacheSizePercentage() >= 90 ? 'bg-red-500' :
+                getCacheSizePercentage() >= 70 ? 'bg-orange-500' : 'bg-blue-500'
+              )}
+              initial={{ width: '0%' }}
+              animate={{ width: `${getCacheSizePercentage()}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
         </div>
+
+        {/* Cache limit settings */}
+        <AnimatePresence>
+          {showSettings && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="space-y-2 pt-2 border-t border-border"
+            >
+              <Label className="text-xs text-muted-foreground">Limite máximo de cache</Label>
+              <Select value={cacheLimit.toString()} onValueChange={handleCacheLimitChange}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CACHE_LIMIT_OPTIONS.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground">
+                Você será notificado quando o cache ultrapassar este limite.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Pending operations */}
         <div className="flex items-center justify-between text-sm">
