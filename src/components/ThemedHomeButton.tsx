@@ -260,7 +260,7 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
       <div className={cn(
         'relative z-10',
         isCircular ? 'mt-0' : 'mt-2',
-        'w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18',
+        'w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20',
         'flex items-center justify-center',
         'border',
         style.iconContainerClass,
