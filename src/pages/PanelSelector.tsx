@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Dumbbell, Shield, Loader2, ArrowLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -8,6 +9,39 @@ import AnimatedLogo from '@/components/AnimatedLogo';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import bgHome from '@/assets/bg-home.png';
+
+// Animação de entrada para os cards
+const cardVariants = {
+  hidden: { opacity: 0, y: 30, scale: 0.9 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      delay: i * 0.1,
+      duration: 0.4,
+      ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number],
+    },
+  }),
+};
+
+// Glow colors por tema
+const getGlowColor = (themeId: string, panelId: string): string => {
+  const glowMap: Record<string, Record<string, string>> = {
+    fire: { client: 'rgba(249, 115, 22, 0.5)', instructor: 'rgba(234, 179, 8, 0.5)', admin: 'rgba(220, 38, 38, 0.5)' },
+    ocean: { client: 'rgba(6, 182, 212, 0.5)', instructor: 'rgba(20, 184, 166, 0.5)', admin: 'rgba(59, 130, 246, 0.5)' },
+    forest: { client: 'rgba(34, 197, 94, 0.5)', instructor: 'rgba(132, 204, 22, 0.5)', admin: 'rgba(16, 185, 129, 0.5)' },
+    lightning: { client: 'rgba(250, 204, 21, 0.5)', instructor: 'rgba(245, 158, 11, 0.5)', admin: 'rgba(249, 115, 22, 0.5)' },
+    galaxy: { client: 'rgba(168, 85, 247, 0.5)', instructor: 'rgba(217, 70, 239, 0.5)', admin: 'rgba(139, 92, 246, 0.5)' },
+    iron: { client: 'rgba(148, 163, 184, 0.4)', instructor: 'rgba(161, 161, 170, 0.4)', admin: 'rgba(107, 114, 128, 0.4)' },
+    blood: { client: 'rgba(220, 38, 38, 0.5)', instructor: 'rgba(225, 29, 72, 0.5)', admin: 'rgba(185, 28, 28, 0.5)' },
+    neon: { client: 'rgba(236, 72, 153, 0.6)', instructor: 'rgba(34, 211, 238, 0.6)', admin: 'rgba(192, 38, 211, 0.6)' },
+    gold: { client: 'rgba(234, 179, 8, 0.5)', instructor: 'rgba(245, 158, 11, 0.5)', admin: 'rgba(249, 115, 22, 0.5)' },
+    amoled: { client: 'rgba(var(--primary), 0.4)', instructor: 'rgba(34, 197, 94, 0.4)', admin: 'rgba(59, 130, 246, 0.4)' },
+    default: { client: 'rgba(var(--primary), 0.4)', instructor: 'rgba(34, 197, 94, 0.4)', admin: 'rgba(59, 130, 246, 0.4)' },
+  };
+  return glowMap[themeId]?.[panelId] || glowMap.default[panelId];
+};
 
 interface PanelOption {
   id: 'client' | 'instructor' | 'admin';
@@ -222,32 +256,46 @@ const PanelSelector: React.FC = () => {
           Selecione o painel de acesso
         </p>
 
-        {/* Panel buttons - Cards maiores e temáticos */}
+        {/* Panel buttons - Cards maiores e temáticos com animação */}
         <div className="grid grid-cols-3 gap-3 w-full">
-          {panels.map((panel) => {
+          {panels.map((panel, index) => {
             const Icon = panel.icon;
             const colors = getPanelColors(panel.id);
+            const glowColor = getGlowColor(themeConfig.id, panel.id);
             return (
-              <button
+              <motion.button
                 key={panel.id}
+                custom={index}
+                initial="hidden"
+                animate="visible"
+                variants={cardVariants}
+                whileHover={{ 
+                  scale: 1.05,
+                  boxShadow: `0 0 25px ${glowColor}, 0 0 50px ${glowColor}`,
+                }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => handlePanelSelect(panel)}
                 className={cn(
                   'relative p-4 sm:p-5 bg-card/90 backdrop-blur-sm',
                   'flex flex-col items-center gap-3',
-                  'transition-all duration-200 shadow-lg',
+                  'transition-colors duration-200 shadow-lg',
                   getCardShape(themeConfig.cardStyle),
                   getBorderStyle(themeConfig.cardStyle),
-                  'hover:scale-[1.02] hover:shadow-xl',
-                  'active:scale-[0.98] active:shadow-md',
                   `bg-gradient-to-br ${colors}`
                 )}
+                style={{
+                  boxShadow: `0 4px 20px ${glowColor.replace('0.5', '0.2').replace('0.4', '0.15').replace('0.6', '0.25')}`,
+                }}
               >
                 {/* Icon container com fundo temático */}
-                <div className={cn(
-                  'relative p-3 sm:p-4 rounded-xl transition-colors',
-                  themeColors.iconBg,
-                  'border border-primary/10'
-                )}>
+                <motion.div 
+                  className={cn(
+                    'relative p-3 sm:p-4 rounded-xl transition-colors',
+                    themeColors.iconBg,
+                    'border border-primary/10'
+                  )}
+                  whileHover={{ rotate: [0, -5, 5, 0], transition: { duration: 0.3 } }}
+                >
                   <Icon 
                     className={cn(
                       'w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12',
@@ -255,7 +303,7 @@ const PanelSelector: React.FC = () => {
                     )} 
                     strokeWidth={2} 
                   />
-                </div>
+                </motion.div>
 
                 {/* Label */}
                 <span className={cn(
@@ -265,7 +313,7 @@ const PanelSelector: React.FC = () => {
                 )}>
                   {panel.label}
                 </span>
-              </button>
+              </motion.button>
             );
           })}
         </div>
