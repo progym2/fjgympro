@@ -844,20 +844,20 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
               <SportThemeSelector compact />
             </motion.div>
 
-            {/* Back Button - Discrete ESC option with slide-in animation */}
+            {/* Back Button - PROMINENT with slide-in animation */}
             <motion.button
               onClick={handleClose}
               disabled={isLoading}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4, duration: 0.3 }}
-              whileHover={{ scale: 1.05 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
+              whileHover={{ scale: 1.05, backgroundColor: 'hsl(var(--primary)/0.2)' }}
               whileTap={{ scale: 0.95 }}
-              className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background/60 hover:bg-background/80 border border-border/50 text-muted-foreground hover:text-foreground transition-all text-xs font-medium backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2 rounded-xl bg-primary/10 hover:bg-primary/20 border-2 border-primary/40 hover:border-primary/60 text-primary font-semibold transition-all text-sm backdrop-blur-md shadow-lg shadow-primary/10 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ArrowLeft size={14} />
-              <span>Voltar</span>
-              <kbd className="ml-1 px-1.5 py-0.5 rounded bg-muted/50 text-[10px] font-mono">ESC</kbd>
+              <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
+              <span className="sm:inline">Voltar</span>
+              <kbd className="hidden sm:inline ml-1 px-1.5 py-0.5 rounded bg-primary/20 text-[10px] font-mono text-primary/80">ESC</kbd>
             </motion.button>
 
             {/* Header with professional design and staggered reveal */}
