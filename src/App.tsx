@@ -11,6 +11,7 @@ import { useAutoNightMode } from "@/hooks/useAutoNightMode";
 import { clearExpiredCache } from "@/hooks/useOfflineStorage";
 import { initializeCache } from "@/hooks/useIndexedDBCache";
 import { useOfflineDataPreloader } from "@/hooks/useOfflineDataPreloader";
+import { useCacheSizeMonitor } from "@/hooks/useCacheSizeMonitor";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import InstallBanner from "@/components/InstallBanner";
 import VideoSplashScreen from "@/components/VideoSplashScreen";
@@ -56,9 +57,10 @@ const NightModeHandler = () => {
   return null;
 };
 
-// Component to preload data for offline use
+// Component to preload data for offline use and monitor cache size
 const OfflineDataLoader = () => {
   const { preloadAllData } = useOfflineDataPreloader();
+  useCacheSizeMonitor(); // Monitor cache size and show notification if too large
   
   useEffect(() => {
     // Preload data after initial render
