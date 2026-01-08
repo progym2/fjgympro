@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import AnimatedLogo from '@/components/AnimatedLogo';
+// Removed AnimatedLogo for performance
 import PanelSwitcher from '@/components/PanelSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
 import InstructorSelector from '@/components/instructor/InstructorSelector';
@@ -240,7 +240,7 @@ const InstructorDashboard: React.FC = () => {
           <Suspense fallback={<ComponentLoader />}>
             <Routes>
               <Route path="/" element={
-                <div className="space-y-4 animate-fade-in">
+                <div className="space-y-4">
                   {isMaster && <InstructorSelector />}
                   
                   <Suspense fallback={null}>
@@ -248,19 +248,14 @@ const InstructorDashboard: React.FC = () => {
                   </Suspense>
                   
                   <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
-                    {menuItems.map((item, index) => (
-                      <div 
+                    {menuItems.map((item) => (
+                      <ThemedMenuButton
                         key={item.path}
-                        className="transform transition-all duration-150 hover:scale-[1.02] active:scale-[0.97]"
-                        style={{ animationDelay: `${index * 25}ms` }}
-                      >
-                        <ThemedMenuButton
-                          icon={item.icon}
-                          label={item.label}
-                          color={item.color}
-                          onClick={() => { playClickSound(); navigate(item.path); }}
-                        />
-                      </div>
+                        icon={item.icon}
+                        label={item.label}
+                        color={item.color}
+                        onClick={() => { playClickSound(); navigate(item.path); }}
+                      />
                     ))}
                   </div>
                 </div>

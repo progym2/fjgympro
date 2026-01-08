@@ -1,5 +1,4 @@
 import React, { memo, useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
@@ -18,9 +17,9 @@ const getCardShape = (style: string): string => {
     case 'sharp':
       return 'rounded-sm';
     case 'hexagonal':
-      return 'rounded-lg [clip-path:polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)]';
+      return 'rounded-lg';
     case 'beveled':
-      return 'rounded-xl [clip-path:polygon(0_12px,12px_0,calc(100%-12px)_0,100%_12px,100%_calc(100%-12px),calc(100%-12px)_100%,12px_100%,0_calc(100%-12px))]';
+      return 'rounded-xl';
     case 'organic':
       return 'rounded-[1.5rem]';
     default:
@@ -35,7 +34,7 @@ const getBorderStyle = (style: string): string => {
     case 'beveled':
       return 'border-2 border-primary/30';
     case 'hexagonal':
-      return 'border-0';
+      return 'border border-primary/20';
     default:
       return 'border border-border/50';
   }
@@ -57,121 +56,62 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
       ? 'font-bold' 
       : 'font-medium';
 
-  // Modern gym-style icon backgrounds with gradient
+  // Modern gym-style icon backgrounds
   const iconBackground = useMemo(() => {
     switch (themeConfig.id) {
       case 'fire':
-        return 'bg-gradient-to-br from-orange-500/30 to-red-600/20 border border-orange-500/30';
+        return 'bg-gradient-to-br from-orange-500/20 to-red-600/10 border border-orange-500/20';
       case 'ocean':
-        return 'bg-gradient-to-br from-cyan-500/30 to-blue-600/20 border border-cyan-500/30';
+        return 'bg-gradient-to-br from-cyan-500/20 to-blue-600/10 border border-cyan-500/20';
       case 'forest':
-        return 'bg-gradient-to-br from-green-500/30 to-emerald-600/20 border border-green-500/30';
+        return 'bg-gradient-to-br from-green-500/20 to-emerald-600/10 border border-green-500/20';
       case 'lightning':
-        return 'bg-gradient-to-br from-yellow-400/30 to-amber-500/20 border border-yellow-400/30';
+        return 'bg-gradient-to-br from-yellow-400/20 to-amber-500/10 border border-yellow-400/20';
       case 'galaxy':
-        return 'bg-gradient-to-br from-purple-500/30 to-violet-600/20 border border-purple-500/30';
+        return 'bg-gradient-to-br from-purple-500/20 to-violet-600/10 border border-purple-500/20';
       case 'iron':
-        return 'bg-gradient-to-br from-slate-400/30 to-zinc-600/20 border border-slate-400/30';
+        return 'bg-gradient-to-br from-slate-400/20 to-zinc-600/10 border border-slate-400/20';
       case 'blood':
-        return 'bg-gradient-to-br from-red-600/30 to-rose-800/20 border border-red-600/30';
+        return 'bg-gradient-to-br from-red-600/20 to-rose-800/10 border border-red-600/20';
       case 'neon':
-        return 'bg-gradient-to-br from-pink-500/30 to-fuchsia-600/20 border border-pink-500/30';
+        return 'bg-gradient-to-br from-pink-500/20 to-fuchsia-600/10 border border-pink-500/20';
       case 'gold':
-        return 'bg-gradient-to-br from-yellow-500/30 to-orange-500/20 border border-yellow-500/30';
+        return 'bg-gradient-to-br from-yellow-500/20 to-orange-500/10 border border-yellow-500/20';
       default:
-        return 'bg-primary/15 border border-primary/30';
+        return 'bg-primary/10 border border-primary/20';
     }
   }, [themeConfig.id]);
 
-  const iconStyleClasses = themeConfig.icons.style === 'glow' 
-    ? 'drop-shadow-[0_0_8px_currentColor]' 
-    : themeConfig.icons.style === 'filled'
-      ? 'fill-current opacity-80'
-      : '';
-
   return (
-    <motion.button
+    <button
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'relative p-3 sm:p-4 md:p-5 bg-card/90 backdrop-blur-md',
+        'relative p-3 sm:p-4 md:p-5 bg-card/90 backdrop-blur-sm',
         'flex flex-col items-center gap-2 sm:gap-3',
-        'transition-all duration-200 shadow-lg group',
+        'transition-all duration-150 shadow-md',
         getCardShape(themeConfig.cardStyle),
         getBorderStyle(themeConfig.cardStyle),
-        'hover:border-primary/50 hover:shadow-primary/30 hover:shadow-xl',
-        disabled && 'opacity-50 pointer-events-none',
-        // Modern gym-style accent line at top
-        'before:absolute before:top-0 before:left-1/4 before:right-1/4 before:h-[2px]',
-        'before:bg-gradient-to-r before:from-transparent before:via-primary/50 before:to-transparent',
-        'before:opacity-0 before:transition-opacity before:duration-300',
-        'hover:before:opacity-100'
+        'hover:border-primary/50 hover:shadow-lg hover:bg-card',
+        'active:scale-[0.97] active:shadow-sm',
+        disabled && 'opacity-50 pointer-events-none'
       )}
-      whileHover={{ 
-        scale: 1.03,
-        y: -3,
-      }}
-      whileTap={{ scale: 0.97 }}
-      transition={{ 
-        type: 'spring', 
-        stiffness: 400, 
-        damping: 20 
-      }}
     >
-      {/* Background shimmer effect on hover */}
-      <div className={cn(
-        'absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500',
-        getCardShape(themeConfig.cardStyle),
-        'overflow-hidden'
-      )}>
-        <motion.div
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(135deg, transparent 40%, hsl(${themeConfig.primary} / 0.1) 50%, transparent 60%)`
-          }}
-          animate={{
-            x: ['-100%', '200%'],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            repeatDelay: 1.5,
-          }}
-        />
-      </div>
-
       {/* Icon container with themed background */}
       <div className={cn(
-        'relative p-2.5 sm:p-3 rounded-lg sm:rounded-xl',
+        'relative p-2.5 sm:p-3 rounded-lg sm:rounded-xl transition-colors',
         iconBackground
       )}>
-        <motion.div
-          animate={themeConfig.icons.style === 'glow' ? {
-            filter: [
-              'drop-shadow(0 0 4px currentColor)',
-              'drop-shadow(0 0 12px currentColor)',
-              'drop-shadow(0 0 4px currentColor)',
-            ]
-          } : {}}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <Icon className={cn(
-            color,
-            'w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10',
-            iconStyleClasses
-          )} strokeWidth={2.5} />
-        </motion.div>
+        <Icon className={cn(
+          color,
+          'w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10'
+        )} strokeWidth={2.5} />
 
         {/* Badge */}
         {badge && (
-          <motion.span 
-            className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 500 }}
-          >
+          <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
             {badge}
-          </motion.span>
+          </span>
         )}
       </div>
 
@@ -182,16 +122,7 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
       )}>
         {label}
       </span>
-
-      {/* Subtle glow effect on hover */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100"
-        style={{
-          background: `radial-gradient(circle at 50% 30%, hsl(${themeConfig.primary} / 0.15), transparent 60%)`
-        }}
-        initial={false}
-      />
-    </motion.button>
+    </button>
   );
 });
 
