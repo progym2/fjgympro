@@ -410,25 +410,40 @@ const RegisterClient: React.FC = () => {
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">Telefone</label>
             <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
               <Input
                 placeholder="(00) 00000-0000"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: filterPhoneOnly(e.target.value) })}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+                  let formatted = digits;
+                  if (digits.length > 2) formatted = `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+                  if (digits.length > 7) formatted = `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+                  setFormData({ ...formData, phone: formatted });
+                }}
                 className="pl-10 bg-background/50"
                 inputMode="tel"
+                maxLength={15}
               />
             </div>
           </div>
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">Data de Nascimento</label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
               <Input
-                type="date"
+                placeholder="DD/MM/AAAA"
                 value={formData.birth_date}
-                onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 8);
+                  let formatted = digits;
+                  if (digits.length > 2) formatted = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+                  if (digits.length > 4) formatted = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+                  setFormData({ ...formData, birth_date: formatted });
+                }}
                 className="pl-10 bg-background/50"
+                inputMode="numeric"
+                maxLength={10}
               />
             </div>
           </div>
