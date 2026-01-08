@@ -473,13 +473,34 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
           repeat: Infinity,
           ease: 'easeInOut',
         }}
+        onMouseMove={(e) => {
+          if (!hoverEffectsEnabled) return;
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width) * 100;
+          const y = ((e.clientY - rect.top) / rect.height) * 100;
+          e.currentTarget.style.setProperty('--mouse-x', `${x}%`);
+          e.currentTarget.style.setProperty('--mouse-y', `${y}%`);
+        }}
       >
+        {/* Light trail effect */}
+        {isHovered && hoverEffectsEnabled && (
+          <motion.div
+            className="absolute inset-0 pointer-events-none z-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              background: `radial-gradient(circle 60px at var(--mouse-x, 50%) var(--mouse-y, 50%), ${rippleColor}, transparent 70%)`,
+            }}
+          />
+        )}
+
         {/* Ripple effects */}
         <AnimatePresence>
           {ripples.map(ripple => (
             <motion.span
               key={ripple.id}
-              className="absolute rounded-full pointer-events-none"
+              className="absolute rounded-full pointer-events-none z-5"
               style={{
                 left: ripple.x,
                 top: ripple.y,
@@ -495,11 +516,11 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
         </AnimatePresence>
 
         {/* Shine effect */}
-        <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/5 to-white/20 pointer-events-none" 
+        <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/5 to-white/20 pointer-events-none z-1" 
              style={{ clipPath: 'inherit', borderRadius: 'inherit' }} />
         
         {/* Inner glow */}
-        <div className="absolute inset-2 rounded-[inherit] bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+        <div className="absolute inset-2 rounded-[inherit] bg-gradient-to-br from-white/10 to-transparent pointer-events-none z-1" />
         
         {/* Animated Icon */}
         <motion.div
