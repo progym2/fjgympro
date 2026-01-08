@@ -1,5 +1,5 @@
 const DB_NAME = 'francgympro_offline';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export interface CachedData<T> {
   key: string;
@@ -29,12 +29,19 @@ export async function openDB(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains('cache')) {
         const cacheStore = db.createObjectStore('cache', { keyPath: 'key' });
         cacheStore.createIndex('expiresAt', 'expiresAt', { unique: false });
+        cacheStore.createIndex('timestamp', 'timestamp', { unique: false });
       }
 
       // Store for pending offline operations
       if (!db.objectStoreNames.contains('pendingOps')) {
         const opsStore = db.createObjectStore('pendingOps', { keyPath: 'id', autoIncrement: true });
         opsStore.createIndex('timestamp', 'timestamp', { unique: false });
+        opsStore.createIndex('priority', 'priority', { unique: false });
+      }
+
+      // Store for offline queue metadata
+      if (!db.objectStoreNames.contains('syncMeta')) {
+        db.createObjectStore('syncMeta', { keyPath: 'key' });
       }
     };
   });
@@ -232,5 +239,132 @@ export async function clearAllPendingOperations(): Promise<void> {
     store.clear();
   } catch (error) {
     console.warn('IndexedDB clearAllPendingOperations failed:', error);
+  }
+}
+
+// Sync metadata management
+export interface SyncMeta {
+  key: string;
+  value: unknown;
+  updatedAt: number;
+}
+
+export async function setSyncMeta(key: string, value: unknown): Promise<void> {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('syncMeta', 'readwrite');
+    const store = tx.objectStore('syncMeta');
+    
+    const meta: SyncMeta = {
+      key,
+      value,
+      updatedAt: Date.now(),
+    };
+    
+    store.put(meta);
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (error) {
+    console.warn('IndexedDB setSyncMeta failed:', error);
+  }
+}
+
+export async function getSyncMeta<T>(key: string): Promise<T | null> {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('syncMeta', 'readonly');
+    const store = tx.objectStore('syncMeta');
+    
+    return new Promise((resolve, reject) => {
+      const request = store.get(key);
+      request.onsuccess = () => {
+        const result = request.result as SyncMeta | undefined;
+        resolve(result ? (result.value as T) : null);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.warn('IndexedDB getSyncMeta failed:', error);
+    return null;
+  }
+}
+
+// Get total cache size in bytes (approximate)
+export async function getCacheSize(): Promise<number> {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('cache', 'readonly');
+    const store = tx.objectStore('cache');
+    
+    return new Promise((resolve) => {
+      let totalSize = 0;
+      const request = store.openCursor();
+      
+      request.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest).result;
+        if (cursor) {
+          const item = cursor.value;
+          totalSize += JSON.stringify(item).length * 2; // UTF-16 bytes
+          cursor.continue();
+        } else {
+          resolve(totalSize);
+        }
+      };
+      
+      request.onerror = () => resolve(0);
+    });
+  } catch (error) {
+    console.warn('IndexedDB getCacheSize failed:', error);
+    return 0;
+  }
+}
+
+// Clear all caches (for manual reset)
+export async function clearAllCaches(): Promise<void> {
+  try {
+    const db = await openDB();
+    
+    const cacheTx = db.transaction('cache', 'readwrite');
+    cacheTx.objectStore('cache').clear();
+    
+    const opsTx = db.transaction('pendingOps', 'readwrite');
+    opsTx.objectStore('pendingOps').clear();
+    
+    const metaTx = db.transaction('syncMeta', 'readwrite');
+    metaTx.objectStore('syncMeta').clear();
+    
+    console.log('[IndexedDB] All caches cleared');
+  } catch (error) {
+    console.warn('IndexedDB clearAllCaches failed:', error);
+  }
+}
+
+// Batch set multiple cache items
+export async function batchSetCacheItems<T>(
+  items: Array<{ key: string; data: T; ttlMs?: number }>
+): Promise<void> {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('cache', 'readwrite');
+    const store = tx.objectStore('cache');
+    
+    for (const item of items) {
+      const cacheItem: CachedData<T> = {
+        key: item.key,
+        data: item.data,
+        timestamp: Date.now(),
+        expiresAt: Date.now() + (item.ttlMs || 7 * 24 * 60 * 60 * 1000),
+      };
+      store.put(cacheItem);
+    }
+    
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (error) {
+    console.warn('IndexedDB batchSetCacheItems failed:', error);
   }
 }
