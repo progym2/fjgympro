@@ -3,7 +3,8 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { 
   User, Scale, Droplets, Utensils, Dumbbell, 
   TrendingUp, QrCode, LogOut, Info,
-  Calendar, Award, UserMinus, History, BarChart3, Trophy, Timer, UserPlus, Loader2, Camera, HardDrive
+  Calendar, Award, UserMinus, History, BarChart3, Trophy, Timer, UserPlus, Loader2, Camera, HardDrive,
+  Target, Zap, Flame, Heart
 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -67,25 +68,32 @@ const ComponentLoader = memo(() => (
 ));
 ComponentLoader.displayName = 'ComponentLoader';
 
-// Menu items - defined outside component to avoid recreation
+// Menu items - Modern gym-style icons with better organization
 const MENU_ITEMS = [
-  { icon: User, label: 'Meu Perfil', path: 'profile', color: 'text-blue-500' },
-  { icon: Scale, label: 'Peso e Evolução', path: 'weight', color: 'text-green-500' },
-  { icon: Droplets, label: 'Hidratação', path: 'hydration', color: 'text-cyan-500' },
-  { icon: Utensils, label: 'Plano Alimentar', path: 'nutrition', color: 'text-orange-500' },
+  // Core training features
   { icon: Dumbbell, label: 'Meus Treinos', path: 'workouts', color: 'text-primary' },
   { icon: Timer, label: 'Timer de Treino', path: 'timer', color: 'text-rose-500' },
   { icon: Trophy, label: 'Recordes Pessoais', path: 'records', color: 'text-yellow-500' },
-  { icon: BarChart3, label: 'Evolução & Histórico', path: 'evolution', color: 'text-emerald-500' },
-  { icon: History, label: 'Histórico de Cargas', path: 'load-history', color: 'text-violet-500' },
-  { icon: Calendar, label: 'Agenda', path: 'schedule', color: 'text-purple-500' },
-  { icon: TrendingUp, label: 'Meu Progresso', path: 'progress', color: 'text-teal-500' },
-  { icon: Award, label: 'Metas Alcançadas', path: 'achievements', color: 'text-amber-500' },
+  { icon: Target, label: 'Meu Progresso', path: 'progress', color: 'text-teal-500' },
+  
+  // Body tracking
+  { icon: Scale, label: 'Peso e Evolução', path: 'weight', color: 'text-green-500' },
+  { icon: Droplets, label: 'Hidratação', path: 'hydration', color: 'text-cyan-500' },
+  { icon: Utensils, label: 'Plano Alimentar', path: 'nutrition', color: 'text-orange-500' },
   { icon: Camera, label: 'Galeria Evolução', path: 'gallery', color: 'text-purple-500' },
+  
+  // History & Stats
+  { icon: BarChart3, label: 'Evolução & Histórico', path: 'evolution', color: 'text-emerald-500' },
+  { icon: Flame, label: 'Histórico de Cargas', path: 'load-history', color: 'text-violet-500' },
+  { icon: Award, label: 'Metas Alcançadas', path: 'achievements', color: 'text-amber-500' },
+  { icon: Calendar, label: 'Agenda', path: 'schedule', color: 'text-purple-500' },
+  
+  // Profile & Connections
+  { icon: User, label: 'Meu Perfil', path: 'profile', color: 'text-blue-500' },
   { icon: QrCode, label: 'Meu QR Code', path: 'qrcode', color: 'text-pink-500' },
   { icon: UserPlus, label: 'Escanear Instrutor', path: 'scan-instructor', color: 'text-green-500' },
   { icon: History, label: 'Histórico Vínculos', path: 'link-history', color: 'text-indigo-500' },
-  { icon: UserMinus, label: 'Desvincular Instrutor', path: 'unlink', color: 'text-red-500' },
+  { icon: UserMinus, label: 'Desvincular', path: 'unlink', color: 'text-red-500' },
   { icon: HardDrive, label: 'Backup & Sync', path: 'backup', color: 'text-slate-500' },
 ] as const;
 
