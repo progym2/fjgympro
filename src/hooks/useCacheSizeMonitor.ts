@@ -2,11 +2,26 @@ import { useEffect, useCallback, useRef } from 'react';
 import { getCacheSize } from '@/lib/indexedDB';
 import { toast } from 'sonner';
 
-const CACHE_SIZE_LIMIT = 50 * 1024 * 1024; // 50MB in bytes
+export const CACHE_LIMIT_KEY = 'cache_size_limit_mb';
+const DEFAULT_CACHE_LIMIT_MB = 50;
 const CHECK_INTERVAL = 5 * 60 * 1000; // Check every 5 minutes
 const NOTIFICATION_COOLDOWN = 24 * 60 * 60 * 1000; // Show notification once per day
-
 const LAST_NOTIFICATION_KEY = 'cache_size_notification_last';
+
+export const getCacheLimitBytes = (): number => {
+  const savedLimit = localStorage.getItem(CACHE_LIMIT_KEY);
+  const limitMb = savedLimit ? parseInt(savedLimit) : DEFAULT_CACHE_LIMIT_MB;
+  return limitMb * 1024 * 1024;
+};
+
+export const setCacheLimitMb = (limitMb: number): void => {
+  localStorage.setItem(CACHE_LIMIT_KEY, limitMb.toString());
+};
+
+export const getCacheLimitMb = (): number => {
+  const savedLimit = localStorage.getItem(CACHE_LIMIT_KEY);
+  return savedLimit ? parseInt(savedLimit) : DEFAULT_CACHE_LIMIT_MB;
+};
 
 export const useCacheSizeMonitor = () => {
   const hasCheckedRef = useRef(false);
@@ -22,8 +37,9 @@ export const useCacheSizeMonitor = () => {
   const checkCacheSize = useCallback(async () => {
     try {
       const size = await getCacheSize();
+      const limit = getCacheLimitBytes();
       
-      if (size > CACHE_SIZE_LIMIT) {
+      if (size > limit) {
         // Check if we already notified recently
         const lastNotification = localStorage.getItem(LAST_NOTIFICATION_KEY);
         const now = Date.now();
@@ -32,12 +48,11 @@ export const useCacheSizeMonitor = () => {
           localStorage.setItem(LAST_NOTIFICATION_KEY, now.toString());
           
           toast.warning('Cache offline está grande', {
-            description: `O cache está usando ${formatBytes(size)}. Considere limpar para liberar espaço.`,
+            description: `O cache está usando ${formatBytes(size)} (limite: ${formatBytes(limit)}). Considere limpar para liberar espaço.`,
             duration: 10000,
             action: {
               label: 'Ver configurações',
               onClick: () => {
-                // Navigate to profile where cache settings are
                 window.location.href = '/client/profile';
               }
             }
