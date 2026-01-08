@@ -112,16 +112,27 @@ const Home: React.FC = memo(() => {
 
       {/* Content - centered and compact */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center px-4">
-        {/* Logo - simplified */}
-        <SimpleLogo size="lg" showGlow />
+        {/* Logo - with fade-in animation */}
+        <motion.div
+          initial={{ opacity: 0, y: -20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
+          <SimpleLogo size="lg" showGlow />
+        </motion.div>
 
-        {/* Clock */}
-        <div className="mt-4">
+        {/* Clock - with delayed fade-in */}
+        <motion.div 
+          className="mt-4"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
           <DigitalClock />
-        </div>
+        </motion.div>
 
         {/* Panel Buttons - modern cards with staggered animation */}
-        <div className="mt-8 flex gap-3 sm:gap-4">
+        <div className="mt-10 flex gap-4 sm:gap-6 md:gap-8">
           {[
             { panel: 'client' as const, icon: User, label: 'CLIENTE', color: 'primary' as const },
             { panel: 'instructor' as const, icon: Dumbbell, label: 'INSTRUTOR', color: 'secondary' as const },
@@ -133,7 +144,7 @@ const Home: React.FC = memo(() => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{
                 duration: 0.5,
-                delay: 0.2 + index * 0.15,
+                delay: 0.35 + index * 0.12,
                 ease: [0.25, 0.46, 0.45, 0.94]
               }}
             >
