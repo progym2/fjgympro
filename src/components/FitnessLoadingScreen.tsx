@@ -309,7 +309,7 @@ const FitnessLoadingScreen: React.FC<FitnessLoadingScreenProps> = memo(({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.1 }}
     >
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-5">
@@ -321,10 +321,10 @@ const FitnessLoadingScreen: React.FC<FitnessLoadingScreenProps> = memo(({
 
       {/* Main animation container */}
       <motion.div
-        className="relative z-10 flex flex-col items-center gap-8"
-        initial={{ scale: 0.8, opacity: 0 }}
+        className="relative z-10 flex flex-col items-center gap-6"
+        initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
+        transition={{ duration: 0.15 }}
       >
         {/* Theme icon at top */}
         <motion.div
@@ -354,34 +354,29 @@ const FitnessLoadingScreen: React.FC<FitnessLoadingScreenProps> = memo(({
         </div>
 
         {/* Loading text */}
-        <motion.div
-          className="flex flex-col items-center gap-3"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
+        <div className="flex flex-col items-center gap-2">
           <span 
-            className="font-bebas text-xl tracking-[0.3em] uppercase"
+            className="font-bebas text-lg tracking-[0.2em] uppercase"
             style={{ color: config.color }}
           >
             {message}
           </span>
           
-          {/* Progress bar */}
-          <div className="w-40 h-1 bg-white/10 rounded-full overflow-hidden">
+          {/* Progress bar - faster */}
+          <div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden">
             <motion.div
               className="h-full rounded-full"
               style={{ backgroundColor: config.color }}
               initial={{ width: '0%' }}
               animate={{ width: '100%' }}
               transition={{ 
-                duration: 1.5, 
+                duration: 0.8, 
                 repeat: Infinity,
                 ease: 'easeInOut'
               }}
             />
           </div>
-        </motion.div>
+        </div>
       </motion.div>
 
       {/* Floating particles */}
