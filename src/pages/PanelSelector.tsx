@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Dumbbell, Shield, Loader2, ArrowLeft } from 'lucide-react';
+import { User, Dumbbell, Shield, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
@@ -104,11 +104,41 @@ const getBorderStyle = (style: string): string => {
 
 const PanelSelector: React.FC = () => {
   const navigate = useNavigate();
-  const { role, profile, isLoading, signOut } = useAuth();
+  const { role, profile, isLoading, signOut, session, license } = useAuth();
   const { playClickSound } = useAudio();
   const { themeConfig } = useTheme();
   const [redirecting, setRedirecting] = useState(false);
   const { src, isLoaded, blur } = useProgressiveImage(bgHomeOptimized);
+  const [progress, setProgress] = useState(0);
+
+  // Calcula o progresso baseado nos dados carregados
+  useEffect(() => {
+    let calculatedProgress = 0;
+    
+    // Etapa 1: Sessão iniciada (25%)
+    if (session) calculatedProgress += 25;
+    
+    // Etapa 2: Perfil carregado (25%)
+    if (profile) calculatedProgress += 25;
+    
+    // Etapa 3: Role definido (25%)
+    if (role) calculatedProgress += 25;
+    
+    // Etapa 4: Licença verificada ou redirecionando (25%)
+    if (license || redirecting) calculatedProgress += 25;
+    
+    // Animação suave do progresso
+    const timer = setTimeout(() => {
+      setProgress(prev => {
+        if (calculatedProgress > prev) {
+          return Math.min(prev + 5, calculatedProgress);
+        }
+        return prev;
+      });
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, [session, profile, role, license, redirecting, progress]);
 
   // Cores dinâmicas baseadas no tema
   const themeColors = useMemo(() => {
@@ -229,6 +259,15 @@ const PanelSelector: React.FC = () => {
     navigate('/');
   };
 
+  // Texto de status baseado no progresso
+  const statusText = useMemo(() => {
+    if (redirecting) return 'Redirecionando...';
+    if (progress < 25) return 'Iniciando sessão...';
+    if (progress < 50) return 'Carregando perfil...';
+    if (progress < 75) return 'Verificando permissões...';
+    return 'Validando licença...';
+  }, [redirecting, progress]);
+
   if (isLoading || redirecting) {
     return (
       <div 
@@ -243,23 +282,23 @@ const PanelSelector: React.FC = () => {
         <div className="relative z-10 flex flex-col items-center gap-6">
           <AnimatedLogo size="md" showGlow />
           
-          {/* Animated Progress Bar */}
-          <div className="w-48 sm:w-64 h-1.5 bg-muted/30 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-primary via-primary/80 to-primary rounded-full"
-              initial={{ x: '-100%' }}
-              animate={{ x: '100%' }}
-              transition={{
-                repeat: Infinity,
-                duration: 1.2,
-                ease: 'easeInOut',
-              }}
-              style={{ width: '50%' }}
-            />
+          {/* Progress Bar com Percentual */}
+          <div className="w-48 sm:w-64 flex flex-col items-center gap-2">
+            <div className="w-full h-2 bg-muted/30 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-primary via-primary/80 to-primary rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+              />
+            </div>
+            <span className="text-xs font-mono text-primary font-bold">
+              {progress}%
+            </span>
           </div>
           
           <p className="text-sm text-muted-foreground animate-pulse">
-            {redirecting ? 'Redirecionando...' : 'Carregando...'}
+            {statusText}
           </p>
         </div>
       </div>
