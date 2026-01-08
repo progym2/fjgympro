@@ -108,37 +108,17 @@ const PanelSelector: React.FC = () => {
   const { playClickSound } = useAudio();
   const { themeConfig } = useTheme();
   const [redirecting, setRedirecting] = useState(false);
-  const { src, isLoaded, blur } = useProgressiveImage(bgHomeOptimized);
-  const [progress, setProgress] = useState(0);
+  const { src, blur } = useProgressiveImage(bgHomeOptimized);
 
-  // Calcula o progresso baseado nos dados carregados
-  useEffect(() => {
-    let calculatedProgress = 0;
-    
-    // Etapa 1: Sessão iniciada (25%)
-    if (session) calculatedProgress += 25;
-    
-    // Etapa 2: Perfil carregado (25%)
-    if (profile) calculatedProgress += 25;
-    
-    // Etapa 3: Role definido (25%)
-    if (role) calculatedProgress += 25;
-    
-    // Etapa 4: Licença verificada ou redirecionando (25%)
-    if (license || redirecting) calculatedProgress += 25;
-    
-    // Animação suave do progresso
-    const timer = setTimeout(() => {
-      setProgress(prev => {
-        if (calculatedProgress > prev) {
-          return Math.min(prev + 5, calculatedProgress);
-        }
-        return prev;
-      });
-    }, 50);
-    
-    return () => clearTimeout(timer);
-  }, [session, profile, role, license, redirecting, progress]);
+  // Calcula progresso direto sem animação lenta
+  const progress = useMemo(() => {
+    let p = 0;
+    if (session) p += 25;
+    if (profile) p += 25;
+    if (role) p += 25;
+    if (license || redirecting) p += 25;
+    return p;
+  }, [session, profile, role, license, redirecting]);
 
   // Cores dinâmicas baseadas no tema
   const themeColors = useMemo(() => {
@@ -235,16 +215,14 @@ const PanelSelector: React.FC = () => {
 
     if (!isLoading && role && role !== 'master') {
       setRedirecting(true);
-      const timer = setTimeout(() => {
-        if (role === 'admin') {
-          navigate('/admin');
-        } else if (role === 'instructor') {
-          navigate('/instructor');
-        } else {
-          navigate('/client');
-        }
-      }, 1000);
-      return () => clearTimeout(timer);
+      // Redirecionamento imediato - sem delay
+      if (role === 'admin') {
+        navigate('/admin');
+      } else if (role === 'instructor') {
+        navigate('/instructor');
+      } else {
+        navigate('/client');
+      }
     }
   }, [role, profile, isLoading, navigate]);
 
