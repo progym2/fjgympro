@@ -915,6 +915,7 @@ serve(async (req: Request): Promise<Response> => {
     
     // AUTO-LINK: If user has CPF and logged in with active license, update username to CPF
     // This allows the user to login with their CPF in the future
+    const oldUsername = profile.username;
     if (profile.cpf && profile.cpf.length === 11 && licenseCheck.status === 'active') {
       // Only update username if it's different from CPF and not already a CPF
       const currentUsername = (profile.username || '').replace(/\D/g, '');
@@ -929,6 +930,19 @@ serve(async (req: Request): Promise<Response> => {
         .from("profiles")
         .update(profileUpdates)
         .eq("id", profile.id);
+      
+      // Log username change to history table
+      if (profileUpdates.username && oldUsername !== profileUpdates.username) {
+        await supabaseAdmin
+          .from("username_history")
+          .insert({
+            profile_id: profile.id,
+            old_username: oldUsername,
+            new_username: profileUpdates.username as string,
+            change_reason: 'cpf_auto_link',
+          });
+        console.log(`Username history logged: ${oldUsername} -> ${profileUpdates.username}`);
+      }
       
       // Update local profile reference if username changed
       if (profileUpdates.username) {
