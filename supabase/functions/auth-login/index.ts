@@ -903,11 +903,37 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // Update profile with user_id/email if not set
-    if (!profile.user_id || profile.user_id !== userId || profile.email !== email) {
+    // Also, if user has CPF and license is active, link CPF as username for future logins
+    const profileUpdates: Record<string, unknown> = {};
+    
+    if (!profile.user_id || profile.user_id !== userId) {
+      profileUpdates.user_id = userId;
+    }
+    if (profile.email !== email) {
+      profileUpdates.email = email;
+    }
+    
+    // AUTO-LINK: If user has CPF and logged in with active license, update username to CPF
+    // This allows the user to login with their CPF in the future
+    if (profile.cpf && profile.cpf.length === 11 && licenseCheck.status === 'active') {
+      // Only update username if it's different from CPF and not already a CPF
+      const currentUsername = (profile.username || '').replace(/\D/g, '');
+      if (currentUsername !== profile.cpf) {
+        profileUpdates.username = profile.cpf;
+        console.log(`Auto-linking CPF as username for profile ${profile.id}: ${profile.cpf.substring(0, 3)}...`);
+      }
+    }
+    
+    if (Object.keys(profileUpdates).length > 0) {
       await supabaseAdmin
         .from("profiles")
-        .update({ user_id: userId, email })
+        .update(profileUpdates)
         .eq("id", profile.id);
+      
+      // Update local profile reference if username changed
+      if (profileUpdates.username) {
+        profile.username = profileUpdates.username as string;
+      }
     }
 
     // Determine role: admin/gerente = admin, cref = instructor, else = client
