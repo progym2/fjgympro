@@ -9,7 +9,7 @@ import SimpleLogo from '@/components/SimpleLogo';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
 
-import bgHome from '@/assets/bg-home.png';
+import bgHome from '@/assets/bg-home-optimized.webp';
 
 // Lazy load heavy components
 const LoginDialog = lazy(() => import('@/components/LoginDialog'));

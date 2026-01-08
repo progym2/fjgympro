@@ -28,7 +28,7 @@ import PanelSwitcher from '@/components/PanelSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
 import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
 
-import bgPanels from '@/assets/bg-panels.png';
+import bgPanels from '@/assets/bg-panels-optimized.webp';
 
 // Lazy load ALL components - include AboutDialog
 const AboutDialog = lazy(() => import('@/components/AboutDialog'));
