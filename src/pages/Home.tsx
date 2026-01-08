@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense, memo, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { User, Dumbbell, Shield, Info, Volume2, VolumeX } from 'lucide-react';
 
@@ -25,6 +25,7 @@ const Home: React.FC = memo(() => {
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false);
   const [selectedPanel, setSelectedPanel] = useState<'client' | 'instructor' | 'admin'>('client');
+  const [isExiting, setIsExiting] = useState(false);
 
   const navigate = useNavigate();
   const { licenseExpired } = useAuth();
@@ -63,7 +64,12 @@ const Home: React.FC = memo(() => {
     playClickSound();
     setSelectedPanel(panel);
     stopMusicImmediately();
-    setLoginDialogOpen(true);
+    setIsExiting(true);
+    // Delay dialog opening for exit animation
+    setTimeout(() => {
+      setLoginDialogOpen(true);
+      setIsExiting(false);
+    }, 300);
   }, [playClickSound, stopMusicImmediately]);
 
   const handleLoginSuccess = useCallback((role: string) => {
@@ -112,21 +118,44 @@ const Home: React.FC = memo(() => {
 
       {/* Content - centered and compact */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center px-4">
-        {/* Logo - with fade-in animation */}
+        {/* Logo - with fade-in and pulse animation */}
         <motion.div
           initial={{ opacity: 0, y: -20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+          animate={{ 
+            opacity: isExiting ? 0 : 1, 
+            y: isExiting ? -30 : 0, 
+            scale: isExiting ? 0.9 : 1 
+          }}
+          transition={{ duration: isExiting ? 0.25 : 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          <SimpleLogo size="lg" showGlow />
+          <motion.div
+            animate={{ 
+              scale: [1, 1.02, 1],
+              opacity: [1, 0.9, 1]
+            }}
+            transition={{ 
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            <SimpleLogo size="lg" showGlow />
+          </motion.div>
         </motion.div>
 
-        {/* Clock - with delayed fade-in */}
+        {/* Clock - with delayed fade-in and exit animation */}
         <motion.div 
           className="mt-4"
           initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
+          animate={{ 
+            opacity: isExiting ? 0 : 1, 
+            y: isExiting ? -20 : 0 
+          }}
+          transition={{ 
+            duration: isExiting ? 0.2 : 0.5, 
+            delay: isExiting ? 0.05 : 0.15, 
+            ease: [0.25, 0.46, 0.45, 0.94] 
+          }}
         >
           <DigitalClock />
         </motion.div>
@@ -141,10 +170,14 @@ const Home: React.FC = memo(() => {
             <motion.div
               key={item.panel}
               initial={{ opacity: 0, y: 30, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
+              animate={{ 
+                opacity: isExiting ? 0 : 1, 
+                y: isExiting ? 40 : 0, 
+                scale: isExiting ? 0.85 : 1 
+              }}
               transition={{
-                duration: 0.5,
-                delay: 0.35 + index * 0.12,
+                duration: isExiting ? 0.25 : 0.5,
+                delay: isExiting ? index * 0.05 : 0.35 + index * 0.12,
                 ease: [0.25, 0.46, 0.45, 0.94]
               }}
             >
