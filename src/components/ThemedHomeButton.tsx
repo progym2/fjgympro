@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState, useRef } from 'react';
+import React, { memo, useMemo, useState, useRef, useCallback } from 'react';
 import { LucideIcon } from 'lucide-react';
 import { useTheme, SportTheme, ThemeConfig } from '@/contexts/ThemeContext';
 import { useAudio } from '@/contexts/AudioContext';
@@ -9,6 +9,16 @@ interface RippleType {
   id: number;
   x: number;
   y: number;
+}
+
+interface ParticleType {
+  id: number;
+  x: number;
+  y: number;
+  angle: number;
+  speed: number;
+  size: number;
+  color: string;
 }
 
 interface ThemedHomeButtonProps {
@@ -171,6 +181,23 @@ const getColorVariant = (theme: SportTheme, color: 'primary' | 'secondary' | 'ac
   return colorMap[theme][color];
 };
 
+// Cores das partículas por tema
+const getParticleColors = (theme: SportTheme): string[] => {
+  const colorMap: Record<SportTheme, string[]> = {
+    fire: ['#FF6B35', '#FF9F1C', '#FFCC00', '#FF4500'],
+    ocean: ['#00D4FF', '#0099CC', '#66E0FF', '#00BFFF'],
+    forest: ['#10B981', '#34D399', '#6EE7B7', '#059669'],
+    lightning: ['#FBBF24', '#FCD34D', '#FDE68A', '#F59E0B'],
+    galaxy: ['#A855F7', '#C084FC', '#E879F9', '#8B5CF6'],
+    iron: ['#94A3B8', '#CBD5E1', '#E2E8F0', '#64748B'],
+    blood: ['#EF4444', '#F87171', '#FCA5A5', '#DC2626'],
+    neon: ['#F472B6', '#E879F9', '#A78BFA', '#67E8F9'],
+    gold: ['#FBBF24', '#F59E0B', '#D97706', '#FCD34D'],
+    amoled: ['#6B7280', '#9CA3AF', '#D1D5DB', '#4B5563'],
+  };
+  return colorMap[theme] || colorMap.fire;
+};
+
 const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
   onClick,
   icon: Icon,
@@ -181,10 +208,13 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
   const { currentTheme, themeConfig, hoverEffectsEnabled } = useTheme();
   const { playHoverSound, playClickSound } = useAudio();
   const [ripples, setRipples] = useState<RippleType[]>([]);
+  const [particles, setParticles] = useState<ParticleType[]>([]);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const particleIdRef = useRef(0);
   
   const style = useMemo(() => getButtonStyle(currentTheme, themeConfig), [currentTheme, themeConfig]);
   const colorVariant = useMemo(() => getColorVariant(currentTheme, color), [currentTheme, color]);
+  const particleColors = useMemo(() => getParticleColors(currentTheme), [currentTheme]);
   
   // Get theme icon based on button type
   const ThemeIcon = useMemo(() => {
@@ -193,7 +223,7 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
     return themeConfig.icons.accent;
   }, [themeConfig, color]);
 
-  const createRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const createRipple = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     if (!buttonRef.current) return;
     
     const button = buttonRef.current;
@@ -213,15 +243,49 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
     setTimeout(() => {
       setRipples(prev => prev.filter(r => r.id !== newRipple.id));
     }, 600);
-  };
+  }, []);
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  // Criar partículas que emanam do clique
+  const createParticles = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+    if (!buttonRef.current) return;
+    
+    const button = buttonRef.current;
+    const rect = button.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    const newParticles: ParticleType[] = [];
+    const particleCount = 12;
+    
+    for (let i = 0; i < particleCount; i++) {
+      const angle = (i / particleCount) * 360 + Math.random() * 20 - 10;
+      newParticles.push({
+        id: particleIdRef.current++,
+        x,
+        y,
+        angle,
+        speed: 40 + Math.random() * 30,
+        size: 3 + Math.random() * 3,
+        color: particleColors[Math.floor(Math.random() * particleColors.length)],
+      });
+    }
+    
+    setParticles(prev => [...prev, ...newParticles]);
+    
+    // Remove particles after animation
+    setTimeout(() => {
+      setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
+    }, 500);
+  }, [particleColors]);
+
+  const handleClick = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     if (!disabled) {
       createRipple(event);
+      createParticles(event);
       playClickSound();
       onClick();
     }
-  };
+  }, [disabled, createRipple, createParticles, playClickSound, onClick]);
 
   const handleHover = () => {
     if (hoverEffectsEnabled && !disabled) {
@@ -262,6 +326,39 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
         clipPath: isCircular ? undefined : style.shape,
       }}
     >
+      {/* Particle effects */}
+      <AnimatePresence>
+        {particles.map(particle => {
+          const radians = (particle.angle * Math.PI) / 180;
+          const endX = Math.cos(radians) * particle.speed;
+          const endY = Math.sin(radians) * particle.speed;
+          
+          return (
+            <motion.span
+              key={particle.id}
+              className="absolute rounded-full pointer-events-none z-50"
+              style={{
+                left: particle.x,
+                top: particle.y,
+                width: particle.size,
+                height: particle.size,
+                backgroundColor: particle.color,
+                boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`,
+              }}
+              initial={{ scale: 1, opacity: 1, x: 0, y: 0 }}
+              animate={{ 
+                scale: 0, 
+                opacity: 0,
+                x: endX,
+                y: endY,
+              }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+            />
+          );
+        })}
+      </AnimatePresence>
+      
       {/* Ripple effects */}
       <AnimatePresence>
         {ripples.map(ripple => (
