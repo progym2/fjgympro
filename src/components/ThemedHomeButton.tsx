@@ -379,8 +379,8 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
 
       {/* Label */}
       <span className={cn(
-        'font-bebas text-[9px] sm:text-[10px] tracking-wider',
-        'uppercase text-center leading-tight',
+        'font-bebas text-[11px] sm:text-xs tracking-wider',
+        'uppercase text-center leading-tight mt-1',
         'transition-opacity duration-150',
         style.labelStyle
       )}>
