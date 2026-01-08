@@ -84,6 +84,13 @@ const getThemeConfig = (theme: SportTheme, buttonColor: 'primary' | 'secondary' 
       shape: 'diamond',
       cornerIcon: <Trophy className="w-3 h-3" />,
     },
+    amoled: {
+      primary: { gradient: 'from-gray-700 via-gray-800 to-black', glow: 'rgba(100, 100, 100, 0.4)', ring: 'ring-gray-600/40' },
+      secondary: { gradient: 'from-gray-600 via-gray-700 to-gray-900', glow: 'rgba(80, 80, 80, 0.4)', ring: 'ring-gray-500/40' },
+      accent: { gradient: 'from-gray-500 via-gray-600 to-gray-800', glow: 'rgba(120, 120, 120, 0.4)', ring: 'ring-gray-400/40' },
+      shape: 'hexagon',
+      cornerIcon: <Dumbbell className="w-3 h-3" />,
+    },
   };
   
   return {

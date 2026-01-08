@@ -24,6 +24,7 @@ const getThemeColors = (theme: SportTheme) => {
     blood: { primary: 'bg-red-600', secondary: 'bg-rose-500', tertiary: 'bg-pink-600' },
     neon: { primary: 'bg-pink-500', secondary: 'bg-fuchsia-500', tertiary: 'bg-violet-400' },
     gold: { primary: 'bg-yellow-500', secondary: 'bg-amber-500', tertiary: 'bg-orange-400' },
+    amoled: { primary: 'bg-gray-600', secondary: 'bg-gray-700', tertiary: 'bg-gray-500' },
   };
   return colors[theme];
 };
@@ -39,6 +40,7 @@ const getOrbColors = (theme: SportTheme) => {
     blood: { orb1: 'bg-red-600/10', orb2: 'bg-rose-500/10', orb3: 'bg-pink-600/10' },
     neon: { orb1: 'bg-pink-500/10', orb2: 'bg-fuchsia-500/10', orb3: 'bg-violet-400/10' },
     gold: { orb1: 'bg-yellow-500/10', orb2: 'bg-amber-500/10', orb3: 'bg-orange-400/10' },
+    amoled: { orb1: 'bg-gray-600/5', orb2: 'bg-gray-700/5', orb3: 'bg-gray-500/5' },
   };
   return orbColors[theme];
 };

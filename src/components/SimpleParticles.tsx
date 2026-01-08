@@ -13,6 +13,7 @@ const getThemeColor = (theme: SportTheme): string => {
     blood: 'bg-red-600/30',
     neon: 'bg-pink-500/30',
     gold: 'bg-yellow-500/30',
+    amoled: 'bg-gray-600/20',
   };
   return colors[theme];
 };

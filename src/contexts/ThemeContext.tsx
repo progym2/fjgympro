@@ -16,7 +16,8 @@ export type SportTheme =
   | 'iron'      // Cinza/Prata - Ferro
   | 'blood'     // Vermelho escuro - Sangue
   | 'neon'      // Rosa neon - Neon
-  | 'gold';     // Dourado - Ouro
+  | 'gold'      // Dourado - Ouro
+  | 'amoled';   // Preto puro AMOLED - Economia de bateria
 
 export type CardStyle = 'rounded' | 'sharp' | 'hexagonal' | 'beveled' | 'organic';
 export type IconStyle = 'filled' | 'outlined' | 'duotone' | 'glow';
@@ -186,6 +187,22 @@ export const SPORT_THEMES: ThemeConfig[] = [
     borderRadius: '0.75rem',
     buttonShape: 'rounded',
     glowIntensity: 'medium',
+    pattern: 'none',
+    animationSpeed: 'normal',
+    fontWeight: 'normal'
+  },
+  { 
+    id: 'amoled', 
+    name: 'AMOLED', 
+    emoji: '🖤', 
+    primary: '0 0% 40%', 
+    accent: '0 0% 30%', 
+    gradient: 'from-gray-700 to-gray-900',
+    icons: { main: Dumbbell, secondary: Shield, accent: Target, style: 'outlined' },
+    cardStyle: 'sharp',
+    borderRadius: '0.5rem',
+    buttonShape: 'sharp',
+    glowIntensity: 'low',
     pattern: 'none',
     animationSpeed: 'normal',
     fontWeight: 'normal'
