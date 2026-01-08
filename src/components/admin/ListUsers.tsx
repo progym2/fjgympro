@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search, Trash2, Key, Loader2, User, Dumbbell, Edit2, Shield, Eye, Unlink, RotateCcw, RefreshCw, CheckCircle, FileSpreadsheet, FileText, Download, X, AlertCircle, UserCheck, Link2Off, History } from 'lucide-react';
+import { Users, Search, Trash2, Key, Loader2, User, Dumbbell, Edit2, Shield, Eye, Unlink, RotateCcw, RefreshCw, CheckCircle, FileSpreadsheet, FileText, Download, X, AlertCircle, UserCheck, Link2Off, History, Undo2, Filter } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -92,6 +92,11 @@ const ListUsers: React.FC = () => {
   const [userHistory, setUserHistory] = useState<{ id: string; old_username: string; new_username: string; change_reason: string; changed_at: string }[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [selectedUserForHistory, setSelectedUserForHistory] = useState<Profile | null>(null);
+  const [showRevertDialog, setShowRevertDialog] = useState(false);
+  const [userToRevert, setUserToRevert] = useState<{ user: Profile; originalUsername: string } | null>(null);
+  const [reverting, setReverting] = useState(false);
+  const [cpfLinkedFilter, setCpfLinkedFilter] = useState(false);
+  const [usersWithCpfLinked, setUsersWithCpfLinked] = useState<Set<string>>(new Set());
   
   const isMaster = role === 'master';
 
@@ -181,12 +186,28 @@ const ListUsers: React.FC = () => {
       // Load pre-generated accounts for masters
       if (isMaster) {
         await loadPreGenAccounts();
+        await loadCpfLinkedUsers();
       }
     } catch (err) {
       console.error('Error:', err);
       toast.error('Erro ao carregar usuários');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCpfLinkedUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('username_history')
+        .select('profile_id')
+        .eq('change_reason', 'cpf_auto_link');
+      
+      if (error) throw error;
+      const linkedIds = new Set(data?.map(d => d.profile_id) || []);
+      setUsersWithCpfLinked(linkedIds);
+    } catch (err) {
+      console.error('Error loading CPF linked users:', err);
     }
   };
 
@@ -453,13 +474,65 @@ const ListUsers: React.FC = () => {
     }
   };
 
+  const openRevertUsernameDialog = (user: Profile, originalUsername: string) => {
+    playClickSound();
+    setUserToRevert({ user, originalUsername });
+    setShowRevertDialog(true);
+  };
+
+  const handleRevertUsername = async () => {
+    if (!userToRevert) return;
+    
+    setReverting(true);
+    try {
+      // Update username back to original
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ username: userToRevert.originalUsername })
+        .eq('id', userToRevert.user.id);
+      
+      if (updateError) throw updateError;
+      
+      // Add history entry for reversion
+      const { error: historyError } = await supabase
+        .from('username_history')
+        .insert({
+          profile_id: userToRevert.user.id,
+          old_username: userToRevert.user.username,
+          new_username: userToRevert.originalUsername,
+          change_reason: 'master_revert',
+        });
+      
+      if (historyError) {
+        console.error('Error adding history:', historyError);
+        // Don't fail the operation if history insert fails
+      }
+      
+      toast.success(`Username revertido para "${userToRevert.originalUsername}" com sucesso!`);
+      loadUsers();
+    } catch (err: any) {
+      toast.error(`Erro ao reverter username: ${err.message}`);
+    } finally {
+      setReverting(false);
+      setShowRevertDialog(false);
+      setUserToRevert(null);
+    }
+  };
+
   const filterUsers = (users: Profile[]) => {
-    if (!debouncedSearch.trim()) return users;
+    let filtered = users;
+    
+    // Filter by CPF linked if enabled
+    if (cpfLinkedFilter) {
+      filtered = filtered.filter(u => usersWithCpfLinked.has(u.id));
+    }
+    
+    if (!debouncedSearch.trim()) return filtered;
     const search = debouncedSearch.toLowerCase().trim();
     // Remove formatação do CPF para busca
     const searchClean = search.replace(/[.-]/g, '');
     
-    return users.filter(u => {
+    return filtered.filter(u => {
       const nameMatch = u.full_name?.toLowerCase().includes(search);
       const usernameMatch = u.username.toLowerCase().includes(search);
       const emailMatch = u.email?.toLowerCase().includes(search);
@@ -733,6 +806,19 @@ const ListUsers: React.FC = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          {isMaster && (
+            <Button
+              variant={cpfLinkedFilter ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => { playClickSound(); setCpfLinkedFilter(!cpfLinkedFilter); }}
+              className={`shrink-0 gap-1 ${cpfLinkedFilter ? 'bg-amber-500 hover:bg-amber-600' : ''}`}
+              title="Filtrar apenas CPF vinculado"
+            >
+              <Filter className="w-4 h-4" />
+              <span className="hidden sm:inline">CPF vinculado</span>
+              {cpfLinkedFilter && <span className="ml-1">({usersWithCpfLinked.size})</span>}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -740,6 +826,19 @@ const ListUsers: React.FC = () => {
         <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 flex items-center gap-2 text-sm text-blue-400">
           <Shield className="w-4 h-4" />
           <span>Exibindo apenas usuários cadastrados por você. Acesse o Painel Master para ver todos.</span>
+        </div>
+      )}
+      
+      {isMaster && cpfLinkedFilter && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center gap-2 text-sm text-amber-400">
+          <Filter className="w-4 h-4" />
+          <span>Exibindo apenas usuários que tiveram CPF vinculado automaticamente.</span>
+          <button
+            onClick={() => setCpfLinkedFilter(false)}
+            className="ml-auto text-amber-500 hover:text-amber-400"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
@@ -1227,7 +1326,7 @@ const ListUsers: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {userHistory.map((entry) => (
+                {userHistory.map((entry, index) => (
                   <div key={entry.id} className="p-3 bg-card border border-border rounded-lg">
                     <div className="flex items-center gap-2 text-sm">
                       <span className="text-red-400 font-mono">{entry.old_username}</span>
@@ -1236,12 +1335,28 @@ const ListUsers: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
                       <span>
-                        {entry.change_reason === 'cpf_auto_link' ? 'Vinculação automática CPF' : entry.change_reason}
+                        {entry.change_reason === 'cpf_auto_link' ? 'Vinculação automática CPF' : 
+                         entry.change_reason === 'master_revert' ? 'Reversão pelo Master' : entry.change_reason}
                       </span>
                       <span>
                         {new Date(entry.changed_at).toLocaleDateString('pt-BR')} {new Date(entry.changed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
+                    {/* Show revert button only for the first (most recent) entry with cpf_auto_link */}
+                    {index === 0 && entry.change_reason === 'cpf_auto_link' && selectedUserForHistory && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-2 w-full text-amber-500 border-amber-500/50 hover:bg-amber-500/10"
+                        onClick={() => {
+                          setShowHistoryDialog(false);
+                          openRevertUsernameDialog(selectedUserForHistory, entry.old_username);
+                        }}
+                      >
+                        <Undo2 className="w-4 h-4 mr-2" />
+                        Reverter para "{entry.old_username}"
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1249,6 +1364,50 @@ const ListUsers: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Revert Username Dialog */}
+      <AlertDialog open={showRevertDialog} onOpenChange={setShowRevertDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-amber-500 flex items-center gap-2">
+              <Undo2 className="w-5 h-5" />
+              Reverter Username
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Deseja reverter o username de{' '}
+                  <strong>{userToRevert?.user.full_name || userToRevert?.user.username}</strong>?
+                </p>
+                <div className="p-3 bg-muted/30 rounded-lg space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Username atual:</span>
+                    <span className="font-mono text-red-400">{userToRevert?.user.username}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Reverter para:</span>
+                    <span className="font-mono text-green-400">{userToRevert?.originalUsername}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  O usuário passará a fazer login com o username original. Esta ação será registrada no histórico.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={reverting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRevertUsername}
+              disabled={reverting}
+              className="bg-amber-500 text-white hover:bg-amber-600"
+            >
+              {reverting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Undo2 className="w-4 h-4 mr-2" />}
+              {reverting ? 'Revertendo...' : 'Sim, reverter'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 };
