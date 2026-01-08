@@ -14,6 +14,7 @@ import { useOfflineDataPreloader } from "@/hooks/useOfflineDataPreloader";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import InstallBanner from "@/components/InstallBanner";
 import VideoSplashScreen from "@/components/VideoSplashScreen";
+import ThemeTransitionOverlay from "@/components/ThemeTransitionOverlay";
 import { Loader2 } from "lucide-react";
 
 // Lazy load heavy dashboard pages for faster initial load
@@ -123,6 +124,7 @@ const App = () => {
                 <>
                   <NightModeHandler />
                   <OfflineDataLoader />
+                  <ThemeTransitionOverlay duration={600} />
                   <Toaster />
                   <Sonner />
                   <OfflineIndicator />
