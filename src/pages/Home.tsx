@@ -1,23 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense, memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Dumbbell, Shield, Info, Volume2, VolumeX } from 'lucide-react';
 
 import DigitalClock from '@/components/DigitalClock';
 import ThemedHomeButton from '@/components/ThemedHomeButton';
 import AppFooter from '@/components/AppFooter';
-import LoginDialog from '@/components/LoginDialog';
-import AboutDialog from '@/components/AboutDialog';
-import SimpleParticles from '@/components/SimpleParticles';
 import SimpleLogo from '@/components/SimpleLogo';
-import SportThemeSelector from '@/components/SportThemeSelector';
-import MiniMusicPlayer from '@/components/MiniMusicPlayer';
-import OfflineModeIndicator from '@/components/OfflineModeIndicator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
 
 import bgHome from '@/assets/bg-home.png';
 
-const Home: React.FC = () => {
+// Lazy load heavy components
+const LoginDialog = lazy(() => import('@/components/LoginDialog'));
+const AboutDialog = lazy(() => import('@/components/AboutDialog'));
+const SimpleParticles = lazy(() => import('@/components/SimpleParticles'));
+const SportThemeSelector = lazy(() => import('@/components/SportThemeSelector'));
+const MiniMusicPlayer = lazy(() => import('@/components/MiniMusicPlayer'));
+const OfflineModeIndicator = lazy(() => import('@/components/OfflineModeIndicator'));
+
+const Home: React.FC = memo(() => {
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false);
   const [selectedPanel, setSelectedPanel] = useState<'client' | 'instructor' | 'admin'>('client');
@@ -54,14 +56,14 @@ const Home: React.FC = () => {
     }
   }, [licenseExpired, navigate]);
 
-  const handlePanelClick = (panel: 'client' | 'instructor' | 'admin') => {
+  const handlePanelClick = useCallback((panel: 'client' | 'instructor' | 'admin') => {
     playClickSound();
     setSelectedPanel(panel);
     stopMusicImmediately();
     setLoginDialogOpen(true);
-  };
+  }, [playClickSound, stopMusicImmediately]);
 
-  const handleLoginSuccess = (role: string) => {
+  const handleLoginSuccess = useCallback((role: string) => {
     setLoginDialogOpen(false);
 
     if (role === 'master') {
@@ -73,7 +75,12 @@ const Home: React.FC = () => {
     } else {
       navigate('/client');
     }
-  };
+  }, [navigate]);
+
+  const handleAboutOpen = useCallback(() => setAboutDialogOpen(true), []);
+  const handleLoginClose = useCallback(() => setLoginDialogOpen(false), []);
+  const handleAboutClose = useCallback(() => setAboutDialogOpen(false), []);
+  const handleToggleSfx = useCallback(() => { playClickSound(); toggleSfx(); }, [playClickSound, toggleSfx]);
 
   return (
     <div
@@ -89,8 +96,10 @@ const Home: React.FC = () => {
       {/* Overlay - gradient for depth */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/60 to-black/80" />
 
-      {/* Simple particles - lightweight */}
-      <SimpleParticles />
+      {/* Simple particles - lightweight - lazy loaded */}
+      <Suspense fallback={null}>
+        <SimpleParticles />
+      </Suspense>
 
       {/* Content - centered and compact */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center px-4">
@@ -116,12 +125,14 @@ const Home: React.FC = () => {
       </div>
 
       {/* Fixed buttons - minimal */}
-      <div className="fixed top-3 left-3 z-50">
-        <SportThemeSelector compact />
-      </div>
+      <Suspense fallback={null}>
+        <div className="fixed top-3 left-3 z-50">
+          <SportThemeSelector compact />
+        </div>
+      </Suspense>
 
       <button
-        onClick={() => setAboutDialogOpen(true)}
+        onClick={handleAboutOpen}
         className="fixed top-3 right-3 z-50 p-2.5 rounded-xl bg-black/40 backdrop-blur-sm text-white/70 hover:text-white hover:bg-black/60 transition-all"
         aria-label="Sobre"
       >
@@ -129,7 +140,7 @@ const Home: React.FC = () => {
       </button>
 
       <button
-        onClick={() => { playClickSound(); toggleSfx(); }}
+        onClick={handleToggleSfx}
         className={`fixed bottom-16 left-3 z-50 p-2.5 rounded-xl bg-black/40 backdrop-blur-sm transition-all ${
           isSfxEnabled ? 'text-emerald-400 hover:bg-emerald-500/20' : 'text-white/50 hover:bg-white/10'
         }`}
@@ -139,22 +150,37 @@ const Home: React.FC = () => {
         {isSfxEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
       </button>
 
-      {/* Mini Music Player */}
-      <MiniMusicPlayer />
+      {/* Mini Music Player - lazy */}
+      <Suspense fallback={null}>
+        <MiniMusicPlayer />
+      </Suspense>
 
-      {/* Offline Mode Indicator */}
-      <OfflineModeIndicator />
+      {/* Offline Mode Indicator - lazy */}
+      <Suspense fallback={null}>
+        <OfflineModeIndicator />
+      </Suspense>
 
-      {/* Dialogs */}
-      <LoginDialog
-        isOpen={loginDialogOpen}
-        onClose={() => setLoginDialogOpen(false)}
-        onSuccess={handleLoginSuccess}
-        panelType={selectedPanel}
-      />
-      <AboutDialog isOpen={aboutDialogOpen} onClose={() => setAboutDialogOpen(false)} />
+      {/* Dialogs - only render when open */}
+      {loginDialogOpen && (
+        <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+          <LoginDialog
+            isOpen={loginDialogOpen}
+            onClose={handleLoginClose}
+            onSuccess={handleLoginSuccess}
+            panelType={selectedPanel}
+          />
+        </Suspense>
+      )}
+      
+      {aboutDialogOpen && (
+        <Suspense fallback={null}>
+          <AboutDialog isOpen={aboutDialogOpen} onClose={handleAboutClose} />
+        </Suspense>
+      )}
     </div>
   );
-};
+});
+
+Home.displayName = 'Home';
 
 export default Home;

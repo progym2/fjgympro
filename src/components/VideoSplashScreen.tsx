@@ -1,28 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
-import splashBackground from '@/assets/splash-background.png';
+import React, { useState, useEffect, useRef, memo } from 'react';
 
 interface VideoSplashScreenProps {
   onComplete: () => void;
 }
 
-// Preload video on module load
-const videoPreloadLink = document.createElement('link');
-videoPreloadLink.rel = 'preload';
-videoPreloadLink.as = 'video';
-videoPreloadLink.href = '/video/splash.mp4';
-document.head.appendChild(videoPreloadLink);
-
-const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => {
+const VideoSplashScreen: React.FC<VideoSplashScreenProps> = memo(({ onComplete }) => {
   const [isVisible, setIsVisible] = useState(true);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [videoEnded, setVideoEnded] = useState(false);
-  const [showImage, setShowImage] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const progressRef = useRef<NodeJS.Timeout | null>(null);
+  const progressRef = useRef<number | null>(null);
+  const hasCompletedRef = useRef(false);
 
-  // Check if splash was already shown in this session
+  // Check if splash was already shown in this session - do this FIRST
   useEffect(() => {
     const splashShown = sessionStorage.getItem('splashShown');
     if (splashShown === 'true') {
@@ -31,49 +22,55 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
     }
   }, [onComplete]);
 
-  // Start progress animation when video is loaded
+  // Progress animation
   useEffect(() => {
-    if (isLoaded && !videoEnded) {
-      progressRef.current = setInterval(() => {
-        if (videoRef.current) {
-          const duration = videoRef.current.duration || 5;
+    if (videoReady && videoRef.current) {
+      const updateProgress = () => {
+        if (videoRef.current && !hasCompletedRef.current) {
+          const duration = videoRef.current.duration || 3;
           const currentTime = videoRef.current.currentTime || 0;
           setProgress((currentTime / duration) * 100);
+          progressRef.current = requestAnimationFrame(updateProgress);
         }
-      }, 50);
+      };
+      progressRef.current = requestAnimationFrame(updateProgress);
     }
     return () => {
-      if (progressRef.current) clearInterval(progressRef.current);
+      if (progressRef.current) cancelAnimationFrame(progressRef.current);
     };
-  }, [isLoaded, videoEnded]);
+  }, [videoReady]);
 
   const handleComplete = () => {
+    if (hasCompletedRef.current) return;
+    hasCompletedRef.current = true;
+    
     setIsExiting(true);
+    setProgress(100);
     sessionStorage.setItem('splashShown', 'true');
+    
+    // Quick exit - no extra delays
     setTimeout(() => {
       setIsVisible(false);
       onComplete();
-    }, 300);
+    }, 200);
   };
 
   const handleVideoEnd = () => {
-    setProgress(100);
-    setVideoEnded(true);
-    setShowImage(true);
-    
-    // Show image for 1 second then complete
-    setTimeout(handleComplete, 1000);
+    handleComplete();
   };
 
   const handleVideoError = () => {
-    // Fallback: show image directly if video fails
-    setShowImage(true);
-    setProgress(100);
-    setTimeout(handleComplete, 1500);
+    // Skip directly on error - no fallback image
+    handleComplete();
   };
 
-  const handleCanPlay = () => {
-    setIsLoaded(true);
+  const handleCanPlayThrough = () => {
+    setVideoReady(true);
+    // Auto-start playing
+    videoRef.current?.play().catch(() => {
+      // If autoplay fails, complete immediately
+      handleComplete();
+    });
   };
 
   // Skip splash on tap/click
@@ -81,83 +78,66 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = ({ onComplete }) => 
     handleComplete();
   };
 
+  // Timeout fallback - if video doesn't load in 3 seconds, skip
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!videoReady && !hasCompletedRef.current) {
+        handleComplete();
+      }
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [videoReady]);
+
   if (!isVisible) return null;
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden transition-opacity duration-300 ${isExiting ? 'opacity-0' : 'opacity-100'}`}
+      className={`fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden transition-opacity duration-200 ${isExiting ? 'opacity-0' : 'opacity-100'}`}
       onClick={handleSkip}
+      style={{ touchAction: 'manipulation' }}
     >
-      {/* Background gradient - static, no animation */}
-      <div 
-        className="absolute inset-0"
-        style={{
-          background: 'radial-gradient(ellipse at center, rgba(40, 20, 10, 0.9) 0%, rgba(0, 0, 0, 1) 70%)'
-        }}
-      />
+      {/* Simple dark background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-black" />
 
-      {/* Video phase - show immediately without loading indicator */}
-      {!showImage && (
-        <div className={`relative w-full h-full flex items-center justify-center transition-opacity duration-300 ${isExiting ? 'opacity-0' : 'opacity-100'}`}>
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            preload="auto"
-            onEnded={handleVideoEnd}
-            onError={handleVideoError}
-            onCanPlay={handleCanPlay}
-            className={`w-full h-full object-contain transition-opacity duration-200 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-          >
-            <source src="/video/splash.mp4" type="video/mp4" />
-          </video>
+      {/* Video - preload metadata only for faster initial load */}
+      <video
+        ref={videoRef}
+        muted
+        playsInline
+        preload="metadata"
+        onEnded={handleVideoEnd}
+        onError={handleVideoError}
+        onCanPlayThrough={handleCanPlayThrough}
+        className={`w-full h-full object-contain transition-opacity duration-150 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
+      >
+        <source src="/video/splash.mp4" type="video/mp4" />
+      </video>
+
+      {/* Loading indicator while video loads */}
+      {!videoReady && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-10 h-10 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
         </div>
       )}
 
-      {/* Image phase */}
-      {showImage && (
-        <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${isExiting ? 'opacity-0' : 'opacity-100'}`}>
-          <img
-            src={splashBackground}
-            alt="GymPro - Sua evolução começa aqui"
-            className="w-full h-full object-cover"
-            style={{
-              filter: 'brightness(1.1) contrast(1.05)',
-            }}
-          />
-          
-          {/* Overlay gradient for better text visibility */}
-          <div 
-            className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.4) 100%)'
-            }}
-          />
-
-          {/* Tap to continue text */}
-          <p className="absolute bottom-20 text-white/80 text-sm tracking-widest uppercase animate-pulse">
-            Toque para continuar
-          </p>
-        </div>
-      )}
-
-      {/* Progress bar at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
+      {/* Minimal progress bar */}
+      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black/50">
         <div
-          className="h-full bg-gradient-to-r from-orange-600 via-orange-500 to-yellow-500 transition-[width] duration-100"
+          className="h-full bg-orange-500 transition-[width] duration-75"
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      {/* Skip hint - show quickly */}
-      {!showImage && isLoaded && (
-        <p className="absolute bottom-6 text-white/60 text-xs tracking-wide animate-fade-in">
+      {/* Skip hint */}
+      {videoReady && (
+        <p className="absolute bottom-4 text-white/50 text-xs">
           Toque para pular
         </p>
       )}
     </div>
   );
-};
+});
+
+VideoSplashScreen.displayName = 'VideoSplashScreen';
 
 export default VideoSplashScreen;
