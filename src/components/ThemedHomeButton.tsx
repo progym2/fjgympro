@@ -1,9 +1,9 @@
-import React, { memo, useMemo, useCallback } from 'react';
+import React, { memo, useMemo, useCallback, useState } from 'react';
 import { LucideIcon, Dumbbell, User, Shield, Heart, Flame, Waves, TreePine, Zap, Sparkles, Trophy, Target, Activity } from 'lucide-react';
 import { useTheme, SportTheme } from '@/contexts/ThemeContext';
 import { useAudio } from '@/contexts/AudioContext';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ThemedHomeButtonProps {
   onClick: () => void;
@@ -11,6 +11,12 @@ interface ThemedHomeButtonProps {
   label: string;
   color?: 'primary' | 'secondary' | 'accent';
   disabled?: boolean;
+}
+
+interface RippleType {
+  id: number;
+  x: number;
+  y: number;
 }
 
 // Ícones fitness por tema e tipo de botão
@@ -28,6 +34,70 @@ const getFitnessIcon = (theme: SportTheme, color: 'primary' | 'secondary' | 'acc
     amoled: { primary: User, secondary: Dumbbell, accent: Shield },
   };
   return iconMap[theme]?.[color] || User;
+};
+
+// Cores do ripple por tema
+const getRippleColor = (theme: SportTheme): string => {
+  const colors: Record<SportTheme, string> = {
+    fire: 'rgba(255, 107, 53, 0.5)',
+    ocean: 'rgba(0, 212, 255, 0.5)',
+    forest: 'rgba(16, 185, 129, 0.5)',
+    lightning: 'rgba(251, 191, 36, 0.5)',
+    galaxy: 'rgba(168, 85, 247, 0.5)',
+    iron: 'rgba(148, 163, 184, 0.5)',
+    blood: 'rgba(239, 68, 68, 0.5)',
+    neon: 'rgba(244, 114, 182, 0.5)',
+    gold: 'rgba(251, 191, 36, 0.5)',
+    amoled: 'rgba(107, 114, 128, 0.5)',
+  };
+  return colors[theme] || colors.fire;
+};
+
+// Animação do ícone por tema
+const getIconAnimation = (theme: SportTheme): { hover: { scale?: number | number[]; rotate?: number | number[]; y?: number | number[]; x?: number[]; opacity?: number[]; filter?: string }; transition: object } => {
+  const animations: Record<SportTheme, { hover: { scale?: number | number[]; rotate?: number | number[]; y?: number | number[]; x?: number[]; opacity?: number[]; filter?: string }; transition: object }> = {
+    fire: { 
+      hover: { scale: 1.2, rotate: [0, -10, 10, 0], y: -2 },
+      transition: { duration: 0.4 }
+    },
+    ocean: { 
+      hover: { scale: 1.15, y: [-2, 2, -2], x: [0, 1, -1, 0] },
+      transition: { duration: 0.6 }
+    },
+    forest: { 
+      hover: { scale: 1.1, rotate: [0, 5, -5, 0] },
+      transition: { duration: 0.5 }
+    },
+    lightning: { 
+      hover: { scale: [1, 1.3, 1.1], opacity: [1, 0.8, 1] },
+      transition: { duration: 0.2 }
+    },
+    galaxy: { 
+      hover: { scale: 1.2, rotate: 180 },
+      transition: { duration: 0.5 }
+    },
+    iron: { 
+      hover: { scale: 1.1, y: -3 },
+      transition: { duration: 0.2, type: 'spring', stiffness: 400 }
+    },
+    blood: { 
+      hover: { scale: [1, 1.2, 1.1] },
+      transition: { duration: 0.4 }
+    },
+    neon: { 
+      hover: { scale: 1.15 },
+      transition: { duration: 0.3 }
+    },
+    gold: { 
+      hover: { scale: 1.15, rotate: [0, 10, -10, 0], y: -2 },
+      transition: { duration: 0.4 }
+    },
+    amoled: { 
+      hover: { scale: 1.08, opacity: [1, 0.9, 1] },
+      transition: { duration: 0.2 }
+    },
+  };
+  return animations[theme] || animations.fire;
 };
 
 // Estilos únicos por tema
@@ -85,7 +155,6 @@ const getButtonStyle = (theme: SportTheme, color: 'primary' | 'secondary' | 'acc
   const gradient = colorGradients[color][theme] || colorGradients[color].fire;
 
   const styles: Record<SportTheme, ButtonStyle> = {
-    // Fire: Hexagonal com bordas afiadas
     fire: {
       shape: 'rounded-lg [clip-path:polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]',
       bg: `bg-gradient-to-br ${gradient}`,
@@ -96,7 +165,6 @@ const getButtonStyle = (theme: SportTheme, color: 'primary' | 'secondary' | 'acc
       hoverEffect: 'hover:shadow-orange-500/50 hover:scale-105',
       containerClass: 'w-14 h-14',
     },
-    // Ocean: Pill suave com ondas
     ocean: {
       shape: 'rounded-full',
       bg: `bg-gradient-to-t ${gradient}`,
@@ -107,7 +175,6 @@ const getButtonStyle = (theme: SportTheme, color: 'primary' | 'secondary' | 'acc
       hoverEffect: 'hover:ring-cyan-400/40 hover:scale-102',
       containerClass: 'w-12 h-12',
     },
-    // Forest: Quadrado com cantos arredondados orgânicos
     forest: {
       shape: 'rounded-2xl',
       bg: `bg-gradient-to-br ${gradient}`,
@@ -118,7 +185,6 @@ const getButtonStyle = (theme: SportTheme, color: 'primary' | 'secondary' | 'acc
       hoverEffect: 'hover:shadow-emerald-500/40 hover:scale-103',
       containerClass: 'w-13 h-13',
     },
-    // Lightning: Losango/Diamond rotacionado
     lightning: {
       shape: 'rounded-xl rotate-0',
       bg: `bg-gradient-to-r ${gradient}`,
@@ -129,7 +195,6 @@ const getButtonStyle = (theme: SportTheme, color: 'primary' | 'secondary' | 'acc
       hoverEffect: 'hover:shadow-yellow-400/60 hover:scale-108',
       containerClass: 'w-13 h-13 [clip-path:polygon(50%_0%,100%_50%,50%_100%,0%_50%)]',
     },
-    // Galaxy: Círculo com halo
     galaxy: {
       shape: 'rounded-full',
       bg: `bg-gradient-to-br ${gradient}`,
@@ -140,7 +205,6 @@ const getButtonStyle = (theme: SportTheme, color: 'primary' | 'secondary' | 'acc
       hoverEffect: 'hover:ring-purple-500/30 hover:scale-105',
       containerClass: 'w-14 h-14',
     },
-    // Iron: Retangular industrial
     iron: {
       shape: 'rounded-md',
       bg: `bg-gradient-to-b ${gradient}`,
@@ -151,7 +215,6 @@ const getButtonStyle = (theme: SportTheme, color: 'primary' | 'secondary' | 'acc
       hoverEffect: 'hover:shadow-slate-500/50 hover:scale-102',
       containerClass: 'w-14 h-12',
     },
-    // Blood: Coração/orgânico
     blood: {
       shape: 'rounded-3xl',
       bg: `bg-gradient-to-br ${gradient}`,
@@ -162,7 +225,6 @@ const getButtonStyle = (theme: SportTheme, color: 'primary' | 'secondary' | 'acc
       hoverEffect: 'hover:shadow-red-500/60 hover:scale-105',
       containerClass: 'w-13 h-14',
     },
-    // Neon: Bordas brilhantes
     neon: {
       shape: 'rounded-xl',
       bg: `bg-gradient-to-r ${gradient}`,
@@ -173,7 +235,6 @@ const getButtonStyle = (theme: SportTheme, color: 'primary' | 'secondary' | 'acc
       hoverEffect: 'hover:shadow-pink-500/70 hover:border-pink-300/70 hover:scale-105',
       containerClass: 'w-13 h-13',
     },
-    // Gold: Premium elegante
     gold: {
       shape: 'rounded-xl',
       bg: `bg-gradient-to-br ${gradient}`,
@@ -184,7 +245,6 @@ const getButtonStyle = (theme: SportTheme, color: 'primary' | 'secondary' | 'acc
       hoverEffect: 'hover:shadow-amber-400/60 hover:scale-103',
       containerClass: 'w-14 h-14',
     },
-    // Amoled: Minimalista escuro
     amoled: {
       shape: 'rounded-lg',
       bg: `bg-gradient-to-b ${gradient}`,
@@ -208,27 +268,58 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
 }) => {
   const { currentTheme, hoverEffectsEnabled } = useTheme();
   const { playHoverSound, playClickSound } = useAudio();
+  const [ripples, setRipples] = useState<RippleType[]>([]);
+  const [isHovered, setIsHovered] = useState(false);
+  const rippleIdRef = React.useRef(0);
   
   const Icon = useMemo(() => getFitnessIcon(currentTheme, color), [currentTheme, color]);
   const style = useMemo(() => getButtonStyle(currentTheme, color), [currentTheme, color]);
+  const rippleColor = useMemo(() => getRippleColor(currentTheme), [currentTheme]);
+  const iconAnimation = useMemo(() => getIconAnimation(currentTheme), [currentTheme]);
 
-  const handleClick = useCallback(() => {
+  const createRipple = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+    const button = event.currentTarget;
+    const rect = button.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    const newRipple: RippleType = {
+      id: rippleIdRef.current++,
+      x,
+      y,
+    };
+    
+    setRipples(prev => [...prev, newRipple]);
+    
+    setTimeout(() => {
+      setRipples(prev => prev.filter(r => r.id !== newRipple.id));
+    }, 600);
+  }, []);
+
+  const handleClick = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     if (!disabled) {
+      createRipple(event);
       playClickSound();
       onClick();
     }
-  }, [disabled, playClickSound, onClick]);
+  }, [disabled, createRipple, playClickSound, onClick]);
 
-  const handleHover = useCallback(() => {
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
     if (hoverEffectsEnabled && !disabled) {
       playHoverSound();
     }
   }, [hoverEffectsEnabled, disabled, playHoverSound]);
 
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+  }, []);
+
   return (
     <motion.button
       onClick={handleClick}
-      onMouseEnter={handleHover}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       disabled={disabled}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -243,7 +334,7 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
     >
       {/* Button container with theme-specific style */}
       <div className={cn(
-        'relative flex items-center justify-center',
+        'relative flex items-center justify-center overflow-hidden',
         'transition-all duration-200',
         style.containerClass,
         style.shape,
@@ -252,12 +343,38 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
         style.shadow,
         hoverEffectsEnabled && style.hoverEffect
       )}>
+        {/* Ripple effects */}
+        <AnimatePresence>
+          {ripples.map(ripple => (
+            <motion.span
+              key={ripple.id}
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                left: ripple.x,
+                top: ripple.y,
+                backgroundColor: rippleColor,
+                transform: 'translate(-50%, -50%)',
+              }}
+              initial={{ width: 0, height: 0, opacity: 0.8 }}
+              animate={{ width: 120, height: 120, opacity: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            />
+          ))}
+        </AnimatePresence>
+
         {/* Shine effect */}
         <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white/15 pointer-events-none" 
              style={{ clipPath: 'inherit', borderRadius: 'inherit' }} />
         
-        {/* Icon */}
-        <Icon className={cn(style.iconSize, 'text-white drop-shadow-sm relative z-10')} strokeWidth={2.5} />
+        {/* Animated Icon */}
+        <motion.div
+          animate={isHovered && hoverEffectsEnabled ? iconAnimation.hover : { scale: 1, rotate: 0 }}
+          transition={iconAnimation.transition}
+          className="relative z-10"
+        >
+          <Icon className={cn(style.iconSize, 'text-white drop-shadow-sm')} strokeWidth={2.5} />
+        </motion.div>
       </div>
 
       {/* Label */}
