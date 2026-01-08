@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Save, Calculator, Shield, Award, Key, Info } from 'lucide-react';
+import { User, Save, Calculator, Shield, Award, Key, Info, Database } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -15,6 +15,7 @@ import ClientPageHeader from './ClientPageHeader';
 import ProfilePhotoUploader from '@/components/shared/ProfilePhotoUploader';
 import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import CacheStatusIndicator from '@/components/shared/CacheStatusIndicator';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
@@ -477,6 +478,15 @@ const Profile: React.FC = () => {
               <span>≥ 30</span>
             </div>
           </div>
+        </div>
+
+        {/* Cache & Offline Settings */}
+        <div className="bg-card/80 backdrop-blur-md rounded-xl p-6 border border-border/50 h-fit">
+          <div className="flex items-center gap-2 mb-4">
+            <Database className="w-5 h-5 text-primary" />
+            <h3 className="font-bebas text-xl tracking-wider">DADOS OFFLINE</h3>
+          </div>
+          <CacheStatusIndicator showActions={true} />
         </div>
       </div>
       </div>
