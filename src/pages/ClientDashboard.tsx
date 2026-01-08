@@ -60,6 +60,7 @@ const WidgetRestoreButton = lazy(() => import('@/components/shared/WidgetRestore
 const FloatingLinkRequests = lazy(() => import('@/components/client/FloatingLinkRequests'));
 const BackupRestorePanel = lazy(() => import('@/components/shared/BackupRestorePanel'));
 const SyncSettings = lazy(() => import('@/components/client/SyncSettings'));
+const OfflineDownload = lazy(() => import('@/components/client/OfflineDownload'));
 
 // Minimal loading fallback
 const ComponentLoader = memo(() => (
@@ -95,6 +96,9 @@ const MENU_ITEMS = [
   { icon: UserPlus, label: 'Escanear Instrutor', path: 'scan-instructor', color: 'text-green-500' },
   { icon: History, label: 'Histórico Vínculos', path: 'link-history', color: 'text-indigo-500' },
   { icon: UserMinus, label: 'Desvincular', path: 'unlink', color: 'text-red-500' },
+  
+  // Offline & Sync
+  { icon: HardDrive, label: 'Download Offline', path: 'offline-download', color: 'text-emerald-500' },
   { icon: HardDrive, label: 'Backup & Sync', path: 'sync', color: 'text-slate-500' },
 ] as const;
 
@@ -298,6 +302,7 @@ const ClientDashboard: React.FC = () => {
               <Route path="link-history" element={<LinkHistory />} />
               <Route path="backup" element={<BackupRestorePanel />} />
               <Route path="sync" element={<SyncSettings />} />
+              <Route path="offline-download" element={<OfflineDownload />} />
             </Routes>
           </Suspense>
         </main>

@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import AnimatedLogo from '@/components/AnimatedLogo';
+// Removed AnimatedLogo for performance
 import PanelSwitcher from '@/components/PanelSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
 import ProfileAvatar from '@/components/shared/ProfileAvatar';
