@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Phone, Mail, ShoppingCart } from 'lucide-react';
+import { Lock, Phone, Mail, ShoppingCart, Home, Timer } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
@@ -11,10 +11,32 @@ const LicenseExpired: React.FC = () => {
   const navigate = useNavigate();
   const { signOut, license } = useAuth();
   const { playClickSound } = useAudio();
+  const [countdown, setCountdown] = useState(30);
+
+  // Auto redirect after 30 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleGoHome();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const handleLogout = async () => {
     playClickSound();
     await signOut();
+    navigate('/');
+  };
+
+  const handleGoHome = () => {
+    playClickSound();
     navigate('/');
   };
 
@@ -100,7 +122,7 @@ const LicenseExpired: React.FC = () => {
           </div>
 
           {/* Contact Info */}
-          <div className="pt-6 border-t border-border/50 space-y-3">
+          <div className="pt-4 border-t border-border/50 space-y-3">
             <p className="text-sm text-muted-foreground">Entre em contato:</p>
             <div className="flex flex-col items-center gap-2">
               <a
@@ -113,14 +135,31 @@ const LicenseExpired: React.FC = () => {
             </div>
           </div>
 
-          {/* Back Button */}
+          {/* Countdown timer */}
+          <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm py-2">
+            <Timer size={16} />
+            <span>Redirecionando em {countdown}s...</span>
+          </div>
+
+          {/* Go Home Button */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleGoHome}
+            className="w-full py-3 bg-primary/20 text-primary font-medium rounded-lg hover:bg-primary/30 transition-colors flex items-center justify-center gap-2"
+          >
+            <Home size={18} />
+            Ir para Tela Inicial
+          </motion.button>
+
+          {/* Logout Button */}
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleLogout}
-            className="w-full py-3 bg-muted text-muted-foreground font-medium rounded-lg hover:bg-muted/80 transition-colors"
+            className="w-full py-2 text-muted-foreground text-sm hover:text-foreground transition-colors"
           >
-            Voltar à Tela Inicial
+            Sair da Conta
           </motion.button>
         </div>
       </motion.div>

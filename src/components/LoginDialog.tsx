@@ -893,7 +893,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
               <div className="space-y-2">
                 <label className="text-xs font-medium text-foreground flex items-center gap-2">
                   <User size={12} className="text-primary" />
-                  Usuário
+                  Usuário ou CPF
                 </label>
                 <div className="relative">
                   <input
@@ -905,15 +905,19 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
                       const pasted = e.clipboardData.getData('text').trim();
                       setUsername(pasted);
                     }}
-                    placeholder="Digite seu usuário"
+                    placeholder="Digite seu usuário ou CPF"
                     disabled={isLoading}
                     autoComplete="username"
                     autoCapitalize="off"
                     autoCorrect="off"
                     spellCheck={false}
+                    inputMode="text"
                     className="w-full px-4 py-3 bg-background/80 border border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none disabled:opacity-50 placeholder:text-muted-foreground/50"
                   />
                 </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Você pode usar seu nome de usuário ou CPF (apenas números)
+                </p>
               </div>
 
               {/* Password Field */}
