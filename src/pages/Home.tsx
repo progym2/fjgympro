@@ -173,83 +173,89 @@ const Home: React.FC = memo(() => {
         <SimpleParticles />
       </Suspense>
 
-      {/* Content - centered and compact */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center px-4">
-        {/* Logo - with fade-in and pulse animation */}
-        <motion.div
-          initial={{ opacity: 0, y: -20, scale: 0.95 }}
-          animate={{ 
-            opacity: isExiting ? 0 : 1, 
-            y: isExiting ? -30 : 0, 
-            scale: isExiting ? 0.9 : 1 
-          }}
-          transition={{ duration: isExiting ? 0.25 : 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
+      {/* Content - centered with better spacing */}
+      <div className="relative z-10 h-full flex flex-col items-center justify-between px-4 sm:px-6 md:px-8 py-16 sm:py-20 md:py-24">
+        {/* Top spacer */}
+        <div className="flex-shrink-0" />
+
+        {/* Center content */}
+        <div className="flex flex-col items-center">
+          {/* Logo - with fade-in and pulse animation */}
           <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ 
-              scale: [1, 1.02, 1],
-              opacity: [1, 0.9, 1]
+              opacity: isExiting ? 0 : 1, 
+              y: isExiting ? -30 : 0, 
+              scale: isExiting ? 0.9 : 1 
             }}
-            transition={{ 
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
+            transition={{ duration: isExiting ? 0.25 : 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <SimpleLogo size="lg" showGlow />
-          </motion.div>
-        </motion.div>
-
-        {/* Clock - with delayed fade-in and exit animation */}
-        <motion.div 
-          className="mt-4"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ 
-            opacity: isExiting ? 0 : 1, 
-            y: isExiting ? -20 : 0 
-          }}
-          transition={{ 
-            duration: isExiting ? 0.2 : 0.5, 
-            delay: isExiting ? 0.05 : 0.15, 
-            ease: [0.25, 0.46, 0.45, 0.94] 
-          }}
-        >
-          <DigitalClock />
-        </motion.div>
-
-        {/* Panel Buttons - modern cards with staggered animation */}
-        <div className="mt-10 flex gap-6 sm:gap-10 md:gap-14">
-          {[
-            { panel: 'client' as const, icon: User, label: 'CLIENTE', color: 'primary' as const },
-            { panel: 'instructor' as const, icon: Dumbbell, label: 'INSTRUTOR', color: 'secondary' as const },
-            { panel: 'admin' as const, icon: Shield, label: 'GERENTE', color: 'accent' as const },
-          ].map((item, index) => (
             <motion.div
-              key={item.panel}
-              initial={{ opacity: 0, y: 30, scale: 0.9 }}
               animate={{ 
-                opacity: isExiting ? 0 : 1, 
-                y: isExiting ? 40 : 0, 
-                scale: isExiting ? 0.85 : 1 
+                scale: [1, 1.02, 1],
+                opacity: [1, 0.9, 1]
               }}
-              transition={{
-                duration: isExiting ? 0.25 : 0.5,
-                delay: isExiting ? index * 0.05 : 0.35 + index * 0.12,
-                ease: [0.25, 0.46, 0.45, 0.94]
+              transition={{ 
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut"
               }}
             >
-              <ThemedHomeButton
-                onClick={() => handlePanelClick(item.panel)}
-                icon={item.icon}
-                label={item.label}
-                color={item.color}
-              />
+              <SimpleLogo size="lg" showGlow />
             </motion.div>
-          ))}
+          </motion.div>
+
+          {/* Clock - with delayed fade-in and exit animation */}
+          <motion.div 
+            className="mt-4 sm:mt-6 md:mt-8"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ 
+              opacity: isExiting ? 0 : 1, 
+              y: isExiting ? -20 : 0 
+            }}
+            transition={{ 
+              duration: isExiting ? 0.2 : 0.5, 
+              delay: isExiting ? 0.05 : 0.15, 
+              ease: [0.25, 0.46, 0.45, 0.94] 
+            }}
+          >
+            <DigitalClock />
+          </motion.div>
+
+          {/* Panel Buttons - larger with more spacing */}
+          <div className="mt-8 sm:mt-12 md:mt-16 flex gap-8 sm:gap-12 md:gap-16 lg:gap-20">
+            {[
+              { panel: 'client' as const, icon: User, label: 'CLIENTE', color: 'primary' as const },
+              { panel: 'instructor' as const, icon: Dumbbell, label: 'INSTRUTOR', color: 'secondary' as const },
+              { panel: 'admin' as const, icon: Shield, label: 'GERENTE', color: 'accent' as const },
+            ].map((item, index) => (
+              <motion.div
+                key={item.panel}
+                initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                animate={{ 
+                  opacity: isExiting ? 0 : 1, 
+                  y: isExiting ? 40 : 0, 
+                  scale: isExiting ? 0.85 : 1 
+                }}
+                transition={{
+                  duration: isExiting ? 0.25 : 0.5,
+                  delay: isExiting ? index * 0.05 : 0.35 + index * 0.12,
+                  ease: [0.25, 0.46, 0.45, 0.94]
+                }}
+              >
+                <ThemedHomeButton
+                  onClick={() => handlePanelClick(item.panel)}
+                  icon={item.icon}
+                  label={item.label}
+                  color={item.color}
+                />
+              </motion.div>
+            ))}
+          </div>
         </div>
 
-        {/* Footer inline */}
-        <div className="mt-10">
+        {/* Footer - at bottom */}
+        <div className="flex-shrink-0">
           <AppFooter />
         </div>
       </div>
