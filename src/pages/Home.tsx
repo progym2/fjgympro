@@ -60,36 +60,64 @@ const Home: React.FC = memo(() => {
     }
   }, [licenseExpired, navigate]);
 
+  const playPanelTransitionSound = useCallback((panel: 'client' | 'instructor' | 'admin') => {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    // Different sound characteristics for each panel
+    const soundConfigs = {
+      client: {
+        startFreq: 600,
+        endFreq: 300,
+        type: 'sine' as OscillatorType,
+        duration: 0.12,
+        volume: 0.07
+      },
+      instructor: {
+        startFreq: 900,
+        endFreq: 400,
+        type: 'triangle' as OscillatorType,
+        duration: 0.15,
+        volume: 0.06
+      },
+      admin: {
+        startFreq: 1200,
+        endFreq: 500,
+        type: 'square' as OscillatorType,
+        duration: 0.18,
+        volume: 0.04
+      }
+    };
+    
+    const config = soundConfigs[panel];
+    
+    oscillator.frequency.setValueAtTime(config.startFreq, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(config.endFreq, audioContext.currentTime + config.duration);
+    
+    gainNode.gain.setValueAtTime(config.volume, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + config.duration);
+    
+    oscillator.type = config.type;
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + config.duration);
+  }, []);
+
   const handlePanelClick = useCallback((panel: 'client' | 'instructor' | 'admin') => {
     playClickSound();
     setSelectedPanel(panel);
     stopMusicImmediately();
     setIsExiting(true);
-    // Delay dialog opening for exit animation and play transition sound
+    
     setTimeout(() => {
-      // Play transition/whoosh sound when dialog opens
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      // Sweep frequency for whoosh effect
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.15);
-      
-      gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
-      
-      oscillator.type = 'sine';
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.15);
-      
+      playPanelTransitionSound(panel);
       setLoginDialogOpen(true);
       setIsExiting(false);
     }, 300);
-  }, [playClickSound, stopMusicImmediately]);
+  }, [playClickSound, stopMusicImmediately, playPanelTransitionSound]);
 
   const handleLoginSuccess = useCallback((role: string) => {
     setLoginDialogOpen(false);
