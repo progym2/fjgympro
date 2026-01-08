@@ -1,5 +1,5 @@
 import React, { memo, useMemo, useCallback, useState, useRef } from 'react';
-import { LucideIcon, Dumbbell, User, Shield, Heart, Flame, Waves, TreePine, Zap, Sparkles, Trophy, Target, Activity, Bike, Mountain, Sword, Crown, Rocket, Star, Timer, Gauge, Footprints, PersonStanding } from 'lucide-react';
+import { LucideIcon, Dumbbell, User, Shield, Heart, Flame, Waves, TreePine, Zap, Sparkles, Trophy, Target, Activity, Crown } from 'lucide-react';
 import { useTheme, SportTheme } from '@/contexts/ThemeContext';
 import { useAudio } from '@/contexts/AudioContext';
 import { cn } from '@/lib/utils';
@@ -19,297 +19,107 @@ interface RippleType {
   y: number;
 }
 
-interface ParticleType {
-  id: number;
-  x: number;
-  y: number;
-  angle: number;
-  velocity: number;
-  size: number;
-  color: string;
-}
-
-// Ícones esportivos modernos por tema e tipo de botão
-const getFitnessIcon = (theme: SportTheme, color: 'primary' | 'secondary' | 'accent'): LucideIcon => {
-  const iconMap: Record<SportTheme, Record<string, LucideIcon>> = {
-    fire: { primary: PersonStanding, secondary: Timer, accent: Crown },
-    ocean: { primary: PersonStanding, secondary: Gauge, accent: Crown },
-    forest: { primary: PersonStanding, secondary: Footprints, accent: Crown },
-    lightning: { primary: PersonStanding, secondary: Rocket, accent: Crown },
-    galaxy: { primary: PersonStanding, secondary: Star, accent: Crown },
-    iron: { primary: PersonStanding, secondary: Dumbbell, accent: Crown },
-    blood: { primary: PersonStanding, secondary: Heart, accent: Crown },
-    neon: { primary: PersonStanding, secondary: Sparkles, accent: Crown },
-    gold: { primary: PersonStanding, secondary: Trophy, accent: Crown },
-    amoled: { primary: PersonStanding, secondary: Target, accent: Crown },
-  };
-  return iconMap[theme]?.[color] || User;
-};
-
-// Cores do ripple por tema
-const getRippleColor = (theme: SportTheme): string => {
-  const colors: Record<SportTheme, string> = {
-    fire: 'rgba(255, 107, 53, 0.6)',
-    ocean: 'rgba(0, 212, 255, 0.6)',
-    forest: 'rgba(16, 185, 129, 0.6)',
-    lightning: 'rgba(251, 191, 36, 0.6)',
-    galaxy: 'rgba(168, 85, 247, 0.6)',
-    iron: 'rgba(148, 163, 184, 0.6)',
-    blood: 'rgba(239, 68, 68, 0.6)',
-    neon: 'rgba(244, 114, 182, 0.6)',
-    gold: 'rgba(251, 191, 36, 0.6)',
-    amoled: 'rgba(107, 114, 128, 0.6)',
-  };
-  return colors[theme] || colors.fire;
-};
-
-// Cores das partículas por tema
-const getParticleColors = (theme: SportTheme): string[] => {
-  const colors: Record<SportTheme, string[]> = {
-    fire: ['#ff6b35', '#ff8c42', '#ffd700', '#ff4500', '#ff7f50'],
-    ocean: ['#00d4ff', '#00bcd4', '#4dd0e1', '#0097a7', '#26c6da'],
-    forest: ['#10b981', '#22c55e', '#4ade80', '#16a34a', '#86efac'],
-    lightning: ['#fbbf24', '#f59e0b', '#fcd34d', '#d97706', '#fef08a'],
-    galaxy: ['#a855f7', '#c084fc', '#e879f9', '#9333ea', '#d946ef'],
-    iron: ['#94a3b8', '#cbd5e1', '#64748b', '#e2e8f0', '#475569'],
-    blood: ['#ef4444', '#f87171', '#dc2626', '#fca5a5', '#b91c1c'],
-    neon: ['#f472b6', '#ec4899', '#db2777', '#f9a8d4', '#be185d'],
-    gold: ['#fbbf24', '#f59e0b', '#d97706', '#fcd34d', '#b45309'],
-    amoled: ['#6b7280', '#9ca3af', '#4b5563', '#d1d5db', '#374151'],
-  };
-  return colors[theme] || colors.fire;
-};
-
-// Cores do glow pulsante por tema
-const getGlowColor = (theme: SportTheme): { dim: string; bright: string } => {
-  const colors: Record<SportTheme, { dim: string; bright: string }> = {
-    fire: { dim: '0 0 20px 2px rgba(255, 107, 53, 0.25)', bright: '0 0 40px 10px rgba(255, 107, 53, 0.5)' },
-    ocean: { dim: '0 0 20px 2px rgba(0, 212, 255, 0.25)', bright: '0 0 40px 10px rgba(0, 212, 255, 0.5)' },
-    forest: { dim: '0 0 20px 2px rgba(16, 185, 129, 0.25)', bright: '0 0 40px 10px rgba(16, 185, 129, 0.5)' },
-    lightning: { dim: '0 0 20px 2px rgba(251, 191, 36, 0.3)', bright: '0 0 45px 12px rgba(251, 191, 36, 0.6)' },
-    galaxy: { dim: '0 0 20px 2px rgba(168, 85, 247, 0.25)', bright: '0 0 40px 10px rgba(168, 85, 247, 0.5)' },
-    iron: { dim: '0 0 15px 2px rgba(148, 163, 184, 0.2)', bright: '0 0 30px 8px rgba(148, 163, 184, 0.4)' },
-    blood: { dim: '0 0 20px 2px rgba(239, 68, 68, 0.3)', bright: '0 0 40px 10px rgba(239, 68, 68, 0.55)' },
-    neon: { dim: '0 0 25px 3px rgba(244, 114, 182, 0.35)', bright: '0 0 50px 14px rgba(244, 114, 182, 0.65)' },
-    gold: { dim: '0 0 20px 2px rgba(251, 191, 36, 0.3)', bright: '0 0 40px 10px rgba(251, 191, 36, 0.55)' },
-    amoled: { dim: '0 0 12px 2px rgba(107, 114, 128, 0.15)', bright: '0 0 25px 6px rgba(107, 114, 128, 0.35)' },
-  };
-  return colors[theme] || colors.fire;
-};
-
-// Animação do ícone por tema
-const getIconAnimation = (theme: SportTheme): { hover: { scale?: number | number[]; rotate?: number | number[]; y?: number | number[]; x?: number[]; opacity?: number[]; filter?: string }; transition: object } => {
-  const animations: Record<SportTheme, { hover: { scale?: number | number[]; rotate?: number | number[]; y?: number | number[]; x?: number[]; opacity?: number[]; filter?: string }; transition: object }> = {
-    fire: { 
-      hover: { scale: 1.25, rotate: [0, -8, 8, 0], y: -3 },
-      transition: { duration: 0.4 }
-    },
-    ocean: { 
-      hover: { scale: 1.2, y: [-3, 3, -3], x: [0, 2, -2, 0] },
-      transition: { duration: 0.6 }
-    },
-    forest: { 
-      hover: { scale: 1.15, rotate: [0, 5, -5, 0] },
-      transition: { duration: 0.5 }
-    },
-    lightning: { 
-      hover: { scale: [1, 1.35, 1.2], opacity: [1, 0.8, 1] },
-      transition: { duration: 0.2 }
-    },
-    galaxy: { 
-      hover: { scale: 1.25, rotate: 360 },
-      transition: { duration: 0.6 }
-    },
-    iron: { 
-      hover: { scale: 1.15, y: -4 },
-      transition: { duration: 0.2, type: 'spring', stiffness: 400 }
-    },
-    blood: { 
-      hover: { scale: [1, 1.25, 1.15] },
-      transition: { duration: 0.4 }
-    },
-    neon: { 
-      hover: { scale: 1.2 },
-      transition: { duration: 0.3 }
-    },
-    gold: { 
-      hover: { scale: 1.2, rotate: [0, 12, -12, 0], y: -3 },
-      transition: { duration: 0.4 }
-    },
-    amoled: { 
-      hover: { scale: 1.1, opacity: [1, 0.85, 1] },
-      transition: { duration: 0.2 }
-    },
-  };
-  return animations[theme] || animations.fire;
-};
-
-// Estilos únicos por tema - TAMANHOS RESPONSIVOS PARA DESKTOP E MOBILE
-type ButtonStyle = {
-  shape: string;
-  bg: string;
-  border: string;
-  shadow: string;
-  iconSize: string;
-  labelStyle: string;
-  hoverEffect: string;
-  containerClass: string;
-};
-
-const getButtonStyle = (theme: SportTheme, color: 'primary' | 'secondary' | 'accent'): ButtonStyle => {
-  const colorGradients = {
-    primary: {
-      fire: 'from-orange-500 via-red-500 to-orange-600',
-      ocean: 'from-cyan-400 via-blue-500 to-cyan-600',
-      forest: 'from-emerald-400 via-green-500 to-emerald-600',
-      lightning: 'from-yellow-400 via-amber-500 to-yellow-600',
-      galaxy: 'from-purple-400 via-violet-500 to-purple-600',
-      iron: 'from-slate-400 via-zinc-500 to-slate-600',
-      blood: 'from-red-400 via-rose-500 to-red-600',
-      neon: 'from-pink-400 via-fuchsia-500 to-pink-600',
-      gold: 'from-yellow-400 via-amber-500 to-yellow-600',
-      amoled: 'from-gray-500 via-zinc-600 to-gray-700',
-    },
-    secondary: {
-      fire: 'from-emerald-400 via-teal-500 to-emerald-600',
-      ocean: 'from-teal-400 via-cyan-500 to-teal-600',
-      forest: 'from-lime-400 via-green-500 to-lime-600',
-      lightning: 'from-orange-400 via-amber-500 to-orange-600',
-      galaxy: 'from-pink-400 via-purple-500 to-pink-600',
-      iron: 'from-zinc-400 via-slate-500 to-zinc-600',
-      blood: 'from-rose-400 via-red-500 to-rose-600',
-      neon: 'from-violet-400 via-purple-500 to-violet-600',
-      gold: 'from-amber-400 via-orange-500 to-amber-600',
-      amoled: 'from-zinc-500 via-gray-600 to-zinc-700',
-    },
-    accent: {
-      fire: 'from-blue-400 via-indigo-500 to-blue-600',
-      ocean: 'from-indigo-400 via-purple-500 to-indigo-600',
-      forest: 'from-teal-400 via-emerald-500 to-teal-600',
-      lightning: 'from-red-400 via-orange-500 to-red-600',
-      galaxy: 'from-indigo-400 via-blue-500 to-indigo-600',
-      iron: 'from-gray-400 via-zinc-500 to-gray-600',
-      blood: 'from-pink-400 via-rose-500 to-pink-600',
-      neon: 'from-cyan-400 via-blue-500 to-cyan-600',
-      gold: 'from-orange-400 via-yellow-500 to-orange-600',
-      amoled: 'from-slate-500 via-gray-600 to-slate-700',
-    },
-  };
-
-  const gradient = colorGradients[color][theme] || colorGradients[color].fire;
-
-  // Tamanho responsivo otimizado - mais compacto
-  const baseContainerClass = 'w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32';
-  const baseIconSize = 'w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14';
-
-  const styles: Record<SportTheme, ButtonStyle> = {
+// Cores do tema para cada botão
+const getThemeColors = (theme: SportTheme, color: 'primary' | 'secondary' | 'accent') => {
+  const themeColors: Record<SportTheme, Record<string, { main: string; glow: string; text: string; border: string; accent: string }>> = {
     fire: {
-      shape: 'rounded-2xl',
-      bg: `bg-gradient-to-br ${gradient}`,
-      border: 'border-2 border-orange-300/40',
-      shadow: 'shadow-2xl shadow-orange-500/40',
-      iconSize: baseIconSize,
-      labelStyle: 'text-orange-100 font-bold',
-      hoverEffect: 'hover:shadow-orange-500/60 hover:scale-105',
-      containerClass: baseContainerClass,
+      primary: { main: 'from-orange-500 to-red-600', glow: 'rgba(255,107,53,0.5)', text: 'text-orange-100', border: 'border-orange-400/50', accent: '#ff6b35' },
+      secondary: { main: 'from-emerald-500 to-teal-600', glow: 'rgba(16,185,129,0.5)', text: 'text-emerald-100', border: 'border-emerald-400/50', accent: '#10b981' },
+      accent: { main: 'from-blue-500 to-indigo-600', glow: 'rgba(59,130,246,0.5)', text: 'text-blue-100', border: 'border-blue-400/50', accent: '#3b82f6' },
     },
     ocean: {
-      shape: 'rounded-full',
-      bg: `bg-gradient-to-t ${gradient}`,
-      border: 'border-2 border-cyan-200/50 ring-2 ring-cyan-400/25',
-      shadow: 'shadow-xl shadow-cyan-500/30',
-      iconSize: baseIconSize,
-      labelStyle: 'text-cyan-100 font-semibold',
-      hoverEffect: 'hover:ring-cyan-400/50 hover:scale-103',
-      containerClass: baseContainerClass,
+      primary: { main: 'from-cyan-400 to-blue-600', glow: 'rgba(34,211,238,0.5)', text: 'text-cyan-100', border: 'border-cyan-400/50', accent: '#22d3ee' },
+      secondary: { main: 'from-teal-400 to-cyan-600', glow: 'rgba(20,184,166,0.5)', text: 'text-teal-100', border: 'border-teal-400/50', accent: '#14b8a6' },
+      accent: { main: 'from-indigo-400 to-purple-600', glow: 'rgba(129,140,248,0.5)', text: 'text-indigo-100', border: 'border-indigo-400/50', accent: '#818cf8' },
     },
     forest: {
-      shape: 'rounded-3xl',
-      bg: `bg-gradient-to-br ${gradient}`,
-      border: 'border-2 border-emerald-200/40',
-      shadow: 'shadow-xl shadow-emerald-500/35',
-      iconSize: baseIconSize,
-      labelStyle: 'text-emerald-100 font-semibold',
-      hoverEffect: 'hover:shadow-emerald-500/50 hover:scale-104',
-      containerClass: baseContainerClass,
+      primary: { main: 'from-emerald-400 to-green-600', glow: 'rgba(52,211,153,0.5)', text: 'text-emerald-100', border: 'border-emerald-400/50', accent: '#34d399' },
+      secondary: { main: 'from-lime-400 to-green-600', glow: 'rgba(163,230,53,0.5)', text: 'text-lime-100', border: 'border-lime-400/50', accent: '#a3e635' },
+      accent: { main: 'from-teal-400 to-emerald-600', glow: 'rgba(45,212,191,0.5)', text: 'text-teal-100', border: 'border-teal-400/50', accent: '#2dd4bf' },
     },
     lightning: {
-      shape: 'rounded-xl',
-      bg: `bg-gradient-to-r ${gradient}`,
-      border: 'border-2 border-yellow-300/50',
-      shadow: 'shadow-2xl shadow-yellow-400/50',
-      iconSize: baseIconSize,
-      labelStyle: 'text-yellow-100 font-bold tracking-tight',
-      hoverEffect: 'hover:shadow-yellow-400/70 hover:scale-110',
-      containerClass: baseContainerClass,
+      primary: { main: 'from-yellow-400 to-amber-600', glow: 'rgba(251,191,36,0.5)', text: 'text-yellow-100', border: 'border-yellow-400/50', accent: '#fbbf24' },
+      secondary: { main: 'from-orange-400 to-amber-600', glow: 'rgba(251,146,60,0.5)', text: 'text-orange-100', border: 'border-orange-400/50', accent: '#fb923c' },
+      accent: { main: 'from-red-400 to-orange-600', glow: 'rgba(248,113,113,0.5)', text: 'text-red-100', border: 'border-red-400/50', accent: '#f87171' },
     },
     galaxy: {
-      shape: 'rounded-full',
-      bg: `bg-gradient-to-br ${gradient}`,
-      border: 'border-2 border-purple-300/40 ring-4 ring-purple-500/15',
-      shadow: 'shadow-2xl shadow-purple-500/40',
-      iconSize: baseIconSize,
-      labelStyle: 'text-purple-100 font-semibold tracking-wide',
-      hoverEffect: 'hover:ring-purple-500/40 hover:scale-105',
-      containerClass: baseContainerClass,
+      primary: { main: 'from-purple-400 to-violet-600', glow: 'rgba(192,132,252,0.5)', text: 'text-purple-100', border: 'border-purple-400/50', accent: '#c084fc' },
+      secondary: { main: 'from-pink-400 to-purple-600', glow: 'rgba(244,114,182,0.5)', text: 'text-pink-100', border: 'border-pink-400/50', accent: '#f472b6' },
+      accent: { main: 'from-indigo-400 to-blue-600', glow: 'rgba(129,140,248,0.5)', text: 'text-indigo-100', border: 'border-indigo-400/50', accent: '#818cf8' },
     },
     iron: {
-      shape: 'rounded-lg',
-      bg: `bg-gradient-to-b ${gradient}`,
-      border: 'border-2 border-slate-300/50',
-      shadow: 'shadow-xl shadow-slate-500/40',
-      iconSize: baseIconSize,
-      labelStyle: 'text-slate-200 font-bold uppercase tracking-widest',
-      hoverEffect: 'hover:shadow-slate-500/60 hover:scale-103',
-      containerClass: baseContainerClass,
+      primary: { main: 'from-slate-400 to-zinc-600', glow: 'rgba(148,163,184,0.4)', text: 'text-slate-100', border: 'border-slate-400/50', accent: '#94a3b8' },
+      secondary: { main: 'from-zinc-400 to-slate-600', glow: 'rgba(161,161,170,0.4)', text: 'text-zinc-100', border: 'border-zinc-400/50', accent: '#a1a1aa' },
+      accent: { main: 'from-gray-400 to-zinc-600', glow: 'rgba(156,163,175,0.4)', text: 'text-gray-100', border: 'border-gray-400/50', accent: '#9ca3af' },
     },
     blood: {
-      shape: 'rounded-3xl',
-      bg: `bg-gradient-to-br ${gradient}`,
-      border: 'border-2 border-red-300/40',
-      shadow: 'shadow-2xl shadow-red-500/50',
-      iconSize: baseIconSize,
-      labelStyle: 'text-red-100 font-bold',
-      hoverEffect: 'hover:shadow-red-500/70 hover:scale-105',
-      containerClass: baseContainerClass,
+      primary: { main: 'from-red-500 to-rose-700', glow: 'rgba(239,68,68,0.5)', text: 'text-red-100', border: 'border-red-400/50', accent: '#ef4444' },
+      secondary: { main: 'from-rose-400 to-red-600', glow: 'rgba(251,113,133,0.5)', text: 'text-rose-100', border: 'border-rose-400/50', accent: '#fb7185' },
+      accent: { main: 'from-pink-400 to-rose-600', glow: 'rgba(244,114,182,0.5)', text: 'text-pink-100', border: 'border-pink-400/50', accent: '#f472b6' },
     },
     neon: {
-      shape: 'rounded-2xl',
-      bg: `bg-gradient-to-r ${gradient}`,
-      border: 'border-2 border-pink-400/60',
-      shadow: 'shadow-2xl shadow-pink-500/60',
-      iconSize: baseIconSize,
-      labelStyle: 'text-pink-100 font-bold',
-      hoverEffect: 'hover:shadow-pink-500/80 hover:border-pink-300/80 hover:scale-105',
-      containerClass: baseContainerClass,
+      primary: { main: 'from-pink-500 to-fuchsia-600', glow: 'rgba(236,72,153,0.6)', text: 'text-pink-100', border: 'border-pink-400/60', accent: '#ec4899' },
+      secondary: { main: 'from-violet-400 to-purple-600', glow: 'rgba(167,139,250,0.6)', text: 'text-violet-100', border: 'border-violet-400/60', accent: '#a78bfa' },
+      accent: { main: 'from-cyan-400 to-blue-600', glow: 'rgba(34,211,238,0.6)', text: 'text-cyan-100', border: 'border-cyan-400/60', accent: '#22d3ee' },
     },
     gold: {
-      shape: 'rounded-2xl',
-      bg: `bg-gradient-to-br ${gradient}`,
-      border: 'border-2 border-yellow-300/60',
-      shadow: 'shadow-2xl shadow-amber-400/50',
-      iconSize: baseIconSize,
-      labelStyle: 'text-amber-100 font-bold tracking-wide',
-      hoverEffect: 'hover:shadow-amber-400/70 hover:scale-104',
-      containerClass: baseContainerClass,
+      primary: { main: 'from-yellow-400 to-amber-600', glow: 'rgba(234,179,8,0.5)', text: 'text-yellow-100', border: 'border-yellow-400/50', accent: '#eab308' },
+      secondary: { main: 'from-amber-400 to-orange-600', glow: 'rgba(245,158,11,0.5)', text: 'text-amber-100', border: 'border-amber-400/50', accent: '#f59e0b' },
+      accent: { main: 'from-orange-400 to-yellow-600', glow: 'rgba(251,146,60,0.5)', text: 'text-orange-100', border: 'border-orange-400/50', accent: '#fb923c' },
     },
     amoled: {
-      shape: 'rounded-xl',
-      bg: `bg-gradient-to-b ${gradient}`,
-      border: 'border border-gray-500/40',
-      shadow: 'shadow-xl shadow-black/60',
-      iconSize: baseIconSize,
-      labelStyle: 'text-gray-300 font-medium',
-      hoverEffect: 'hover:shadow-black/80 hover:scale-102',
-      containerClass: baseContainerClass,
+      primary: { main: 'from-gray-500 to-zinc-700', glow: 'rgba(107,114,128,0.3)', text: 'text-gray-200', border: 'border-gray-500/40', accent: '#6b7280' },
+      secondary: { main: 'from-zinc-500 to-gray-700', glow: 'rgba(113,113,122,0.3)', text: 'text-zinc-200', border: 'border-zinc-500/40', accent: '#71717a' },
+      accent: { main: 'from-slate-500 to-gray-700', glow: 'rgba(100,116,139,0.3)', text: 'text-slate-200', border: 'border-slate-500/40', accent: '#64748b' },
     },
   };
-
-  return styles[theme] || styles.fire;
+  return themeColors[theme]?.[color] || themeColors.fire[color];
 };
+
+// Componente de haltere SVG personalizado
+const DumbbellShape: React.FC<{ color: string; className?: string }> = memo(({ color, className }) => (
+  <svg viewBox="0 0 120 40" className={className} fill="none">
+    {/* Peso esquerdo */}
+    <rect x="5" y="5" width="20" height="30" rx="3" fill={color} opacity="0.9" />
+    <rect x="25" y="10" width="8" height="20" rx="2" fill={color} opacity="0.7" />
+    {/* Barra central */}
+    <rect x="33" y="17" width="54" height="6" rx="3" fill={color} opacity="0.6" />
+    {/* Peso direito */}
+    <rect x="87" y="10" width="8" height="20" rx="2" fill={color} opacity="0.7" />
+    <rect x="95" y="5" width="20" height="30" rx="3" fill={color} opacity="0.9" />
+  </svg>
+));
+
+DumbbellShape.displayName = 'DumbbellShape';
+
+// Componente de kettlebell SVG
+const KettlebellShape: React.FC<{ color: string; className?: string }> = memo(({ color, className }) => (
+  <svg viewBox="0 0 40 50" className={className} fill="none">
+    <path 
+      d="M20 5 C10 5 8 12 8 12 L8 18 C8 18 2 25 2 35 C2 45 12 48 20 48 C28 48 38 45 38 35 C38 25 32 18 32 18 L32 12 C32 12 30 5 20 5 Z"
+      fill={color} 
+      opacity="0.9"
+    />
+    <ellipse cx="20" cy="10" rx="6" ry="3" fill="black" opacity="0.3" />
+  </svg>
+));
+
+KettlebellShape.displayName = 'KettlebellShape';
+
+// Componente de placa de peso SVG
+const WeightPlateShape: React.FC<{ color: string; className?: string }> = memo(({ color, className }) => (
+  <svg viewBox="0 0 50 50" className={className} fill="none">
+    <circle cx="25" cy="25" r="23" fill={color} opacity="0.9" stroke={color} strokeWidth="2" />
+    <circle cx="25" cy="25" r="18" fill="black" opacity="0.2" />
+    <circle cx="25" cy="25" r="6" fill="black" opacity="0.4" />
+  </svg>
+));
+
+WeightPlateShape.displayName = 'WeightPlateShape';
 
 const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
   onClick,
+  icon: Icon,
   label,
   color = 'primary',
   disabled = false,
@@ -317,17 +127,11 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
   const { currentTheme, hoverEffectsEnabled } = useTheme();
   const { playHoverSound, playClickSound } = useAudio();
   const [ripples, setRipples] = useState<RippleType[]>([]);
-  const [particles, setParticles] = useState<ParticleType[]>([]);
   const [isHovered, setIsHovered] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
   const rippleIdRef = useRef(0);
-  const particleIdRef = useRef(0);
   
-  const Icon = useMemo(() => getFitnessIcon(currentTheme, color), [currentTheme, color]);
-  const style = useMemo(() => getButtonStyle(currentTheme, color), [currentTheme, color]);
-  const rippleColor = useMemo(() => getRippleColor(currentTheme), [currentTheme]);
-  const particleColors = useMemo(() => getParticleColors(currentTheme), [currentTheme]);
-  const glowColors = useMemo(() => getGlowColor(currentTheme), [currentTheme]);
-  const iconAnimation = useMemo(() => getIconAnimation(currentTheme), [currentTheme]);
+  const colors = useMemo(() => getThemeColors(currentTheme, color), [currentTheme, color]);
 
   const createRipple = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     const button = event.currentTarget;
@@ -335,56 +139,21 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     
-    const newRipple: RippleType = {
-      id: rippleIdRef.current++,
-      x,
-      y,
-    };
-    
+    const newRipple: RippleType = { id: rippleIdRef.current++, x, y };
     setRipples(prev => [...prev, newRipple]);
     
     setTimeout(() => {
       setRipples(prev => prev.filter(r => r.id !== newRipple.id));
-    }, 600);
+    }, 500);
   }, []);
-
-  const createParticles = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
-    const button = event.currentTarget;
-    const rect = button.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    
-    const newParticles: ParticleType[] = [];
-    const particleCount = 12;
-    
-    for (let i = 0; i < particleCount; i++) {
-      const angle = (i / particleCount) * 360 + Math.random() * 30;
-      newParticles.push({
-        id: particleIdRef.current++,
-        x: centerX,
-        y: centerY,
-        angle,
-        velocity: 80 + Math.random() * 60,
-        size: 4 + Math.random() * 6,
-        color: particleColors[Math.floor(Math.random() * particleColors.length)],
-      });
-    }
-    
-    setParticles(prev => [...prev, ...newParticles]);
-    
-    setTimeout(() => {
-      setParticles(prev => prev.filter(p => !newParticles.some(np => np.id === p.id)));
-    }, 800);
-  }, [particleColors]);
 
   const handleClick = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     if (!disabled) {
       createRipple(event);
-      createParticles(event);
       playClickSound();
       onClick();
     }
-  }, [disabled, createRipple, createParticles, playClickSound, onClick]);
+  }, [disabled, createRipple, playClickSound, onClick]);
 
   const handleMouseEnter = useCallback(() => {
     setIsHovered(true);
@@ -397,103 +166,66 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
     setIsHovered(false);
   }, []);
 
+  // Determinar qual elemento fitness decorativo usar baseado na cor do botão
+  const FitnessDecor = useMemo(() => {
+    if (color === 'primary') return null; // Cliente - só ícone
+    if (color === 'secondary') return 'dumbbell'; // Instrutor
+    return 'crown'; // Admin
+  }, [color]);
+
   return (
     <motion.button
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onMouseDown={() => setIsPressed(true)}
+      onMouseUp={() => setIsPressed(false)}
       disabled={disabled}
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={hoverEffectsEnabled ? { scale: 1.08 } : undefined}
-      whileTap={{ scale: 0.92 }}
-      transition={{ duration: 0.15, ease: 'easeOut' }}
+      whileHover={hoverEffectsEnabled ? { scale: 1.05, y: -3 } : undefined}
+      whileTap={{ scale: 0.95 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
       className={cn(
-        'relative group',
-        'flex flex-col items-center justify-center gap-2',
+        'relative group flex flex-col items-center',
         disabled && 'opacity-50 cursor-not-allowed pointer-events-none'
       )}
     >
-      {/* Particle effects container */}
-      <AnimatePresence>
-        {particles.map(particle => (
-          <motion.div
-            key={particle.id}
-            className="absolute pointer-events-none z-20 rounded-full"
-            style={{
-              width: particle.size,
-              height: particle.size,
-              backgroundColor: particle.color,
-              left: particle.x,
-              top: particle.y,
-              boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`,
-            }}
-            initial={{ 
-              scale: 1, 
-              opacity: 1,
-              x: 0,
-              y: 0,
-            }}
-            animate={{ 
-              scale: 0,
-              opacity: 0,
-              x: Math.cos(particle.angle * Math.PI / 180) * particle.velocity,
-              y: Math.sin(particle.angle * Math.PI / 180) * particle.velocity,
-            }}
-            exit={{ opacity: 0 }}
-            transition={{ 
-              duration: 0.7,
-              ease: [0.25, 0.46, 0.45, 0.94],
-            }}
-          />
-        ))}
-      </AnimatePresence>
-
-      {/* Button container with theme-specific style */}
+      {/* Container principal - Hexagonal fitness style */}
       <motion.div 
         className={cn(
           'relative flex items-center justify-center overflow-hidden',
-          'transition-all duration-200',
-          style.containerClass,
-          style.shape,
-          style.bg,
-          style.border,
-          style.shadow,
-          hoverEffectsEnabled && style.hoverEffect
+          'w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20',
+          'rounded-2xl',
+          `bg-gradient-to-br ${colors.main}`,
+          `border-2 ${colors.border}`,
+          'shadow-xl',
+          'transition-all duration-200'
         )}
+        style={{
+          boxShadow: isHovered 
+            ? `0 0 30px 8px ${colors.glow}, inset 0 1px 0 0 rgba(255,255,255,0.2)` 
+            : `0 0 20px 4px ${colors.glow}, inset 0 1px 0 0 rgba(255,255,255,0.1)`,
+        }}
         animate={{
           boxShadow: [
-            glowColors.dim,
-            glowColors.bright,
-            glowColors.dim,
+            `0 0 15px 2px ${colors.glow}`,
+            `0 0 25px 6px ${colors.glow}`,
+            `0 0 15px 2px ${colors.glow}`,
           ],
         }}
         transition={{
-          duration: 2.5,
+          duration: 2,
           repeat: Infinity,
           ease: 'easeInOut',
         }}
-        onMouseMove={(e) => {
-          if (!hoverEffectsEnabled) return;
-          const rect = e.currentTarget.getBoundingClientRect();
-          const x = ((e.clientX - rect.left) / rect.width) * 100;
-          const y = ((e.clientY - rect.top) / rect.height) * 100;
-          e.currentTarget.style.setProperty('--mouse-x', `${x}%`);
-          e.currentTarget.style.setProperty('--mouse-y', `${y}%`);
-        }}
       >
-        {/* Light trail effect */}
-        {isHovered && hoverEffectsEnabled && (
-          <motion.div
-            className="absolute inset-0 pointer-events-none z-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              background: `radial-gradient(circle 60px at var(--mouse-x, 50%) var(--mouse-y, 50%), ${rippleColor}, transparent 70%)`,
-            }}
-          />
-        )}
+        {/* Background pattern - fitness lines */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.1) 4px, rgba(255,255,255,0.1) 5px)`,
+          }} />
+        </div>
 
         {/* Ripple effects */}
         <AnimatePresence>
@@ -504,43 +236,122 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
               style={{
                 left: ripple.x,
                 top: ripple.y,
-                backgroundColor: rippleColor,
+                backgroundColor: 'rgba(255,255,255,0.4)',
                 transform: 'translate(-50%, -50%)',
               }}
-              initial={{ width: 0, height: 0, opacity: 0.8 }}
-              animate={{ width: 180, height: 180, opacity: 0 }}
+              initial={{ width: 0, height: 0, opacity: 0.6 }}
+              animate={{ width: 120, height: 120, opacity: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
             />
           ))}
         </AnimatePresence>
 
-        {/* Shine effect */}
-        <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/5 to-white/20 pointer-events-none z-1" 
-             style={{ clipPath: 'inherit', borderRadius: 'inherit' }} />
+        {/* Inner shine effect */}
+        <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/5 to-white/20 pointer-events-none" />
         
-        {/* Inner glow */}
-        <div className="absolute inset-2 rounded-[inherit] bg-gradient-to-br from-white/10 to-transparent pointer-events-none z-1" />
+        {/* Corner accent - fitness inspired */}
+        <div className="absolute top-0 right-0 w-4 h-4 overflow-hidden">
+          <div className="absolute -top-2 -right-2 w-4 h-4 bg-white/20 rotate-45" />
+        </div>
+
+        {/* Fitness decoration elements */}
+        {FitnessDecor === 'dumbbell' && (
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 opacity-30">
+            <Dumbbell className="w-8 h-2 text-white" />
+          </div>
+        )}
+
+        {FitnessDecor === 'crown' && (
+          <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 opacity-40">
+            <Crown className="w-4 h-3 text-white" />
+          </div>
+        )}
         
-        {/* Animated Icon */}
+        {/* Main Icon with animation */}
         <motion.div
-          animate={isHovered && hoverEffectsEnabled ? iconAnimation.hover : { scale: 1, rotate: 0 }}
-          transition={iconAnimation.transition}
+          animate={isHovered && hoverEffectsEnabled ? { 
+            scale: 1.15, 
+            rotate: [0, -5, 5, 0],
+          } : { scale: 1, rotate: 0 }}
+          transition={{ duration: 0.3 }}
           className="relative z-10"
         >
-          <Icon className={cn(style.iconSize, 'text-white drop-shadow-lg')} strokeWidth={2} />
+          <Icon 
+            className={cn(
+              'w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9',
+              'text-white drop-shadow-lg'
+            )} 
+            strokeWidth={2.2} 
+          />
         </motion.div>
+
+        {/* Hover glow overlay */}
+        {isHovered && hoverEffectsEnabled && (
+          <motion.div
+            className="absolute inset-0 pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            style={{
+              background: `radial-gradient(circle at center, rgba(255,255,255,0.2), transparent 70%)`,
+            }}
+          />
+        )}
       </motion.div>
 
-      {/* Label */}
-      <span className={cn(
-        'font-bebas text-sm sm:text-base md:text-lg lg:text-xl tracking-wider',
-        'uppercase text-center leading-tight mt-2 sm:mt-2.5',
-        'transition-opacity duration-150',
-        style.labelStyle
-      )}>
-        {label}
-      </span>
+      {/* Label with fitness style */}
+      <motion.div 
+        className="mt-2 flex flex-col items-center"
+        animate={isHovered && hoverEffectsEnabled ? { y: -2 } : { y: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <span className={cn(
+          'font-bebas text-xs sm:text-sm tracking-widest uppercase',
+          'text-center leading-tight',
+          colors.text,
+          'transition-all duration-150'
+        )}>
+          {label}
+        </span>
+        
+        {/* Decorative line under label */}
+        <motion.div
+          className="h-0.5 rounded-full mt-1"
+          style={{ backgroundColor: colors.accent }}
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ 
+            width: isHovered ? '100%' : '30%', 
+            opacity: isHovered ? 0.8 : 0.4 
+          }}
+          transition={{ duration: 0.2 }}
+        />
+      </motion.div>
+
+      {/* Floating fitness icons decoration on hover */}
+      <AnimatePresence>
+        {isHovered && hoverEffectsEnabled && (
+          <>
+            <motion.div
+              className="absolute -left-2 top-1/2 -translate-y-1/2 pointer-events-none"
+              initial={{ opacity: 0, x: 10, scale: 0.5 }}
+              animate={{ opacity: 0.5, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 10, scale: 0.5 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Activity className="w-3 h-3" style={{ color: colors.accent }} />
+            </motion.div>
+            <motion.div
+              className="absolute -right-2 top-1/2 -translate-y-1/2 pointer-events-none"
+              initial={{ opacity: 0, x: -10, scale: 0.5 }}
+              animate={{ opacity: 0.5, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: -10, scale: 0.5 }}
+              transition={{ duration: 0.2, delay: 0.05 }}
+            >
+              <Target className="w-3 h-3" style={{ color: colors.accent }} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </motion.button>
   );
 });
