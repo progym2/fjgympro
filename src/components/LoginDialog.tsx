@@ -746,12 +746,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
 
   return (
     <>
-    <AnimatePresence>
       {isOpen && (
-        <MotionOverlay
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
           onMouseDown={(e) => {
             // Only close if left-click directly on overlay (not right-click for context menu)
@@ -760,14 +756,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
             }
           }}
         >
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.98, opacity: 0 }}
-            transition={{ 
-              duration: 0.15, 
-              ease: 'easeOut'
-            }}
+          <div
             className="relative w-full max-w-md bg-card rounded-2xl border border-primary/30 shadow-2xl shadow-primary/20 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
@@ -800,21 +789,16 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
               <SportThemeSelector compact />
             </div>
 
-            {/* Back Button - PROMINENT */}
-            <motion.button
+            {/* Back Button - PROMINENT - instant */}
+            <button
               onClick={handleClose}
               disabled={isLoading}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.1 }}
-              whileHover={{ scale: 1.05, backgroundColor: 'hsl(var(--primary)/0.2)' }}
-              whileTap={{ scale: 0.95 }}
-              className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2 rounded-xl bg-primary/10 hover:bg-primary/20 border-2 border-primary/40 hover:border-primary/60 text-primary font-semibold transition-all text-sm backdrop-blur-md shadow-lg shadow-primary/10 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2 rounded-xl bg-primary/10 hover:bg-primary/20 border-2 border-primary/40 hover:border-primary/60 text-primary font-semibold transition-colors text-sm backdrop-blur-md shadow-lg shadow-primary/10 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
               <span className="sm:inline">Voltar</span>
               <kbd className="hidden sm:inline ml-1 px-1.5 py-0.5 rounded bg-primary/20 text-[10px] font-mono text-primary/80">ESC</kbd>
-            </motion.button>
+            </button>
 
             {/* Header with professional design and staggered reveal */}
             <div className="relative z-10 p-8 pt-12 text-center bg-gradient-to-b from-primary/10 via-transparent to-transparent">
@@ -849,13 +833,9 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
             </div>
 
             {/* Form - instant display */}
-            <motion.form 
+            <form 
               onSubmit={handleSubmit} 
-              className="relative z-10 p-8 pt-4 space-y-5"
-              animate={shakeForm ? {
-                x: [0, -10, 10, -10, 10, -5, 5, 0],
-                transition: { duration: 0.4 }
-              } : {}}
+              className={`relative z-10 p-8 pt-4 space-y-5 ${shakeForm ? 'animate-shake' : ''}`}
             >
               {/* Error Message - Clean and intuitive */}
               <AnimatePresence>
@@ -1111,11 +1091,10 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
                   Voltar ao Menu Inicial
                 </Button>
               </div>
-            </motion.form>
-          </motion.div>
-        </MotionOverlay>
+            </form>
+          </div>
+        </div>
       )}
-    </AnimatePresence>
     
     {/* Session Conflict Dialog */}
     <AlertDialog open={showSessionConflict} onOpenChange={setShowSessionConflict}>
