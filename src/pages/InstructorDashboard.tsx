@@ -31,6 +31,7 @@ import InstructorSelector from '@/components/instructor/InstructorSelector';
 import ProfileAvatar from '@/components/shared/ProfileAvatar';
 import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
+import FitnessLoadingScreen from '@/components/FitnessLoadingScreen';
 
 import bgPanels from '@/assets/bg-panels-optimized.webp';
 
@@ -69,12 +70,13 @@ const ComponentLoader = () => (
 
 const InstructorDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user, profile, role, license, signOut, licenseExpired, isLicenseValid } = useAuth();
+  const { user, profile, role, license, signOut, licenseExpired, isLicenseValid, isLoading: authLoading } = useAuth();
   const { playClickSound } = useAudio();
   const { isLoaded: bgLoaded } = useProgressiveImage(bgPanels);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [linkedStudentsCount, setLinkedStudentsCount] = useState(0);
+  const [initialLoading, setInitialLoading] = useState(true);
   
   const [notificationsVisible, setNotificationsVisible] = useState(() => {
     return localStorage.getItem('widget_instructor_notifications_visible') !== 'false';
@@ -84,6 +86,14 @@ const InstructorDashboard: React.FC = () => {
     setNotificationsVisible(visible);
     localStorage.setItem('widget_instructor_notifications_visible', String(visible));
   };
+
+  // Initial loading effect
+  useEffect(() => {
+    if (!authLoading && profile) {
+      const timer = setTimeout(() => setInitialLoading(false), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [authLoading, profile]);
 
   // Fetch linked students count
   useEffect(() => {
@@ -165,6 +175,11 @@ const InstructorDashboard: React.FC = () => {
     { icon: QrCode, label: 'Leitor QR Code', path: 'qr-scanner', color: 'text-amber-500' },
     { icon: HardDrive, label: 'Backup & Sync', path: 'backup', color: 'text-slate-500' },
   ], []);
+
+  // Show fitness loading screen during initial load
+  if (initialLoading) {
+    return <FitnessLoadingScreen message="Carregando painel..." />;
+  }
 
   return (
     <div className="h-[100dvh] relative overflow-hidden bg-background">
