@@ -23,7 +23,7 @@ export type CardStyle = 'rounded' | 'sharp' | 'hexagonal' | 'beveled' | 'organic
 export type IconStyle = 'filled' | 'outlined' | 'duotone' | 'glow';
 export type LayoutStyle = 'grid' | 'list' | 'masonry' | 'cards';
 
-interface ThemeConfig {
+export interface ThemeConfig {
   id: SportTheme;
   name: string;
   emoji: string;
