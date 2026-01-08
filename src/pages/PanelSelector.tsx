@@ -240,10 +240,27 @@ const PanelSelector: React.FC = () => {
         }}
       >
         <div className="absolute inset-0 bg-black/70" />
-        <div className="relative z-10 flex flex-col items-center gap-4">
+        <div className="relative z-10 flex flex-col items-center gap-6">
           <AnimatedLogo size="md" showGlow />
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Carregando...</p>
+          
+          {/* Animated Progress Bar */}
+          <div className="w-48 sm:w-64 h-1.5 bg-muted/30 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-primary via-primary/80 to-primary rounded-full"
+              initial={{ x: '-100%' }}
+              animate={{ x: '100%' }}
+              transition={{
+                repeat: Infinity,
+                duration: 1.2,
+                ease: 'easeInOut',
+              }}
+              style={{ width: '50%' }}
+            />
+          </div>
+          
+          <p className="text-sm text-muted-foreground animate-pulse">
+            {redirecting ? 'Redirecionando...' : 'Carregando...'}
+          </p>
         </div>
       </div>
     );
