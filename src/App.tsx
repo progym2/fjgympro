@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useAutoNightMode } from "@/hooks/useAutoNightMode";
 import { clearExpiredCache } from "@/hooks/useOfflineStorage";
 import { initializeCache } from "@/hooks/useIndexedDBCache";
+import { useOfflineDataPreloader } from "@/hooks/useOfflineDataPreloader";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import InstallBanner from "@/components/InstallBanner";
 import VideoSplashScreen from "@/components/VideoSplashScreen";
@@ -48,9 +49,27 @@ const queryClient = new QueryClient({
 clearExpiredCache();
 initializeCache();
 
-// Component to handle auto night mode
+// Component to handle auto night mode and offline preloading
 const NightModeHandler = () => {
   useAutoNightMode({ startHour: 20, endHour: 6, enabled: true });
+  return null;
+};
+
+// Component to preload data for offline use
+const OfflineDataLoader = () => {
+  const { preloadAllData } = useOfflineDataPreloader();
+  
+  useEffect(() => {
+    // Preload data after initial render
+    const timer = setTimeout(() => {
+      if (navigator.onLine) {
+        preloadAllData();
+      }
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, [preloadAllData]);
+  
   return null;
 };
 
@@ -103,6 +122,7 @@ const App = () => {
               {splashComplete && (
                 <>
                   <NightModeHandler />
+                  <OfflineDataLoader />
                   <Toaster />
                   <Sonner />
                   <OfflineIndicator />
