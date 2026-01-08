@@ -8,6 +8,7 @@ import AppFooter from '@/components/AppFooter';
 import SimpleLogo from '@/components/SimpleLogo';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
+import { useProgressiveImage } from '@/hooks/useProgressiveImage';
 
 import bgHome from '@/assets/bg-home-optimized.webp';
 
@@ -27,6 +28,7 @@ const Home: React.FC = memo(() => {
   const navigate = useNavigate();
   const { licenseExpired } = useAuth();
   const { playClickSound, setOnHomeScreen, setSplashComplete, stopMusicImmediately, tryAutoPlay, isSfxEnabled, toggleSfx } = useAudio();
+  const { isLoaded: bgLoaded } = useProgressiveImage(bgHome);
 
   // Marcar que está na tela inicial
   useEffect(() => {
@@ -84,15 +86,21 @@ const Home: React.FC = memo(() => {
 
   return (
     <div
-      className="h-[100dvh] relative overflow-hidden"
+      className="h-[100dvh] relative overflow-hidden bg-black"
       onClick={tryAutoPlay}
       onTouchStart={tryAutoPlay}
-      style={{
-        backgroundImage: `url(${bgHome})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
     >
+      {/* Progressive background image */}
+      <div 
+        className="absolute inset-0 transition-all duration-500"
+        style={{
+          backgroundImage: `url(${bgHome})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: bgLoaded ? 'none' : 'blur(10px)',
+          transform: bgLoaded ? 'scale(1)' : 'scale(1.05)',
+        }}
+      />
       {/* Overlay - gradient for depth */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/60 to-black/80" />
 

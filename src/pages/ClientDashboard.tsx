@@ -27,6 +27,7 @@ import {
 import PanelSwitcher from '@/components/PanelSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
 import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
+import { useProgressiveImage } from '@/hooks/useProgressiveImage';
 
 import bgPanels from '@/assets/bg-panels-optimized.webp';
 
@@ -137,6 +138,7 @@ const ClientDashboard: React.FC = () => {
   const location = useLocation();
   const { user, profile, role, license, signOut, licenseExpired, isLicenseValid } = useAuth();
   const { playClickSound } = useAudio();
+  const { isLoaded: bgLoaded } = useProgressiveImage(bgPanels);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   
@@ -208,14 +210,18 @@ const ClientDashboard: React.FC = () => {
   const handleWorkoutBack = useCallback(() => navigate('/client/workouts'), [navigate]);
 
   return (
-    <div
-      className="h-[100dvh] relative overflow-hidden"
-      style={{
-        backgroundImage: `url(${bgPanels})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-    >
+    <div className="h-[100dvh] relative overflow-hidden bg-background">
+      {/* Progressive background */}
+      <div 
+        className="absolute inset-0 transition-all duration-500"
+        style={{
+          backgroundImage: `url(${bgPanels})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: bgLoaded ? 'none' : 'blur(10px)',
+          transform: bgLoaded ? 'scale(1)' : 'scale(1.05)',
+        }}
+      />
       <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background/90" />
 
       <div className="relative z-10 h-full flex flex-col pb-14 overflow-y-auto overflow-x-hidden overscroll-contain">
