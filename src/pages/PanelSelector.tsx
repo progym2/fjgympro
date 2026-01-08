@@ -231,8 +231,20 @@ const PanelSelector: React.FC = () => {
 
   if (isLoading || redirecting) {
     return (
-      <div className="h-[100dvh] flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div 
+        className="h-[100dvh] flex flex-col items-center justify-center bg-background"
+        style={{
+          backgroundImage: src ? `url(${src})` : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-black/70" />
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <AnimatedLogo size="md" showGlow />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        </div>
       </div>
     );
   }
