@@ -1223,36 +1223,18 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
                 )}
               </motion.button>
 
-              {/* Demo Hints */}
+              {/* Back to Menu Button */}
               <div className="pt-4 border-t border-border/50">
-                <p className="text-xs text-center text-muted-foreground">
-                  <span className="text-primary">Dica:</span> Use{' '}
-                  <code className="px-1 py-0.5 bg-muted rounded text-xs">teste</code> /{' '}
-                  <code className="px-1 py-0.5 bg-muted rounded text-xs">2026</code> para demonstração de 30 min
-                </p>
-
-                {import.meta.env.DEV && (
-                  <div className="mt-3 space-y-2">
-                    <p className="text-xs text-center text-muted-foreground">
-                      <span className="text-primary">Dev:</span> Master{' '}
-                      <code className="px-1 py-0.5 bg-muted rounded text-xs">franc</code> /{' '}
-                      <code className="px-1 py-0.5 bg-muted rounded text-xs">125758</code>
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setUsername('franc');
-                        setPassword('125758');
-                      }}
-                      disabled={isLoading}
-                      className="w-full border-primary/30 text-primary hover:bg-primary/10"
-                    >
-                      Preencher Master (DEV)
-                    </Button>
-                  </div>
-                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleClose}
+                  disabled={isLoading}
+                  className="w-full flex items-center justify-center gap-2 border-primary/40 text-primary hover:bg-primary/10 hover:border-primary/60"
+                >
+                  <ArrowLeft size={18} />
+                  Voltar ao Menu Inicial
+                </Button>
               </div>
             </motion.form>
           </motion.div>
