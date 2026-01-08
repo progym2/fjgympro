@@ -62,11 +62,12 @@ const BackupRestorePanel = lazy(() => import('@/components/shared/BackupRestoreP
 const SyncSettings = lazy(() => import('@/components/client/SyncSettings'));
 const OfflineDownload = lazy(() => import('@/components/client/OfflineDownload'));
 
-// Minimal loading fallback
+// Import loading skeletons
+import PageLoadingSkeleton from '@/components/ui/loading-skeleton';
+
+// Minimal loading fallback with skeleton
 const ComponentLoader = memo(() => (
-  <div className="flex items-center justify-center py-12">
-    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-  </div>
+  <PageLoadingSkeleton type="dashboard" />
 ));
 ComponentLoader.displayName = 'ComponentLoader';
 

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Dumbbell, User, Mail, Phone, Save, Loader2, Award, IdCard, MapPin, CheckCircle2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -142,7 +141,7 @@ const RegisterInstructor: React.FC = () => {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+    <div className="space-y-4 animate-fade-in">
       <div className="flex items-center gap-2">
         <button
           onClick={() => { playClickSound(); navigate('/admin'); }}
@@ -258,13 +257,20 @@ const RegisterInstructor: React.FC = () => {
           <div className="sm:col-span-2">
             <label className="text-sm text-muted-foreground mb-2 block">Telefone</label>
             <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
               <Input
                 placeholder="(00) 00000-0000"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: filterPhoneOnly(e.target.value) })}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+                  let formatted = digits;
+                  if (digits.length > 2) formatted = `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+                  if (digits.length > 7) formatted = `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+                  setFormData({ ...formData, phone: formatted });
+                }}
                 className="pl-10 bg-background/50"
                 inputMode="tel"
+                maxLength={15}
               />
             </div>
           </div>
@@ -280,7 +286,7 @@ const RegisterInstructor: React.FC = () => {
           </Button>
         </div>
       </form>
-    </motion.div>
+    </div>
   );
 };
 
