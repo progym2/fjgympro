@@ -9,7 +9,8 @@ import AnimatedLogo from '@/components/AnimatedLogo';
 import ThemedParticles from '@/components/ThemedParticles';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import bgHome from '@/assets/bg-home.png';
+import { useProgressiveImage } from '@/hooks/useProgressiveImage';
+import bgHomeOptimized from '@/assets/bg-home-optimized.webp';
 
 // Animação de entrada para os cards
 const cardVariants = {
@@ -107,6 +108,7 @@ const PanelSelector: React.FC = () => {
   const { playClickSound } = useAudio();
   const { themeConfig } = useTheme();
   const [redirecting, setRedirecting] = useState(false);
+  const { src, isLoaded, blur } = useProgressiveImage(bgHomeOptimized);
 
   // Cores dinâmicas baseadas no tema
   const themeColors = useMemo(() => {
@@ -239,9 +241,11 @@ const PanelSelector: React.FC = () => {
     <div
       className="h-[100dvh] flex flex-col items-center justify-center overflow-hidden bg-background"
       style={{
-        backgroundImage: `url(${bgHome})`,
+        backgroundImage: src ? `url(${src})` : 'none',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        filter: blur ? 'blur(10px)' : 'none',
+        transition: 'filter 0.3s ease-out',
       }}
     >
       <div className="absolute inset-0 bg-black/70" />
