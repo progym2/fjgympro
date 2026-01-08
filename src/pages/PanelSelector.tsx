@@ -110,17 +110,14 @@ const PanelSelector: React.FC = () => {
   const { themeConfig } = useTheme();
   const [redirecting, setRedirecting] = useState(false);
   const { src, blur } = useProgressiveImage(bgHomeOptimized);
-  const { preloadData } = useDataPreloader();
+  const { preloadData, preloadStatus } = useDataPreloader();
   const hasPreloadedRef = useRef(false);
 
   // Pré-carrega dados do dashboard durante o loading
   useEffect(() => {
     if (profile?.id && role && !hasPreloadedRef.current && navigator.onLine) {
       hasPreloadedRef.current = true;
-      // Inicia preload imediatamente em background
-      preloadData(profile.id, role).catch(() => {
-        // Ignora erros de preload - não é crítico
-      });
+      preloadData(profile.id, role).catch(() => {});
     }
   }, [profile?.id, role, preloadData]);
 
@@ -251,14 +248,15 @@ const PanelSelector: React.FC = () => {
     navigate('/');
   };
 
-  // Texto de status baseado no progresso
+  // Texto de status baseado no progresso e preload
   const statusText = useMemo(() => {
     if (redirecting) return 'Redirecionando...';
     if (progress < 25) return 'Iniciando sessão...';
     if (progress < 50) return 'Carregando perfil...';
     if (progress < 75) return 'Verificando permissões...';
+    if (preloadStatus === 'loading') return 'Preparando dados...';
     return 'Validando licença...';
-  }, [redirecting, progress]);
+  }, [redirecting, progress, preloadStatus]);
 
   if (isLoading || redirecting) {
     return (
@@ -271,12 +269,12 @@ const PanelSelector: React.FC = () => {
         }}
       >
         <div className="absolute inset-0 bg-black/70" />
-        <div className="relative z-10 flex flex-col items-center gap-6">
+        <div className="relative z-10 flex flex-col items-center gap-5">
           <AnimatedLogo size="md" showGlow />
           
           {/* Progress Bar com Percentual */}
           <div className="w-48 sm:w-64 flex flex-col items-center gap-2">
-            <div className="w-full h-2 bg-muted/30 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-muted/30 rounded-full overflow-hidden relative">
               <motion.div
                 className="h-full bg-gradient-to-r from-primary via-primary/80 to-primary rounded-full"
                 initial={{ width: 0 }}
@@ -288,10 +286,34 @@ const PanelSelector: React.FC = () => {
               {progress}%
             </span>
           </div>
-          
+
+          {/* Status Text */}
           <p className="text-sm text-muted-foreground animate-pulse">
             {statusText}
           </p>
+          
+          {/* Preload Indicator */}
+          {preloadStatus === 'loading' && (
+            <motion.div 
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 text-xs text-muted-foreground/70"
+            >
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+              <span>Sincronizando dados offline...</span>
+            </motion.div>
+          )}
+          
+          {preloadStatus === 'done' && progress >= 75 && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center gap-2 text-xs text-green-500"
+            >
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+              <span>Dados prontos</span>
+            </motion.div>
+          )}
         </div>
       </div>
     );
