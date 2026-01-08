@@ -60,6 +60,11 @@ const getColorConfig = (theme: SportTheme, color: 'primary' | 'secondary' | 'acc
       secondary: { gradient: 'from-amber-500 via-orange-500 to-amber-600', accent: 'bg-amber-400', glow: 'shadow-amber-500/40' },
       accent: { gradient: 'from-orange-500 via-yellow-500 to-orange-600', accent: 'bg-orange-400', glow: 'shadow-orange-500/40' },
     },
+    amoled: {
+      primary: { gradient: 'from-gray-600 via-gray-700 to-gray-800', accent: 'bg-gray-500', glow: 'shadow-gray-500/30' },
+      secondary: { gradient: 'from-gray-500 via-gray-600 to-gray-700', accent: 'bg-gray-400', glow: 'shadow-gray-400/30' },
+      accent: { gradient: 'from-gray-400 via-gray-500 to-gray-600', accent: 'bg-gray-300', glow: 'shadow-gray-400/30' },
+    },
   };
   
   return configs[theme][color];

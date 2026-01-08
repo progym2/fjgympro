@@ -24,6 +24,7 @@ const themePlayerIcons: Record<SportTheme, {
   blood: { play: Heart, pause: Heart, music: Music4 },
   neon: { play: Sparkles, pause: Sparkles, music: Disc3 },
   gold: { play: Music, pause: Music, music: Radio },
+  amoled: { play: Disc, pause: Disc, music: Headphones },
 };
 
 const MiniMusicPlayer: React.FC = () => {
