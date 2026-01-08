@@ -79,26 +79,52 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return shuffled;
 };
 
-// Sons sintetizados
-const createSinisterClick = () => {
+// Som de clique suave e elegante - estilo "pop" moderno
+const createSoftClick = () => {
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
+  // Oscilador principal - tom suave
+  const osc1 = audioContext.createOscillator();
+  const gain1 = audioContext.createGain();
   
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
+  // Filtro para deixar mais suave
+  const filter = audioContext.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(2000, audioContext.currentTime);
+  filter.Q.setValueAtTime(1, audioContext.currentTime);
   
-  oscillator.type = 'sine';
-  oscillator.frequency.setValueAtTime(180, audioContext.currentTime);
-  oscillator.frequency.exponentialRampToValueAtTime(60, audioContext.currentTime + 0.08);
+  osc1.connect(filter);
+  filter.connect(gain1);
+  gain1.connect(audioContext.destination);
   
-  gainNode.gain.setValueAtTime(SFX_VOLUME, audioContext.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+  osc1.type = 'sine';
+  osc1.frequency.setValueAtTime(800, audioContext.currentTime);
+  osc1.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.06);
   
-  oscillator.start(audioContext.currentTime);
-  oscillator.stop(audioContext.currentTime + 0.1);
+  gain1.gain.setValueAtTime(SFX_VOLUME * 0.25, audioContext.currentTime);
+  gain1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.08);
+  
+  osc1.start(audioContext.currentTime);
+  osc1.stop(audioContext.currentTime + 0.08);
+  
+  // Segunda camada - harmônico suave
+  const osc2 = audioContext.createOscillator();
+  const gain2 = audioContext.createGain();
+  
+  osc2.connect(filter);
+  filter.connect(gain2);
+  gain2.connect(audioContext.destination);
+  
+  osc2.type = 'sine';
+  osc2.frequency.setValueAtTime(1200, audioContext.currentTime);
+  osc2.frequency.exponentialRampToValueAtTime(900, audioContext.currentTime + 0.04);
+  
+  gain2.gain.setValueAtTime(SFX_VOLUME * 0.12, audioContext.currentTime);
+  gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+  
+  osc2.start(audioContext.currentTime);
+  osc2.stop(audioContext.currentTime + 0.05);
 };
 
 // Som suave de hover
@@ -624,7 +650,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const playClickSound = useCallback(() => {
     if (!isSfxEnabled) return;
-    try { createSinisterClick(); } catch {}
+    try { createSoftClick(); } catch {}
   }, [isSfxEnabled]);
 
   const playHoverSound = useCallback(() => {
