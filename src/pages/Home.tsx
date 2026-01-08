@@ -173,10 +173,10 @@ const Home: React.FC = memo(() => {
         <SimpleParticles />
       </Suspense>
 
-      {/* Content - centered with better spacing */}
-      <div className="relative z-10 h-full flex flex-col items-center px-4 sm:px-6 md:px-8 pt-8 sm:pt-12 md:pt-16 pb-4 sm:pb-6">
-        {/* Logo section - mais acima */}
-        <div className="flex flex-col items-center">
+      {/* Content - centered with better spacing for all screens */}
+      <div className="relative z-10 h-full flex flex-col items-center justify-between px-4 sm:px-6 md:px-8 lg:px-12 py-6 sm:py-8 md:py-10 lg:py-12">
+        {/* Logo section */}
+        <div className="flex flex-col items-center flex-shrink-0">
           {/* Logo - with fade-in and pulse animation */}
           <motion.div
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
@@ -204,7 +204,7 @@ const Home: React.FC = memo(() => {
 
           {/* Clock - with delayed fade-in and exit animation */}
           <motion.div 
-            className="mt-4 sm:mt-6 md:mt-8"
+            className="mt-3 sm:mt-4 md:mt-6"
             initial={{ opacity: 0, y: 10 }}
             animate={{ 
               opacity: isExiting ? 0 : 1, 
@@ -218,44 +218,41 @@ const Home: React.FC = memo(() => {
           >
             <DigitalClock />
           </motion.div>
-
-          {/* Panel Buttons - larger with more spacing */}
-          <div className="mt-10 sm:mt-14 md:mt-20 flex gap-6 sm:gap-10 md:gap-14 lg:gap-20">
-            {[
-              { panel: 'client' as const, icon: User, label: 'CLIENTE', color: 'primary' as const },
-              { panel: 'instructor' as const, icon: Dumbbell, label: 'INSTRUTOR', color: 'secondary' as const },
-              { panel: 'admin' as const, icon: Shield, label: 'GERENTE', color: 'accent' as const },
-            ].map((item, index) => (
-              <motion.div
-                key={item.panel}
-                initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                animate={{ 
-                  opacity: isExiting ? 0 : 1, 
-                  y: isExiting ? 40 : 0, 
-                  scale: isExiting ? 0.85 : 1 
-                }}
-                transition={{
-                  duration: isExiting ? 0.25 : 0.5,
-                  delay: isExiting ? index * 0.05 : 0.35 + index * 0.12,
-                  ease: [0.25, 0.46, 0.45, 0.94]
-                }}
-              >
-                <ThemedHomeButton
-                  onClick={() => handlePanelClick(item.panel)}
-                  icon={item.icon}
-                  label={item.label}
-                  color={item.color}
-                />
-              </motion.div>
-            ))}
-          </div>
         </div>
 
-        {/* Spacer para empurrar footer para baixo */}
-        <div className="flex-grow" />
+        {/* Panel Buttons - centered with better distribution */}
+        <div className="flex items-center justify-center gap-8 sm:gap-12 md:gap-16 lg:gap-24 xl:gap-32 py-4 sm:py-6 md:py-8">
+          {[
+            { panel: 'client' as const, icon: User, label: 'CLIENTE', color: 'primary' as const },
+            { panel: 'instructor' as const, icon: Dumbbell, label: 'INSTRUTOR', color: 'secondary' as const },
+            { panel: 'admin' as const, icon: Shield, label: 'GERENTE', color: 'accent' as const },
+          ].map((item, index) => (
+            <motion.div
+              key={item.panel}
+              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              animate={{ 
+                opacity: isExiting ? 0 : 1, 
+                y: isExiting ? 40 : 0, 
+                scale: isExiting ? 0.85 : 1 
+              }}
+              transition={{
+                duration: isExiting ? 0.25 : 0.5,
+                delay: isExiting ? index * 0.05 : 0.35 + index * 0.12,
+                ease: [0.25, 0.46, 0.45, 0.94]
+              }}
+            >
+              <ThemedHomeButton
+                onClick={() => handlePanelClick(item.panel)}
+                icon={item.icon}
+                label={item.label}
+                color={item.color}
+              />
+            </motion.div>
+          ))}
+        </div>
         
-        {/* Footer - fixo na parte inferior */}
-        <div className="mt-auto pb-2 sm:pb-4">
+        {/* Footer - na parte inferior */}
+        <div className="flex-shrink-0">
           <AppFooter />
         </div>
       </div>
