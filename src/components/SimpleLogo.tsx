@@ -18,8 +18,8 @@ const SimpleLogo: React.FC<SimpleLogoProps> = ({
   const sizeClasses = {
     sm: 'w-8 h-auto sm:w-10',
     md: 'w-10 h-auto sm:w-12',
-    lg: 'w-28 h-auto sm:w-32 md:w-36',
-    xl: 'w-32 h-auto sm:w-40 md:w-44',
+    lg: 'w-36 h-auto sm:w-44 md:w-52 lg:w-60',
+    xl: 'w-44 h-auto sm:w-52 md:w-60 lg:w-72',
   };
 
   return (

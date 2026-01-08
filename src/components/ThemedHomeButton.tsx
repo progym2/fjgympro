@@ -53,6 +53,23 @@ const getRippleColor = (theme: SportTheme): string => {
   return colors[theme] || colors.fire;
 };
 
+// Cores do glow pulsante por tema
+const getGlowColor = (theme: SportTheme): { dim: string; bright: string } => {
+  const colors: Record<SportTheme, { dim: string; bright: string }> = {
+    fire: { dim: '0 0 15px 0 rgba(255, 107, 53, 0.3)', bright: '0 0 30px 8px rgba(255, 107, 53, 0.6)' },
+    ocean: { dim: '0 0 15px 0 rgba(0, 212, 255, 0.3)', bright: '0 0 30px 8px rgba(0, 212, 255, 0.6)' },
+    forest: { dim: '0 0 15px 0 rgba(16, 185, 129, 0.3)', bright: '0 0 30px 8px rgba(16, 185, 129, 0.6)' },
+    lightning: { dim: '0 0 15px 0 rgba(251, 191, 36, 0.4)', bright: '0 0 35px 10px rgba(251, 191, 36, 0.7)' },
+    galaxy: { dim: '0 0 15px 0 rgba(168, 85, 247, 0.3)', bright: '0 0 30px 8px rgba(168, 85, 247, 0.6)' },
+    iron: { dim: '0 0 12px 0 rgba(148, 163, 184, 0.25)', bright: '0 0 25px 6px rgba(148, 163, 184, 0.5)' },
+    blood: { dim: '0 0 15px 0 rgba(239, 68, 68, 0.35)', bright: '0 0 30px 8px rgba(239, 68, 68, 0.65)' },
+    neon: { dim: '0 0 18px 0 rgba(244, 114, 182, 0.4)', bright: '0 0 35px 10px rgba(244, 114, 182, 0.7)' },
+    gold: { dim: '0 0 15px 0 rgba(251, 191, 36, 0.35)', bright: '0 0 30px 8px rgba(251, 191, 36, 0.65)' },
+    amoled: { dim: '0 0 10px 0 rgba(107, 114, 128, 0.2)', bright: '0 0 20px 5px rgba(107, 114, 128, 0.4)' },
+  };
+  return colors[theme] || colors.fire;
+};
+
 // Animação do ícone por tema
 const getIconAnimation = (theme: SportTheme): { hover: { scale?: number | number[]; rotate?: number | number[]; y?: number | number[]; x?: number[]; opacity?: number[]; filter?: string }; transition: object } => {
   const animations: Record<SportTheme, { hover: { scale?: number | number[]; rotate?: number | number[]; y?: number | number[]; x?: number[]; opacity?: number[]; filter?: string }; transition: object }> = {
@@ -279,6 +296,7 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
   const Icon = useMemo(() => getFitnessIcon(currentTheme, color), [currentTheme, color]);
   const style = useMemo(() => getButtonStyle(currentTheme, color), [currentTheme, color]);
   const rippleColor = useMemo(() => getRippleColor(currentTheme), [currentTheme]);
+  const glowColors = useMemo(() => getGlowColor(currentTheme), [currentTheme]);
   const iconAnimation = useMemo(() => getIconAnimation(currentTheme), [currentTheme]);
 
   const createRipple = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -337,16 +355,30 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
       )}
     >
       {/* Button container with theme-specific style */}
-      <div className={cn(
-        'relative flex items-center justify-center overflow-hidden',
-        'transition-all duration-200',
-        style.containerClass,
-        style.shape,
-        style.bg,
-        style.border,
-        style.shadow,
-        hoverEffectsEnabled && style.hoverEffect
-      )}>
+      <motion.div 
+        className={cn(
+          'relative flex items-center justify-center overflow-hidden',
+          'transition-all duration-200',
+          style.containerClass,
+          style.shape,
+          style.bg,
+          style.border,
+          style.shadow,
+          hoverEffectsEnabled && style.hoverEffect
+        )}
+        animate={{
+          boxShadow: [
+            glowColors.dim,
+            glowColors.bright,
+            glowColors.dim,
+          ],
+        }}
+        transition={{
+          duration: 2.5,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+      >
         {/* Ripple effects */}
         <AnimatePresence>
           {ripples.map(ripple => (
@@ -379,7 +411,7 @@ const ThemedHomeButton: React.FC<ThemedHomeButtonProps> = memo(({
         >
           <Icon className={cn(style.iconSize, 'text-white drop-shadow-sm')} strokeWidth={2.5} />
         </motion.div>
-      </div>
+      </motion.div>
 
       {/* Label */}
       <span className={cn(
