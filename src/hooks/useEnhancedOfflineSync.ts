@@ -212,6 +212,19 @@ export function useEnhancedOfflineSync() {
 
     if (successCount > 0) {
       toast.success(`${successCount} ${successCount === 1 ? 'alteração sincronizada' : 'alterações sincronizadas'}`);
+      
+      // Try to send push notification
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification('Sincronização Completa', {
+            body: `${successCount} alterações foram sincronizadas com sucesso.`,
+            icon: '/pwa-192x192.png',
+            tag: 'sync-complete',
+          });
+        } catch (e) {
+          // Notification API not available or blocked
+        }
+      }
     }
     
     if (failCount > 0) {

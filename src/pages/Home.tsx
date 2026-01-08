@@ -3,13 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { User, Dumbbell, Shield, Info, Volume2, VolumeX } from 'lucide-react';
 
 import DigitalClock from '@/components/DigitalClock';
-import GymButton from '@/components/GymButton';
+import ModernGymButton from '@/components/ModernGymButton';
 import AppFooter from '@/components/AppFooter';
 import LoginDialog from '@/components/LoginDialog';
 import AboutDialog from '@/components/AboutDialog';
-import ParticlesBackground from '@/components/ParticlesBackground';
-import AnimatedLogo from '@/components/AnimatedLogo';
-import AudioVisualizer from '@/components/AudioVisualizer';
+import SimpleParticles from '@/components/SimpleParticles';
+import SimpleLogo from '@/components/SimpleLogo';
 import SportThemeSelector from '@/components/SportThemeSelector';
 import MiniMusicPlayer from '@/components/MiniMusicPlayer';
 import { useAuth } from '@/contexts/AuthContext';
@@ -86,31 +85,31 @@ const Home: React.FC = () => {
         backgroundPosition: 'center',
       }}
     >
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/60" />
+      {/* Overlay - gradient for depth */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/60 to-black/80" />
 
-      {/* Particles - reduced */}
-      <ParticlesBackground />
+      {/* Simple particles - lightweight */}
+      <SimpleParticles />
 
       {/* Content - centered and compact */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center px-4">
-        {/* Logo */}
-        <AnimatedLogo size="lg" showGlow />
+        {/* Logo - simplified */}
+        <SimpleLogo size="lg" showGlow />
 
         {/* Clock */}
         <div className="mt-4">
           <DigitalClock />
         </div>
 
-        {/* Panel Buttons - compact row */}
-        <div className="mt-6 flex gap-3 sm:gap-4">
-          <GymButton onClick={() => handlePanelClick('client')} icon={User} label="CLIENTE" color="primary" />
-          <GymButton onClick={() => handlePanelClick('instructor')} icon={Dumbbell} label="INSTRUTOR" color="secondary" />
-          <GymButton onClick={() => handlePanelClick('admin')} icon={Shield} label="GERENTE" color="accent" />
+        {/* Panel Buttons - modern cards */}
+        <div className="mt-8 flex gap-3 sm:gap-4">
+          <ModernGymButton onClick={() => handlePanelClick('client')} icon={User} label="CLIENTE" color="primary" />
+          <ModernGymButton onClick={() => handlePanelClick('instructor')} icon={Dumbbell} label="INSTRUTOR" color="secondary" />
+          <ModernGymButton onClick={() => handlePanelClick('admin')} icon={Shield} label="GERENTE" color="accent" />
         </div>
 
         {/* Footer inline */}
-        <div className="mt-8">
+        <div className="mt-10">
           <AppFooter />
         </div>
       </div>
@@ -122,21 +121,21 @@ const Home: React.FC = () => {
 
       <button
         onClick={() => setAboutDialogOpen(true)}
-        className="fixed top-3 right-3 z-50 p-2 rounded-full bg-black/40 text-white/70 hover:text-white"
+        className="fixed top-3 right-3 z-50 p-2.5 rounded-xl bg-black/40 backdrop-blur-sm text-white/70 hover:text-white hover:bg-black/60 transition-all"
         aria-label="Sobre"
       >
-        <Info size={16} />
+        <Info size={18} />
       </button>
 
       <button
         onClick={() => { playClickSound(); toggleSfx(); }}
-        className={`fixed bottom-16 left-3 z-50 p-2 rounded-full bg-black/40 transition-colors ${
-          isSfxEnabled ? 'text-green-400' : 'text-white/50'
+        className={`fixed bottom-16 left-3 z-50 p-2.5 rounded-xl bg-black/40 backdrop-blur-sm transition-all ${
+          isSfxEnabled ? 'text-emerald-400 hover:bg-emerald-500/20' : 'text-white/50 hover:bg-white/10'
         }`}
         aria-label={isSfxEnabled ? 'Desativar sons' : 'Ativar sons'}
-        title={isSfxEnabled ? 'Sons de hover ativos' : 'Sons de hover desativados'}
+        title={isSfxEnabled ? 'Sons ativos' : 'Sons desativados'}
       >
-        {isSfxEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+        {isSfxEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
       </button>
 
       {/* Mini Music Player */}
@@ -150,9 +149,6 @@ const Home: React.FC = () => {
         panelType={selectedPanel}
       />
       <AboutDialog isOpen={aboutDialogOpen} onClose={() => setAboutDialogOpen(false)} />
-
-      {/* Audio Visualizer */}
-      <AudioVisualizer />
     </div>
   );
 };
