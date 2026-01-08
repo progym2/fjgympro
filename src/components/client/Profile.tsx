@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { User, Save, Calculator, Shield, Award, Key, Info } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -186,11 +185,7 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="h-full flex flex-col overflow-hidden"
-    >
+    <div className="h-full flex flex-col overflow-hidden animate-fade-in">
       <ClientPageHeader 
         title="MEU PERFIL" 
         icon={<User className="w-5 h-5" />} 
@@ -485,7 +480,7 @@ const Profile: React.FC = () => {
         </div>
       </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

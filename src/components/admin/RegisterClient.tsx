@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
   UserPlus, User, Mail, Phone, Calendar, Save, Loader2, 
@@ -307,7 +306,7 @@ const RegisterClient: React.FC = () => {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+    <div className="space-y-4 animate-fade-in">
       <div className="flex items-center gap-2">
         <button
           onClick={() => { playClickSound(); handleBack(); }}
@@ -860,7 +859,7 @@ Data de Emissão: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
           )}
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </div>
   );
 };
 
