@@ -32,8 +32,8 @@ const RegisterInstructor: React.FC = () => {
     cref: '',
   });
 
-  // Real-time validations
-  const cpfValidation = useCpfValidation(formData.cpf);
+  // Real-time validations - check for instructor level duplicates
+  const cpfValidation = useCpfValidation(formData.cpf, { checkLevel: 'instructor' });
   const usernameValidation = useUsernameValidation(formData.username);
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -75,8 +75,8 @@ const RegisterClient: React.FC = () => {
   const hasChanges = formData.username !== '' || formData.full_name !== '';
   const { showExitDialog, confirmExit, handleConfirmExit, handleCancelExit } = useUnsavedChanges({ hasChanges });
 
-  // Real-time validations
-  const cpfValidation = useCpfValidation(formData.cpf);
+  // Real-time validations - check for client level duplicates
+  const cpfValidation = useCpfValidation(formData.cpf, { checkLevel: 'client' });
   const usernameValidation = useUsernameValidation(formData.username);
 
   const handleBack = () => {
