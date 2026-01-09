@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
+import { useThemeStyles } from '@/lib/themeStyles';
 
 interface ThemedHeaderProps {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ interface ThemedHeaderProps {
 
 export const ThemedHeader: React.FC<ThemedHeaderProps> = ({ children, className }) => {
   const { themeConfig } = useTheme();
+  const themeStyles = useThemeStyles();
 
   const getHeaderStyle = () => {
     switch (themeConfig.cardStyle) {
@@ -26,7 +28,10 @@ export const ThemedHeader: React.FC<ThemedHeaderProps> = ({ children, className 
     <motion.header
       className={cn(
         'fixed top-0 left-0 right-0 z-40 pt-safe',
-        'bg-card/95 backdrop-blur-md border-b border-border/50',
+        themeStyles.cardBg,
+        'backdrop-blur-md',
+        'border-b',
+        themeStyles.cardBorder,
         'shadow-md',
         getHeaderStyle(),
         className

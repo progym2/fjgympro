@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useTheme, CardStyle } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
+import { useThemeStyles } from '@/lib/themeStyles';
 
 interface ThemedCardProps {
   children: React.ReactNode;
@@ -12,7 +13,7 @@ interface ThemedCardProps {
   pattern?: boolean;
 }
 
-const getCardStyles = (style: CardStyle): string => {
+const getCardShapeStyles = (style: CardStyle): string => {
   switch (style) {
     case 'sharp':
       return 'rounded-sm border-l-4';
@@ -114,11 +115,18 @@ export const ThemedCard: React.FC<ThemedCardProps> = ({
   pattern = false
 }) => {
   const { themeConfig } = useTheme();
+  const themeStyles = useThemeStyles();
   
   const cardClasses = cn(
-    'relative bg-card/90 backdrop-blur-md border-border/50 overflow-hidden',
-    getCardStyles(themeConfig.cardStyle),
-    interactive && 'cursor-pointer transition-all hover:border-primary/50 hover:shadow-lg active:scale-[0.98]',
+    'relative backdrop-blur-md overflow-hidden',
+    themeStyles.cardBg,
+    themeStyles.cardBorder,
+    getCardShapeStyles(themeConfig.cardStyle),
+    interactive && cn(
+      'cursor-pointer transition-all',
+      themeStyles.cardHoverBorder,
+      'hover:shadow-lg active:scale-[0.98]'
+    ),
     glow && 'shadow-glow',
     className
   );
@@ -137,10 +145,11 @@ export const ThemedCard: React.FC<ThemedCardProps> = ({
         onClick={onClick}
         whileHover={{ 
           scale: 1.02,
-          boxShadow: `0 0 30px hsl(${themeConfig.primary} / var(--theme-glow-intensity))`
+          boxShadow: `0 0 30px ${themeStyles.glowColor}`
         }}
         whileTap={{ scale: 0.98 }}
-        transition={{ duration: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--theme-animation-speed') || '0.3') }}
+        transition={{ duration: 0.3 }}
+        style={glow ? { boxShadow: `0 0 15px ${themeStyles.glowColor}` } : undefined}
       >
         {content}
       </motion.div>
@@ -148,7 +157,10 @@ export const ThemedCard: React.FC<ThemedCardProps> = ({
   }
 
   return (
-    <div className={cardClasses}>
+    <div 
+      className={cardClasses}
+      style={glow ? { boxShadow: `0 0 15px ${themeStyles.glowColor}` } : undefined}
+    >
       {content}
     </div>
   );

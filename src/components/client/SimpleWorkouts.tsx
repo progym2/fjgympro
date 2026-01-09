@@ -23,6 +23,8 @@ import WorkoutDetailsModal from './WorkoutDetailsModal';
 import HydrationWidget from './HydrationWidget';
 import WorkoutWeeklyStats from './WorkoutWeeklyStats';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useThemeStyles } from '@/lib/themeStyles';
+import { cn } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -99,6 +101,7 @@ const SimpleWorkouts: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { sendWorkoutAvailableNotification } = usePushNotifications();
+  const themeStyles = useThemeStyles();
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
   const [exercises, setExercises] = useState<Record<string, WorkoutExercise[]>>({});
@@ -513,15 +516,20 @@ const SimpleWorkouts: React.FC = () => {
       <HydrationWidget />
       
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className={cn(
+        "flex items-center justify-between p-3 rounded-xl backdrop-blur-md",
+        themeStyles.cardBg,
+        'border',
+        themeStyles.cardBorder
+      )}>
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/client')}
-            className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            className={cn("text-sm transition-colors", themeStyles.accentColor, "hover:opacity-80")}
           >
             ← Voltar
           </button>
-          <h2 className="text-xl sm:text-2xl font-bebas text-primary flex items-center gap-2">
+          <h2 className={cn("text-xl sm:text-2xl font-bebas flex items-center gap-2", themeStyles.titleColor)}>
             <Dumbbell className="w-6 h-6" />
             MEUS TREINOS
           </h2>
@@ -537,16 +545,20 @@ const SimpleWorkouts: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-primary/20 border border-primary/50 rounded-xl p-4"
+          className={cn(
+            "rounded-xl p-4 border",
+            themeStyles.tipBg,
+            themeStyles.tipBorder
+          )}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/30 rounded-full flex items-center justify-center">
-                <Timer className="w-5 h-5 text-primary animate-pulse" />
+              <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", themeStyles.iconBg)}>
+                <Timer className={cn("w-5 h-5 animate-pulse", themeStyles.iconColor)} />
               </div>
               <div>
-                <p className="text-sm font-medium text-primary">Treino em andamento</p>
-                <p className="text-xs text-muted-foreground">
+                <p className={cn("text-sm font-medium", themeStyles.titleColor)}>Treino em andamento</p>
+                <p className={cn("text-xs", themeStyles.accentColor)}>
                   {plans.find(p => p.id === activeWorkout.planId)?.name}
                 </p>
               </div>
@@ -565,8 +577,12 @@ const SimpleWorkouts: React.FC = () => {
       )}
 
       {/* Day Selector */}
-      <div className="bg-card/80 backdrop-blur-md rounded-xl p-4 border border-border/50">
-        <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1">
+      <div className={cn(
+        "rounded-xl p-4 backdrop-blur-md border",
+        themeStyles.cardBg,
+        themeStyles.cardBorder
+      )}>
+        <p className={cn("text-xs mb-3 flex items-center gap-1", themeStyles.accentColor)}>
           <Calendar size={14} />
           Selecione o dia para ver seus exercícios:
         </p>
