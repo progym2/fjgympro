@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Utensils, Plus, Trash2, Calculator, Save, Loader2, 
   Apple, Beef, Wheat, Droplets, Coffee, Moon, Sun, 
-  Flame, Target, ChevronRight, Check, Sparkles
+  Flame, Target, ChevronRight, Check, Sparkles, History,
+  Copy, Clock
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -21,6 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
 interface FoodItem {
   id: string;
@@ -47,6 +56,17 @@ interface ProfileData {
   birth_date: string | null;
   gender: string | null;
   fitness_goal: string | null;
+}
+
+interface SavedPlan {
+  id: string;
+  name: string;
+  description: string | null;
+  total_calories: number | null;
+  protein_grams: number | null;
+  carbs_grams: number | null;
+  fat_grams: number | null;
+  created_at: string;
 }
 
 const FOOD_DATABASE: FoodItem[] = [
@@ -103,10 +123,14 @@ const InteractiveMealBuilder: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [planName, setPlanName] = useState('');
   const [showGoalCalculator, setShowGoalCalculator] = useState(false);
+  const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [addedFoodId, setAddedFoodId] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile?.profile_id) {
       fetchProfileData();
+      fetchSavedPlans();
     }
   }, [profile?.profile_id]);
 
@@ -127,6 +151,27 @@ const InteractiveMealBuilder: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching profile data:', error);
+    }
+  };
+
+  const fetchSavedPlans = async () => {
+    if (!profile?.profile_id) return;
+    setLoadingPlans(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('meal_plans')
+        .select('id, name, description, total_calories, protein_grams, carbs_grams, fat_grams, created_at')
+        .eq('created_by', profile.profile_id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
+      setSavedPlans(data || []);
+    } catch (error) {
+      console.error('Error fetching saved plans:', error);
+    } finally {
+      setLoadingPlans(false);
     }
   };
 
@@ -194,12 +239,18 @@ const InteractiveMealBuilder: React.FC = () => {
 
   const addFoodToMeal = (food: FoodItem) => {
     if (!selectedMeal) return;
+    const newFoodId = `${food.id}-${Date.now()}`;
     setMeals(meals.map(meal => 
       meal.id === selectedMeal 
-        ? { ...meal, foods: [...meal.foods, { ...food, id: `${food.id}-${Date.now()}` }] }
+        ? { ...meal, foods: [...meal.foods, { ...food, id: newFoodId }] }
         : meal
     ));
-    toast.success(`${food.name} adicionado!`);
+    
+    // Visual feedback animation
+    setAddedFoodId(newFoodId);
+    setTimeout(() => setAddedFoodId(null), 600);
+    
+    toast.success(`${food.name} adicionado!`, { duration: 1500 });
   };
 
   const removeFoodFromMeal = (mealId: string, foodIndex: number) => {
@@ -208,6 +259,34 @@ const InteractiveMealBuilder: React.FC = () => {
         ? { ...meal, foods: meal.foods.filter((_, i) => i !== foodIndex) }
         : meal
     ));
+  };
+
+  const duplicatePlan = async (plan: SavedPlan) => {
+    const newName = `${plan.name} (cópia)`;
+    setPlanName(newName);
+    
+    // Parse the description to restore meals if possible
+    if (plan.description) {
+      toast.success(`Plano "${plan.name}" duplicado! Edite e salve como novo.`);
+    }
+    
+    // Set the goals based on the plan
+    if (plan.total_calories) {
+      setDailyGoals({
+        calories: plan.total_calories,
+        protein: plan.protein_grams || 150,
+        carbs: plan.carbs_grams || 200,
+        fat: plan.fat_grams || 70
+      });
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
   };
 
   const handleSave = async () => {
@@ -240,6 +319,7 @@ const InteractiveMealBuilder: React.FC = () => {
       toast.success('Cardápio salvo com sucesso!');
       setPlanName('');
       setMeals(INITIAL_MEALS);
+      fetchSavedPlans(); // Refresh the history
     } catch (error) {
       console.error('Error saving meal plan:', error);
       toast.error('Erro ao salvar cardápio');
@@ -385,54 +465,91 @@ const InteractiveMealBuilder: React.FC = () => {
 
       {/* Meal Slots */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {meals.map((meal) => (
-          <Card 
-            key={meal.id} 
-            className={`bg-card/80 backdrop-blur-md border cursor-pointer transition-all ${
-              selectedMeal === meal.id 
-                ? 'border-orange-500 ring-2 ring-orange-500/20' 
-                : 'border-border/50 hover:border-orange-500/50'
-            }`}
-            onClick={() => setSelectedMeal(selectedMeal === meal.id ? null : meal.id)}
-          >
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <span className="text-orange-500">{meal.icon}</span>
-                  <span className="text-sm font-medium text-foreground">{meal.name}</span>
-                </span>
-                <Badge variant="outline" className="text-xs bg-background/80 text-muted-foreground border-border">{meal.time}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-3 pt-0">
-              {meal.foods.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-2">
-                  Clique para adicionar alimentos
-                </p>
-              ) : (
-                <div className="space-y-1">
-                  {meal.foods.map((food, idx) => (
-                    <div key={`${food.id}-${idx}`} className="flex items-center justify-between text-xs bg-background/50 rounded px-2 py-1">
-                      <span className="truncate flex-1">{food.name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">{food.calories}kcal</span>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); removeFoodFromMeal(meal.id, idx); }}
-                          className="text-destructive hover:text-destructive/80"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
+        <AnimatePresence mode="wait">
+          {meals.map((meal, mealIndex) => (
+            <motion.div
+              key={meal.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: mealIndex * 0.05, duration: 0.2 }}
+            >
+              <Card 
+                className={`bg-card/80 backdrop-blur-md border cursor-pointer transition-all duration-200 ${
+                  selectedMeal === meal.id 
+                    ? 'border-orange-500 ring-2 ring-orange-500/20 scale-[1.02]' 
+                    : 'border-border/50 hover:border-orange-500/50 hover:scale-[1.01]'
+                }`}
+                onClick={() => setSelectedMeal(selectedMeal === meal.id ? null : meal.id)}
+              >
+                <CardHeader className="py-3 px-4">
+                  <CardTitle className="text-sm flex items-center justify-between">
+                    <motion.span 
+                      className="flex items-center gap-2"
+                      animate={selectedMeal === meal.id ? { x: [0, 3, 0] } : {}}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <span className="text-orange-500">{meal.icon}</span>
+                      <span className="text-sm font-medium text-foreground">{meal.name}</span>
+                    </motion.span>
+                    <Badge variant="outline" className="text-xs bg-background/80 text-muted-foreground border-border">{meal.time}</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-3 pt-0">
+                  {meal.foods.length === 0 ? (
+                    <motion.p 
+                      className="text-xs text-muted-foreground text-center py-2"
+                      animate={selectedMeal === meal.id ? { opacity: [0.5, 1] } : {}}
+                    >
+                      Clique para adicionar alimentos
+                    </motion.p>
+                  ) : (
+                    <div className="space-y-1">
+                      <AnimatePresence>
+                        {meal.foods.map((food, idx) => (
+                          <motion.div 
+                            key={`${food.id}-${idx}`} 
+                            initial={{ opacity: 0, x: -10, scale: 0.95 }}
+                            animate={{ 
+                              opacity: 1, 
+                              x: 0, 
+                              scale: 1,
+                              backgroundColor: addedFoodId === food.id ? 'hsl(var(--primary) / 0.2)' : 'transparent'
+                            }}
+                            exit={{ opacity: 0, x: 10, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            className="flex items-center justify-between text-xs bg-background/50 rounded px-2 py-1"
+                          >
+                            <span className="truncate flex-1">{food.name}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-muted-foreground">{food.calories}kcal</span>
+                              <motion.button 
+                                onClick={(e) => { e.stopPropagation(); removeFoodFromMeal(meal.id, idx); }}
+                                className="text-destructive hover:text-destructive/80"
+                                whileHover={{ scale: 1.2 }}
+                                whileTap={{ scale: 0.9 }}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </motion.button>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                      <motion.div 
+                        className="text-xs text-orange-500 font-medium pt-1 border-t border-border/50"
+                        key={meal.foods.reduce((acc, f) => acc + f.calories, 0)}
+                        initial={{ scale: 1 }}
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        Total: {meal.foods.reduce((acc, f) => acc + f.calories, 0)} kcal
+                      </motion.div>
                     </div>
-                  ))}
-                  <div className="text-xs text-orange-500 font-medium pt-1 border-t border-border/50">
-                    Total: {meal.foods.reduce((acc, f) => acc + f.calories, 0)} kcal
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
 
       {/* Food Selection Panel */}
@@ -461,13 +578,16 @@ const InteractiveMealBuilder: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 max-h-64 overflow-y-auto">
-              {filteredFoods.map((food) => (
+              {filteredFoods.map((food, index) => (
                 <motion.button
                   key={food.id}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.02, duration: 0.15 }}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => addFoodToMeal(food)}
-                  className="p-3 bg-background/50 rounded-lg border border-border/50 hover:border-orange-500/50 text-left transition-all"
+                  className="p-3 bg-background/50 rounded-lg border border-border/50 hover:border-orange-500 hover:bg-orange-500/10 text-left transition-colors duration-150"
                 >
                   <p className="text-sm font-medium truncate">{food.name}</p>
                   <p className="text-xs text-muted-foreground">{food.portion}</p>
@@ -475,6 +595,13 @@ const InteractiveMealBuilder: React.FC = () => {
                     <span className="text-orange-500">{food.calories}kcal</span>
                     <span className="text-red-400">P{food.protein}g</span>
                   </div>
+                  <motion.div
+                    className="mt-1 flex items-center gap-1 text-xs text-green-500 opacity-0"
+                    whileHover={{ opacity: 1 }}
+                  >
+                    <Plus className="w-3 h-3" />
+                    Adicionar
+                  </motion.div>
                 </motion.button>
               ))}
             </div>
@@ -494,14 +621,98 @@ const InteractiveMealBuilder: React.FC = () => {
               className="bg-background/50"
             />
           </div>
-          <Button 
-            onClick={handleSave} 
-            disabled={saving || !planName.trim() || totals.calories === 0}
-            className="bg-orange-500 hover:bg-orange-600 sm:self-end"
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-            {saving ? 'Salvando...' : 'Salvar Cardápio'}
-          </Button>
+          <div className="flex gap-2 sm:self-end">
+            {/* History Sheet */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="shrink-0">
+                  <History className="w-4 h-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[340px] sm:w-[400px]">
+                <SheetHeader>
+                  <SheetTitle className="flex items-center gap-2 font-bebas text-lg">
+                    <History className="w-5 h-5 text-orange-500" />
+                    HISTÓRICO DE CARDÁPIOS
+                  </SheetTitle>
+                </SheetHeader>
+                <ScrollArea className="h-[calc(100vh-100px)] mt-4 pr-4">
+                  {loadingPlans ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                    </div>
+                  ) : savedPlans.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Utensils className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">Nenhum cardápio salvo</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {savedPlans.map((plan, index) => (
+                        <motion.div
+                          key={plan.id}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-orange-500/50 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm truncate">{plan.name}</h4>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                                <Clock className="w-3 h-3" />
+                                {formatDate(plan.created_at)}
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => duplicatePlan(plan)}
+                              className="shrink-0 h-8 w-8 p-0"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          
+                          <div className="grid grid-cols-4 gap-1 mt-2 text-xs">
+                            <div className="bg-background/80 rounded px-2 py-1 text-center">
+                              <span className="text-orange-500 font-medium">{plan.total_calories || '-'}</span>
+                              <p className="text-muted-foreground text-[10px]">kcal</p>
+                            </div>
+                            <div className="bg-background/80 rounded px-2 py-1 text-center">
+                              <span className="text-red-400 font-medium">{plan.protein_grams || '-'}</span>
+                              <p className="text-muted-foreground text-[10px]">prot</p>
+                            </div>
+                            <div className="bg-background/80 rounded px-2 py-1 text-center">
+                              <span className="text-blue-400 font-medium">{plan.carbs_grams || '-'}</span>
+                              <p className="text-muted-foreground text-[10px]">carb</p>
+                            </div>
+                            <div className="bg-background/80 rounded px-2 py-1 text-center">
+                              <span className="text-yellow-400 font-medium">{plan.fat_grams || '-'}</span>
+                              <p className="text-muted-foreground text-[10px]">gord</p>
+                            </div>
+                          </div>
+                          
+                          {plan.description && (
+                            <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{plan.description}</p>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </SheetContent>
+            </Sheet>
+            
+            <Button 
+              onClick={handleSave} 
+              disabled={saving || !planName.trim() || totals.calories === 0}
+              className="bg-orange-500 hover:bg-orange-600"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              {saving ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
