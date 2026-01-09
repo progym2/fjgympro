@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   ArrowLeft, Palette, LayoutGrid, List, Maximize2, Minimize2,
-  MousePointer2, Settings, Check, Sun, Moon
+  MousePointer2, Settings, Check, Sun, Moon, Trash2, Database, Loader2
 } from 'lucide-react';
+import { clearAllCaches } from '@/lib/indexedDB';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -29,6 +31,51 @@ const AppSettings: React.FC = () => {
     themeConfig
   } = useTheme();
   const styles = useThemeStyles();
+  const [isClearing, setIsClearing] = useState(false);
+
+  const handleClearCache = async () => {
+    setIsClearing(true);
+    try {
+      // Clear IndexedDB caches
+      await clearAllCaches();
+      
+      // Clear localStorage caches (except essential settings)
+      const keysToPreserve = ['theme', 'menuSize', 'menuLayout', 'hoverEffects', 'splashShown'];
+      const allKeys = Object.keys(localStorage);
+      for (const key of allKeys) {
+        if (!keysToPreserve.includes(key) && !key.startsWith('theme')) {
+          localStorage.removeItem(key);
+        }
+      }
+      
+      // Clear sessionStorage
+      sessionStorage.clear();
+      
+      // Clear Service Worker caches
+      if ('caches' in window) {
+        const cacheKeys = await caches.keys();
+        await Promise.all(cacheKeys.map((k) => caches.delete(k)));
+      }
+      
+      toast.success('Cache limpo com sucesso!', {
+        description: 'Todos os dados temporários foram removidos. Recomendamos recarregar a página.',
+      });
+      
+      // Offer to reload
+      setTimeout(() => {
+        if (confirm('Deseja recarregar a página agora para aplicar as alterações?')) {
+          window.location.reload();
+        }
+      }, 500);
+    } catch (error) {
+      console.error('Failed to clear cache:', error);
+      toast.error('Erro ao limpar cache', {
+        description: 'Tente novamente ou recarregue a página manualmente.',
+      });
+    } finally {
+      setIsClearing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -249,6 +296,45 @@ const AppSettings: React.FC = () => {
                     ))}
                   </div>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Clear Cache */}
+          <Card className={cn("border border-destructive/30", styles.cardBg)}>
+            <CardHeader className="pb-3">
+              <CardTitle className={cn("flex items-center gap-2 text-base text-destructive")}>
+                <Database size={18} />
+                Limpar Cache
+              </CardTitle>
+              <CardDescription>Limpe dados temporários para resolver problemas de carregamento</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <p className="text-sm text-muted-foreground">
+                    Isso irá limpar dados em cache, histórico de sincronização e arquivos temporários. 
+                    Suas configurações de tema e preferências serão mantidas.
+                  </p>
+                </div>
+                <Button
+                  variant="destructive"
+                  onClick={handleClearCache}
+                  disabled={isClearing}
+                  className="w-full"
+                >
+                  {isClearing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Limpando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Limpar Cache do App
+                    </>
+                  )}
+                </Button>
               </div>
             </CardContent>
           </Card>
