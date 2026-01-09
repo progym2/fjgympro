@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   TrendingUp, Calendar, Flame, Beef, Wheat, Droplets,
-  ChevronLeft, ChevronRight, Target, Trophy, FileDown
+  ChevronLeft, ChevronRight, Target, Trophy, FileDown, Share2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,7 +27,9 @@ import {
 } from 'recharts';
 import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { exportNutritionChartsToPDF } from '@/lib/nutritionPdfExport';
+import { exportNutritionChartsToPDF, shareChartsSummaryViaWhatsApp } from '@/lib/nutritionPdfExport';
+import SharePdfDialog from './SharePdfDialog';
+import jsPDF from 'jspdf';
 
 interface MealPlan {
   id: string;
@@ -55,6 +57,8 @@ const NutritionCharts: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [dailyData, setDailyData] = useState<DailyData[]>([]);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [currentPdf, setCurrentPdf] = useState<{ doc: jsPDF; filename: string } | null>(null);
   const [goals, setGoals] = useState({
     calories: 2000,
     protein: 150,
@@ -178,30 +182,44 @@ const NutritionCharts: React.FC = () => {
     ? `${format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'dd MMM', { locale: ptBR })} - ${format(endOfWeek(currentDate, { weekStartsOn: 1 }), 'dd MMM', { locale: ptBR })}`
     : format(currentDate, 'MMMM yyyy', { locale: ptBR });
 
+  const getExportOptions = () => ({
+    periodLabel,
+    viewMode,
+    dailyData: dailyData.map(d => ({
+      date: d.date,
+      dayName: d.dayName,
+      calories: d.calories,
+      protein: d.protein,
+      carbs: d.carbs,
+      fat: d.fat,
+      hydration: d.hydration,
+    })),
+    goals,
+    averages,
+    userName: profile?.full_name || undefined,
+  });
+
   const handleExportPDF = () => {
     if (dailyData.length === 0) {
       toast.error('Nenhum dado disponível para exportar');
       return;
     }
-
-    exportNutritionChartsToPDF({
-      periodLabel,
-      viewMode,
-      dailyData: dailyData.map(d => ({
-        date: d.date,
-        dayName: d.dayName,
-        calories: d.calories,
-        protein: d.protein,
-        carbs: d.carbs,
-        fat: d.fat,
-        hydration: d.hydration,
-      })),
-      goals,
-      averages,
-      userName: profile?.full_name || undefined,
-    });
-
+    exportNutritionChartsToPDF(getExportOptions());
     toast.success('Relatório PDF exportado com sucesso!');
+  };
+
+  const handleShare = () => {
+    if (dailyData.length === 0) {
+      toast.error('Nenhum dado disponível para compartilhar');
+      return;
+    }
+    const result = exportNutritionChartsToPDF(getExportOptions());
+    setCurrentPdf(result);
+    setShowShareDialog(true);
+  };
+
+  const handleWhatsAppShare = () => {
+    shareChartsSummaryViaWhatsApp(getExportOptions());
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -269,7 +287,28 @@ const NutritionCharts: React.FC = () => {
           <FileDown className="w-4 h-4" />
           <span className="hidden sm:inline">Exportar</span> PDF
         </Button>
+
+        {/* Share Button */}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="gap-2"
+          onClick={handleShare}
+        >
+          <Share2 className="w-4 h-4" />
+        </Button>
       </div>
+
+      {/* Share Dialog */}
+      <SharePdfDialog
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        pdfDoc={currentPdf?.doc || null}
+        filename={currentPdf?.filename || ''}
+        messageType="nutrition_report"
+        senderName={profile?.full_name || ''}
+        onWhatsAppShare={handleWhatsAppShare}
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
