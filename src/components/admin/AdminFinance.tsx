@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEscapeBack } from '@/hooks/useEscapeBack';
+import { useThemeStyles } from '@/lib/themeStyles';
+import { cn } from '@/lib/utils';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 
 interface PaymentStats {
@@ -31,6 +33,7 @@ const AdminFinance: React.FC = () => {
   const navigate = useNavigate();
   const { playClickSound } = useAudio();
   const { role, profile: currentProfile } = useAuth();
+  const themeStyles = useThemeStyles();
   const [stats, setStats] = useState<PaymentStats>({ total: 0, paid: 0, pending: 0, overdue: 0, clientCount: 0, instructorCount: 0 });
   const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,7 +150,7 @@ const AdminFinance: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+        <Loader2 className={cn('w-8 h-8 animate-spin', themeStyles.iconColor)} />
       </div>
     );
   }
@@ -157,18 +160,18 @@ const AdminFinance: React.FC = () => {
       <div className="flex items-center gap-2">
         <button
           onClick={() => { playClickSound(); navigate('/admin'); }}
-          className="text-sm text-muted-foreground hover:text-blue-500 transition-colors"
+          className={cn('text-sm transition-colors hover:opacity-80', themeStyles.accentColor)}
         >
           ← Voltar
         </button>
-        <h2 className="text-xl sm:text-2xl font-bebas text-emerald-500 flex items-center gap-2">
+        <h2 className={cn('text-xl sm:text-2xl font-bebas flex items-center gap-2', themeStyles.titleColor)}>
           <CreditCard className="w-6 h-6" />
           {isMaster ? 'FINANCEIRO GLOBAL' : 'MEU FINANCEIRO'}
         </h2>
       </div>
 
       {!isMaster && (
-        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 flex items-center gap-2 text-sm text-emerald-400">
+        <div className={cn('rounded-lg p-3 flex items-center gap-2 text-sm border', themeStyles.tipBg, themeStyles.tipBorder, themeStyles.tipText)}>
           <Shield className="w-4 h-4" />
           <span>Exibindo dados financeiros apenas dos seus cadastros. Acesse o Painel Master para ver o financeiro global.</span>
         </div>
@@ -176,7 +179,7 @@ const AdminFinance: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-card/80 backdrop-blur-md rounded-xl p-4 border border-border/50">
+        <div className={cn('backdrop-blur-md rounded-xl p-4 border', themeStyles.cardBg, themeStyles.cardBorder)}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
               <DollarSign className="w-5 h-5 text-emerald-500" />
@@ -187,29 +190,29 @@ const AdminFinance: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-card/80 backdrop-blur-md rounded-xl p-4 border border-border/50">
+        <div className={cn('backdrop-blur-md rounded-xl p-4 border', themeStyles.cardBg, themeStyles.cardBorder)}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-green-500" />
+            <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', themeStyles.iconBg)}>
+              <CheckCircle className={cn('w-5 h-5', themeStyles.iconColor)} />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Recebido</p>
-              <p className="text-lg font-bebas text-green-500">R$ {stats.paid.toFixed(2)}</p>
+              <p className={cn('text-lg font-bebas', themeStyles.accentColor)}>R$ {stats.paid.toFixed(2)}</p>
             </div>
           </div>
         </div>
-        <div className="bg-card/80 backdrop-blur-md rounded-xl p-4 border border-border/50">
+        <div className={cn('backdrop-blur-md rounded-xl p-4 border', themeStyles.cardBg, themeStyles.cardBorder)}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-yellow-500" />
+            <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', themeStyles.iconBg)}>
+              <Clock className={cn('w-5 h-5', themeStyles.iconColor)} />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Pendente</p>
-              <p className="text-lg font-bebas text-yellow-500">R$ {stats.pending.toFixed(2)}</p>
+              <p className={cn('text-lg font-bebas', themeStyles.accentColor)}>R$ {stats.pending.toFixed(2)}</p>
             </div>
           </div>
         </div>
-        <div className="bg-card/80 backdrop-blur-md rounded-xl p-4 border border-border/50">
+        <div className={cn('backdrop-blur-md rounded-xl p-4 border', themeStyles.cardBg, themeStyles.cardBorder)}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-destructive/20 flex items-center justify-center">
               <XCircle className="w-5 h-5 text-destructive" />
@@ -224,7 +227,7 @@ const AdminFinance: React.FC = () => {
 
       {/* User Stats */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-card/80 backdrop-blur-md rounded-xl p-4 border border-border/50">
+        <div className={cn('backdrop-blur-md rounded-xl p-4 border', themeStyles.cardBg, themeStyles.cardBorder)}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
               <Users className="w-5 h-5 text-blue-500" />
@@ -235,10 +238,10 @@ const AdminFinance: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-card/80 backdrop-blur-md rounded-xl p-4 border border-border/50">
+        <div className={cn('backdrop-blur-md rounded-xl p-4 border', themeStyles.cardBg, themeStyles.cardBorder)}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-green-500" />
+            <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', themeStyles.iconBg)}>
+              <TrendingUp className={cn('w-5 h-5', themeStyles.iconColor)} />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">{isMaster ? 'Total Instrutores' : 'Meus Instrutores'}</p>
@@ -249,9 +252,9 @@ const AdminFinance: React.FC = () => {
       </div>
 
       {/* Recent Payments */}
-      <div className="bg-card/80 backdrop-blur-md rounded-xl border border-border/50 overflow-hidden">
-        <div className="p-4 border-b border-border/50">
-          <h3 className="font-bebas text-lg">PAGAMENTOS RECENTES</h3>
+      <div className={cn('backdrop-blur-md rounded-xl border overflow-hidden', themeStyles.cardBg, themeStyles.cardBorder)}>
+        <div className={cn('p-4 border-b', themeStyles.cardBorder)}>
+          <h3 className={cn('font-bebas text-lg', themeStyles.titleColor)}>PAGAMENTOS RECENTES</h3>
         </div>
         <div className="divide-y divide-border/50">
           {recentPayments.length === 0 ? (
