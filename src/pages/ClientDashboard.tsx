@@ -125,7 +125,7 @@ MenuGrid.displayName = 'MenuGrid';
 
 // Home content - separated for better memoization
 const HomeContent = memo(({ onNavigate }: { onNavigate: (path: string) => void }) => (
-  <div className="space-y-4">
+  <div className="space-y-5 pt-3 sm:pt-4">
     <Suspense fallback={null}>
       <FinancialAlerts />
       <LinkedInstructorCard />
@@ -300,7 +300,7 @@ const ClientDashboard: React.FC = () => {
           </div>
         </ThemedHeader>
 
-        <main className="flex-1 container mx-auto px-1 sm:px-3 py-1 sm:py-2 momentum-scroll">
+        <main className="flex-1 container mx-auto px-1 sm:px-3 pt-4 sm:pt-5 pb-2 momentum-scroll">
           <Suspense fallback={<ComponentLoader />}>
             <Routes>
               <Route path="/" element={<HomeContent onNavigate={handleNavigate} />} />
