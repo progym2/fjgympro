@@ -50,8 +50,9 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        globPatterns: ["**/*.{js,css,html,ico,svg,woff2,png,jpg,webp,mp3,mp4}"],
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+        globPatterns: ["**/*.{js,css,html,ico,svg,woff2,png,jpg,webp}"],
+        globIgnores: ["**/*.mp3", "**/*.mp4"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api/],
         cleanupOutdatedCaches: true,
