@@ -13,14 +13,12 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = memo(({ onComplete }
   const progressRef = useRef<number | null>(null);
   const hasCompletedRef = useRef(false);
 
-  // Check if splash was already shown in this session - do this FIRST
+  // Load video immediately
   useEffect(() => {
-    const splashShown = sessionStorage.getItem('splashShown');
-    if (splashShown === 'true') {
-      setIsVisible(false);
-      onComplete();
+    if (videoRef.current) {
+      videoRef.current.load();
     }
-  }, [onComplete]);
+  }, []);
 
   // Progress animation
   useEffect(() => {
@@ -78,13 +76,13 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = memo(({ onComplete }
     handleComplete();
   };
 
-  // Timeout fallback - if video doesn't load in 3 seconds, skip
+  // Timeout fallback - if video doesn't load in 8 seconds, skip
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!videoReady && !hasCompletedRef.current) {
         handleComplete();
       }
-    }, 3000);
+    }, 8000);
     return () => clearTimeout(timeout);
   }, [videoReady]);
 
@@ -99,15 +97,17 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = memo(({ onComplete }
       {/* Simple dark background */}
       <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-black" />
 
-      {/* Video - preload metadata only for faster initial load */}
+      {/* Video - preload auto for faster loading */}
       <video
         ref={videoRef}
         muted
         playsInline
-        preload="metadata"
+        autoPlay
+        preload="auto"
         onEnded={handleVideoEnd}
         onError={handleVideoError}
         onCanPlayThrough={handleCanPlayThrough}
+        onLoadedData={() => setVideoReady(true)}
         className={`w-full h-full object-contain transition-opacity duration-150 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
       >
         <source src="/video/splash.mp4" type="video/mp4" />
