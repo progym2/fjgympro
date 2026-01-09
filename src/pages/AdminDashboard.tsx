@@ -169,16 +169,17 @@ const AdminDashboard: React.FC = () => {
           backgroundImage: `url(${bgPanels})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
           filter: bgLoaded ? 'none' : 'blur(10px)',
           transform: bgLoaded ? 'scale(1)' : 'scale(1.05)',
         }}
       />
-      {/* Vibrant overlay with fire accent */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background/80" />
-      <div className="absolute inset-0 bg-gradient-to-t from-orange-950/20 via-transparent to-transparent" />
+      {/* Subtle overlay - preserving original image colors */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40" />
+      <div className="absolute inset-0 bg-gradient-to-t from-orange-950/10 via-transparent to-transparent" />
       {/* Fire particles effect */}
       <FireParticles count={20} />
-      <div className="relative z-10 h-full flex flex-col pb-14 overflow-y-auto overflow-x-hidden overscroll-contain pt-safe">
+      <div className="relative z-10 h-full flex flex-col pb-14 overflow-y-auto overflow-x-hidden overscroll-none pt-safe">
         <div className="h-16 sm:h-18" />
         <ThemedHeader className="sticky top-0">
           <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
