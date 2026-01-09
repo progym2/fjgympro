@@ -3,6 +3,7 @@ import { useTheme, SportTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ThemedMenuButtonProps {
   icon: LucideIcon;
@@ -11,6 +12,7 @@ interface ThemedMenuButtonProps {
   color?: string;
   badge?: string | number;
   disabled?: boolean;
+  tooltip?: string;
 }
 
 // Estilos específicos por tema - cores otimizadas para legibilidade
@@ -113,7 +115,8 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
   onClick,
   color,
   badge,
-  disabled = false
+  disabled = false,
+  tooltip
 }) => {
   const { themeConfig, currentTheme } = useTheme();
 
@@ -125,7 +128,7 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
       ? 'font-bold' 
       : 'font-medium';
 
-  return (
+  const buttonContent = (
     <motion.button
       onClick={onClick}
       disabled={disabled}
@@ -142,7 +145,7 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
       {/* Icon container - tamanho aumentado com glow pulsante */}
       <motion.div 
         className={cn(
-          'relative p-4 sm:p-5 md:p-6 border-2 transition-all duration-300',
+          'relative p-5 sm:p-6 md:p-7 border-2 transition-all duration-300',
           themeStyles.iconBg,
           themeStyles.iconBorder,
           themeStyles.shape,
@@ -154,7 +157,7 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
       >
         <Icon 
           className={cn(
-            'w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12',
+            'w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16',
             color || themeStyles.iconColor
           )} 
           strokeWidth={1.8} 
@@ -170,7 +173,7 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
 
       {/* Label - maior e mais legível */}
       <span className={cn(
-        'font-bebas text-xs sm:text-sm md:text-base tracking-wider text-center leading-tight',
+        'font-bebas text-sm sm:text-base md:text-lg tracking-wider text-center leading-tight',
         themeStyles.labelColor,
         fontWeightClass
       )}>
@@ -178,6 +181,29 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
       </span>
     </motion.button>
   );
+
+  if (tooltip) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {buttonContent}
+        </TooltipTrigger>
+        <TooltipContent 
+          side="bottom" 
+          className={cn(
+            'max-w-[200px] text-center font-medium',
+            themeStyles.iconBg,
+            themeStyles.iconBorder,
+            'border text-foreground'
+          )}
+        >
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return buttonContent;
 });
 
 ThemedMenuButton.displayName = 'ThemedMenuButton';
