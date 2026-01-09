@@ -379,8 +379,8 @@ const DefaultWorkoutPlans: React.FC<DefaultWorkoutPlansProps> = ({ onPlanCreated
                                     className="flex items-center gap-2 p-2 rounded-lg bg-background/50 text-xs"
                                   >
                                     <div className={`w-1.5 h-1.5 rounded-full ${style.text.replace('text', 'bg')}`} />
-                                    <span className="truncate text-foreground/80">{ex.name}</span>
-                                    <span className="text-muted-foreground ml-auto">{ex.sets}x{ex.reps}</span>
+                                    <span className="truncate text-foreground">{ex.name}</span>
+                                    <span className="text-foreground/70 ml-auto font-medium">{ex.sets}x{ex.reps}</span>
                                   </div>
                                 ))}
                               </div>
