@@ -14,7 +14,7 @@ import { useOfflineDataPreloader } from "@/hooks/useOfflineDataPreloader";
 import { useCacheSizeMonitor } from "@/hooks/useCacheSizeMonitor";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import InstallBanner from "@/components/InstallBanner";
-import VideoSplashScreen from "@/components/VideoSplashScreen";
+import VideoSplashScreen, { APP_VERSION } from "@/components/VideoSplashScreen";
 import ThemeTransitionOverlay from "@/components/ThemeTransitionOverlay";
 import { Loader2 } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
@@ -106,7 +106,7 @@ const AppRoutes = () => {
 };
 
 const App = () => {
-  const [splashComplete, setSplashComplete] = useState(() => localStorage.getItem('splashShown') === 'true');
+  const [splashComplete, setSplashComplete] = useState(() => localStorage.getItem('splashShown') === APP_VERSION);
 
   return (
     <QueryClientProvider client={queryClient}>

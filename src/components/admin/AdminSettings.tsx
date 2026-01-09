@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Building, Clock, Save, Loader2, AlertTriangle, Shield, Wallet } from 'lucide-react';
+import { Settings, Building, Clock, Save, Loader2, AlertTriangle, Shield, Wallet, Play } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -253,6 +253,37 @@ const AdminSettings: React.FC = () => {
                 className="bg-background/50"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Splash Screen Reset */}
+        <div className="bg-card/80 backdrop-blur-md rounded-xl p-4 sm:p-6 border border-primary/30 space-y-4">
+          <h3 className="font-bebas text-lg flex items-center gap-2 text-primary">
+            <Play className="w-5 h-5" />
+            VÍDEO DE INTRODUÇÃO
+          </h3>
+          
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Resetar o splash screen para ver o vídeo de introdução novamente.
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                O vídeo aparece apenas na primeira visita ou após atualizações do app.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => {
+                playClickSound();
+                localStorage.removeItem('splashShown');
+                toast.success('Splash resetado! Recarregue a página para ver o vídeo.');
+              }}
+              className="shrink-0"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Resetar Splash
+            </Button>
           </div>
         </div>
 
