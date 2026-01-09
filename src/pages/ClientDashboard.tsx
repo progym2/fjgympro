@@ -26,6 +26,7 @@ import {
 
 import PanelSwitcher from '@/components/PanelSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
+import PanelThemeSelector from '@/components/shared/PanelThemeSelector';
 import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
 import FitnessLoadingScreen from '@/components/FitnessLoadingScreen';
@@ -265,6 +266,7 @@ const ClientDashboard: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-1">
+                <PanelThemeSelector />
                 <ThemeToggle />
                 {isMaster && <PanelSwitcher />}
                 {license && !isMaster && (
