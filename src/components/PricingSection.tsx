@@ -82,11 +82,11 @@ export const PricingSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className={`relative bg-gradient-card rounded-2xl p-8 border ${
+              className={`relative rounded-2xl p-8 border-2 backdrop-blur-sm ${
                 plan.popular
-                  ? "border-primary shadow-glow scale-105"
-                  : "border-border"
-              } transition-all duration-300 hover:border-primary/50`}
+                  ? "border-primary bg-primary/10 shadow-2xl shadow-primary/20 scale-105 ring-2 ring-primary/30"
+                  : "border-border/60 bg-card/95 hover:bg-card"
+              } transition-all duration-300 hover:border-primary/60 hover:shadow-xl`}
             >
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
@@ -97,26 +97,26 @@ export const PricingSection = () => {
               )}
 
               <div className="text-center mb-8">
-                <h3 className="font-display text-3xl mb-2">{plan.name}</h3>
-                <p className="text-muted-foreground text-sm mb-4">
+                <h3 className="font-display text-3xl mb-2 text-foreground">{plan.name}</h3>
+                <p className="text-foreground/70 text-sm mb-4 font-medium">
                   {plan.description}
                 </p>
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-muted-foreground text-lg">R$</span>
-                  <span className="font-display text-6xl text-gradient">
+                  <span className="text-foreground/80 text-lg font-semibold">R$</span>
+                  <span className="font-display text-6xl text-gradient drop-shadow-lg">
                     {plan.price}
                   </span>
-                  <span className="text-muted-foreground">{plan.period}</span>
+                  <span className="text-foreground/70 font-medium">{plan.period}</span>
                 </div>
               </div>
 
               <ul className="space-y-4 mb-8">
                 {plan.features.map((feature, idx) => (
                   <li key={idx} className="flex items-center gap-3">
-                    <div className="w-5 h-5 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Check className="w-3 h-3 text-primary" />
+                    <div className="w-6 h-6 bg-primary/30 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <Check className="w-4 h-4 text-primary drop-shadow-sm" />
                     </div>
-                    <span className="text-muted-foreground">{feature}</span>
+                    <span className="text-foreground/90 font-medium">{feature}</span>
                   </li>
                 ))}
               </ul>
