@@ -70,36 +70,36 @@ const MusicToggle: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-14 right-4 z-40 flex flex-col items-end gap-2">
-      {/* Volume Slider & Track Info */}
+    <div className="fixed bottom-12 right-3 z-40 flex flex-col items-end gap-1.5">
+      {/* Volume Slider & Track Info - Compact */}
       <AnimatePresence>
         {showVolume && isMusicEnabled && (
           <motion.div
-            initial={{ opacity: 0, x: 20, scale: 0.9 }}
+            initial={{ opacity: 0, x: 15, scale: 0.9 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 20, scale: 0.9 }}
-            transition={{ duration: 0.2 }}
-            className={`relative overflow-hidden bg-card/95 backdrop-blur-xl border-2 border-primary/40 rounded-2xl p-4 shadow-xl ${style.glow}`}
+            exit={{ opacity: 0, x: 15, scale: 0.9 }}
+            transition={{ duration: 0.15 }}
+            className={`relative overflow-hidden bg-card/90 backdrop-blur-lg border border-primary/30 rounded-xl p-2.5 shadow-lg ${style.glow}`}
           >
             {/* Gradient background */}
             <div className={`absolute inset-0 bg-gradient-to-br ${style.gradient} opacity-10`} />
             
-            {/* Track Name with Marquee */}
+            {/* Track Name - Compact */}
             {isMusicPlaying && currentTrackName && (
               <div 
                 ref={containerRef}
-                className="relative max-w-[180px] overflow-hidden mb-3"
+                className="relative max-w-[140px] overflow-hidden mb-2"
               >
                 <motion.div
-                  className={`w-6 h-6 rounded-full bg-gradient-to-br ${style.gradient} flex items-center justify-center inline-block mr-2 align-middle`}
+                  className={`w-4 h-4 rounded-full bg-gradient-to-br ${style.gradient} flex items-center justify-center inline-block mr-1.5 align-middle`}
                   animate={{ rotate: 360 }}
                   transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
                 >
-                  <ThemeIcon size={12} className="text-white" />
+                  <ThemeIcon size={8} className="text-white" />
                 </motion.div>
                 <p 
                   ref={textRef}
-                  className={`inline text-sm font-bold ${style.accent} ${needsMarquee ? 'animate-marquee' : ''}`}
+                  className={`inline text-[10px] font-medium ${style.accent} ${needsMarquee ? 'animate-marquee' : ''}`}
                   style={needsMarquee ? { animation: 'marquee 8s linear infinite' } : undefined}
                 >
                   {currentTrackName}
@@ -107,9 +107,9 @@ const MusicToggle: React.FC = () => {
               </div>
             )}
             
-            {/* Volume Slider */}
-            <div className="relative flex items-center gap-3 min-w-[160px]">
-              <Volume1 size={16} className={`flex-shrink-0 ${style.accent}`} />
+            {/* Volume Slider - Compact */}
+            <div className="relative flex items-center gap-2 min-w-[120px]">
+              <Volume1 size={12} className={`flex-shrink-0 ${style.accent}`} />
               <Slider
                 value={[volumePercent]}
                 onValueChange={handleVolumeChange}
@@ -117,17 +117,16 @@ const MusicToggle: React.FC = () => {
                 step={5}
                 className="flex-1"
               />
-              <Volume2 size={16} className={`flex-shrink-0 ${style.accent}`} />
+              <span className={`text-[10px] font-bold ${style.accent} min-w-[28px] text-right`}>
+                {volumePercent}%
+              </span>
             </div>
-            <p className={`text-center text-xs font-bold mt-2 ${style.accent}`}>
-              {volumePercent}%
-            </p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Controls Row */}
-      <div className="flex items-center gap-2">
+      {/* Controls Row - Compact */}
+      <div className="flex items-center gap-1.5">
         {/* Previous Button */}
         <AnimatePresence>
           {isMusicEnabled && (
@@ -135,24 +134,24 @@ const MusicToggle: React.FC = () => {
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.15 }}
               onClick={skipToPreviousTrack}
-              whileHover={{ scale: 1.15 }}
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className={`w-9 h-9 rounded-full ${style.bg} backdrop-blur-md border-2 border-primary/40 
-                flex items-center justify-center shadow-lg hover:border-primary/60 transition-all`}
+              className={`w-7 h-7 rounded-full ${style.bg} backdrop-blur-md border border-primary/30 
+                flex items-center justify-center shadow-md hover:border-primary/50 transition-all`}
             >
-              <SkipBack className={style.accent} size={14} />
+              <SkipBack className={style.accent} size={11} />
             </motion.button>
           )}
         </AnimatePresence>
 
-        {/* Toggle Button */}
+        {/* Toggle Button - Smaller */}
         <motion.button
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
-          transition={{ duration: 0.3, delay: 0.5 }}
+          transition={{ duration: 0.2, delay: 0.3 }}
           onClick={toggleMusic}
           onContextMenu={(e) => {
             e.preventDefault();
@@ -161,32 +160,25 @@ const MusicToggle: React.FC = () => {
           onDoubleClick={() => {
             if (isMusicEnabled) setShowVolume(!showVolume);
           }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           className={`
-            relative w-12 h-12 rounded-full 
+            relative w-9 h-9 rounded-full 
             flex items-center justify-center 
-            transition-all duration-300
+            transition-all duration-200
             ${isMusicEnabled 
-              ? `bg-gradient-to-br ${style.gradient} shadow-xl ${style.glow}` 
-              : 'bg-card/80 backdrop-blur-md border-2 border-border/40 shadow-lg'
+              ? `bg-gradient-to-br ${style.gradient} shadow-lg ${style.glow}` 
+              : 'bg-card/80 backdrop-blur-md border border-border/40 shadow-md'
             }
           `}
         >
-          {/* Animated rings */}
+          {/* Animated rings - smaller */}
           {isMusicPlaying && (
-            <>
-              <motion.div
-                className="absolute inset-0 rounded-full border-2 border-white/40"
-                animate={{ scale: [1, 1.4], opacity: [0.6, 0] }}
-                transition={{ duration: 1.2, repeat: Infinity }}
-              />
-              <motion.div
-                className="absolute inset-0 rounded-full border-2 border-white/20"
-                animate={{ scale: [1, 1.6], opacity: [0.4, 0] }}
-                transition={{ duration: 1.2, repeat: Infinity, delay: 0.2 }}
-              />
-            </>
+            <motion.div
+              className="absolute inset-0 rounded-full border border-white/30"
+              animate={{ scale: [1, 1.3], opacity: [0.5, 0] }}
+              transition={{ duration: 1, repeat: Infinity }}
+            />
           )}
           
           <AnimatePresence mode="wait">
@@ -195,19 +187,19 @@ const MusicToggle: React.FC = () => {
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
               exit={{ scale: 0, rotate: 180 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.15 }}
             >
               {isMusicPlaying ? (
                 <motion.div
-                  animate={{ scale: [1, 1.15, 1], rotate: [0, 5, -5, 0] }}
+                  animate={{ scale: [1, 1.1, 1] }}
                   transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
                 >
-                  <ThemeIcon size={20} className="text-white drop-shadow-lg" />
+                  <ThemeIcon size={14} className="text-white drop-shadow" />
                 </motion.div>
               ) : isMusicEnabled ? (
-                <Pause size={18} className="text-white drop-shadow" />
+                <Pause size={13} className="text-white drop-shadow" />
               ) : (
-                <VolumeX className="text-muted-foreground" size={18} />
+                <VolumeX className="text-muted-foreground" size={13} />
               )}
             </motion.div>
           </AnimatePresence>
@@ -220,29 +212,18 @@ const MusicToggle: React.FC = () => {
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.15 }}
               onClick={skipToNextTrack}
-              whileHover={{ scale: 1.15 }}
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className={`w-9 h-9 rounded-full ${style.bg} backdrop-blur-md border-2 border-primary/40 
-                flex items-center justify-center shadow-lg hover:border-primary/60 transition-all`}
+              className={`w-7 h-7 rounded-full ${style.bg} backdrop-blur-md border border-primary/30 
+                flex items-center justify-center shadow-md hover:border-primary/50 transition-all`}
             >
-              <SkipForward className={style.accent} size={14} />
+              <SkipForward className={style.accent} size={11} />
             </motion.button>
           )}
         </AnimatePresence>
       </div>
-
-      {/* Help Text */}
-      {isMusicEnabled && !showVolume && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.7 }}
-          className={`text-[10px] font-medium text-right mr-1 ${style.accent}`}
-        >
-          2x clique = volume
-        </motion.p>
-      )}
 
       {/* Marquee Animation Styles */}
       <style>{`

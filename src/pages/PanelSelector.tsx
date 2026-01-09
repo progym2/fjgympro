@@ -4,7 +4,7 @@ import { User, Dumbbell, Shield, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useTheme, SportTheme } from '@/contexts/ThemeContext';
 import AnimatedLogo from '@/components/AnimatedLogo';
 import ThemedParticles from '@/components/ThemedParticles';
 import { Button } from '@/components/ui/button';
@@ -15,35 +15,17 @@ import bgHomeOptimized from '@/assets/bg-home-optimized.webp';
 
 // Animação de entrada para os cards
 const cardVariants = {
-  hidden: { opacity: 0, y: 30, scale: 0.9 },
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
     scale: 1,
     transition: {
       delay: i * 0.1,
-      duration: 0.4,
+      duration: 0.3,
       ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number],
     },
   }),
-};
-
-// Glow colors por tema
-const getGlowColor = (themeId: string, panelId: string): string => {
-  const glowMap: Record<string, Record<string, string>> = {
-    fire: { client: 'rgba(249, 115, 22, 0.5)', instructor: 'rgba(234, 179, 8, 0.5)', admin: 'rgba(220, 38, 38, 0.5)' },
-    ocean: { client: 'rgba(6, 182, 212, 0.5)', instructor: 'rgba(20, 184, 166, 0.5)', admin: 'rgba(59, 130, 246, 0.5)' },
-    forest: { client: 'rgba(34, 197, 94, 0.5)', instructor: 'rgba(132, 204, 22, 0.5)', admin: 'rgba(16, 185, 129, 0.5)' },
-    lightning: { client: 'rgba(250, 204, 21, 0.5)', instructor: 'rgba(245, 158, 11, 0.5)', admin: 'rgba(249, 115, 22, 0.5)' },
-    galaxy: { client: 'rgba(168, 85, 247, 0.5)', instructor: 'rgba(217, 70, 239, 0.5)', admin: 'rgba(139, 92, 246, 0.5)' },
-    iron: { client: 'rgba(148, 163, 184, 0.4)', instructor: 'rgba(161, 161, 170, 0.4)', admin: 'rgba(107, 114, 128, 0.4)' },
-    blood: { client: 'rgba(220, 38, 38, 0.5)', instructor: 'rgba(225, 29, 72, 0.5)', admin: 'rgba(185, 28, 28, 0.5)' },
-    neon: { client: 'rgba(236, 72, 153, 0.6)', instructor: 'rgba(34, 211, 238, 0.6)', admin: 'rgba(192, 38, 211, 0.6)' },
-    gold: { client: 'rgba(234, 179, 8, 0.5)', instructor: 'rgba(245, 158, 11, 0.5)', admin: 'rgba(249, 115, 22, 0.5)' },
-    amoled: { client: 'rgba(var(--primary), 0.4)', instructor: 'rgba(34, 197, 94, 0.4)', admin: 'rgba(59, 130, 246, 0.4)' },
-    default: { client: 'rgba(var(--primary), 0.4)', instructor: 'rgba(34, 197, 94, 0.4)', admin: 'rgba(59, 130, 246, 0.4)' },
-  };
-  return glowMap[themeId]?.[panelId] || glowMap.default[panelId];
 };
 
 interface PanelOption {
@@ -54,64 +36,94 @@ interface PanelOption {
 }
 
 const panels: PanelOption[] = [
-  {
-    id: 'client',
-    label: 'CLIENTE',
-    icon: User,
-    route: '/client',
-  },
-  {
-    id: 'instructor',
-    label: 'INSTRUTOR',
-    icon: Dumbbell,
-    route: '/instructor',
-  },
-  {
-    id: 'admin',
-    label: 'GERENTE',
-    icon: Shield,
-    route: '/admin',
-  },
+  { id: 'client', label: 'CLIENTE', icon: User, route: '/client' },
+  { id: 'instructor', label: 'INSTRUTOR', icon: Dumbbell, route: '/instructor' },
+  { id: 'admin', label: 'GERENTE', icon: Shield, route: '/admin' },
 ];
 
-// Estilos de card baseados no tema
-const getCardShape = (style: string): string => {
-  switch (style) {
-    case 'sharp':
-      return 'rounded-sm';
-    case 'hexagonal':
-      return 'rounded-lg';
-    case 'beveled':
-      return 'rounded-xl';
-    case 'organic':
-      return 'rounded-[1.5rem]';
-    default:
-      return 'rounded-xl';
-  }
-};
-
-const getBorderStyle = (style: string): string => {
-  switch (style) {
-    case 'sharp':
-      return 'border-l-4 border-l-primary border-y border-r border-border/50';
-    case 'beveled':
-      return 'border-2 border-primary/30';
-    case 'hexagonal':
-      return 'border border-primary/20';
-    default:
-      return 'border border-border/50';
-  }
+// Estilos únicos por tema para os botões do PanelSelector
+const getThemePanelStyles = (themeId: SportTheme) => {
+  const styles: Record<SportTheme, {
+    client: { bg: string; border: string; icon: string; glow: string };
+    instructor: { bg: string; border: string; icon: string; glow: string };
+    admin: { bg: string; border: string; icon: string; glow: string };
+    shape: string;
+  }> = {
+    fire: {
+      client: { bg: 'from-orange-500/25 to-yellow-500/10', border: 'border-orange-500/40', icon: 'text-orange-400', glow: 'rgba(249,115,22,0.4)' },
+      instructor: { bg: 'from-yellow-500/25 to-amber-500/10', border: 'border-yellow-500/40', icon: 'text-yellow-400', glow: 'rgba(234,179,8,0.4)' },
+      admin: { bg: 'from-red-500/25 to-orange-600/10', border: 'border-red-500/40', icon: 'text-red-400', glow: 'rgba(220,38,38,0.4)' },
+      shape: 'rounded-xl',
+    },
+    ocean: {
+      client: { bg: 'from-cyan-500/25 to-blue-500/10', border: 'border-cyan-500/40', icon: 'text-cyan-400', glow: 'rgba(6,182,212,0.4)' },
+      instructor: { bg: 'from-teal-500/25 to-cyan-500/10', border: 'border-teal-500/40', icon: 'text-teal-400', glow: 'rgba(20,184,166,0.4)' },
+      admin: { bg: 'from-blue-500/25 to-indigo-500/10', border: 'border-blue-500/40', icon: 'text-blue-400', glow: 'rgba(59,130,246,0.4)' },
+      shape: 'rounded-2xl',
+    },
+    forest: {
+      client: { bg: 'from-green-500/25 to-emerald-500/10', border: 'border-green-500/40', icon: 'text-green-400', glow: 'rgba(34,197,94,0.4)' },
+      instructor: { bg: 'from-lime-500/25 to-green-500/10', border: 'border-lime-500/40', icon: 'text-lime-400', glow: 'rgba(132,204,22,0.4)' },
+      admin: { bg: 'from-emerald-500/25 to-teal-500/10', border: 'border-emerald-500/40', icon: 'text-emerald-400', glow: 'rgba(16,185,129,0.4)' },
+      shape: 'rounded-xl',
+    },
+    lightning: {
+      client: { bg: 'from-yellow-400/25 to-amber-400/10', border: 'border-yellow-400/40', icon: 'text-yellow-400', glow: 'rgba(250,204,21,0.4)' },
+      instructor: { bg: 'from-amber-500/25 to-orange-400/10', border: 'border-amber-500/40', icon: 'text-amber-400', glow: 'rgba(245,158,11,0.4)' },
+      admin: { bg: 'from-orange-500/25 to-yellow-500/10', border: 'border-orange-500/40', icon: 'text-orange-400', glow: 'rgba(249,115,22,0.4)' },
+      shape: 'rounded-lg',
+    },
+    galaxy: {
+      client: { bg: 'from-purple-500/25 to-violet-500/10', border: 'border-purple-500/40', icon: 'text-purple-400', glow: 'rgba(168,85,247,0.4)' },
+      instructor: { bg: 'from-fuchsia-500/25 to-purple-500/10', border: 'border-fuchsia-500/40', icon: 'text-fuchsia-400', glow: 'rgba(217,70,239,0.4)' },
+      admin: { bg: 'from-violet-500/25 to-indigo-500/10', border: 'border-violet-500/40', icon: 'text-violet-400', glow: 'rgba(139,92,246,0.4)' },
+      shape: 'rounded-3xl',
+    },
+    iron: {
+      client: { bg: 'from-slate-400/25 to-zinc-500/10', border: 'border-slate-400/40', icon: 'text-slate-300', glow: 'rgba(148,163,184,0.3)' },
+      instructor: { bg: 'from-zinc-500/25 to-gray-500/10', border: 'border-zinc-500/40', icon: 'text-zinc-300', glow: 'rgba(161,161,170,0.3)' },
+      admin: { bg: 'from-gray-500/25 to-slate-600/10', border: 'border-gray-500/40', icon: 'text-gray-300', glow: 'rgba(107,114,128,0.3)' },
+      shape: 'rounded-md',
+    },
+    blood: {
+      client: { bg: 'from-red-600/25 to-rose-600/10', border: 'border-red-600/40', icon: 'text-red-400', glow: 'rgba(220,38,38,0.4)' },
+      instructor: { bg: 'from-rose-600/25 to-red-600/10', border: 'border-rose-600/40', icon: 'text-rose-400', glow: 'rgba(225,29,72,0.4)' },
+      admin: { bg: 'from-red-700/25 to-rose-700/10', border: 'border-red-700/40', icon: 'text-red-500', glow: 'rgba(185,28,28,0.4)' },
+      shape: 'rounded-xl',
+    },
+    neon: {
+      client: { bg: 'from-pink-500/25 to-fuchsia-500/10', border: 'border-pink-500/50', icon: 'text-pink-400', glow: 'rgba(236,72,153,0.5)' },
+      instructor: { bg: 'from-cyan-400/25 to-blue-500/10', border: 'border-cyan-400/50', icon: 'text-cyan-400', glow: 'rgba(34,211,238,0.5)' },
+      admin: { bg: 'from-fuchsia-500/25 to-purple-500/10', border: 'border-fuchsia-500/50', icon: 'text-fuchsia-400', glow: 'rgba(192,38,211,0.5)' },
+      shape: 'rounded-2xl',
+    },
+    gold: {
+      client: { bg: 'from-yellow-500/25 to-amber-500/10', border: 'border-yellow-500/40', icon: 'text-yellow-400', glow: 'rgba(234,179,8,0.4)' },
+      instructor: { bg: 'from-amber-500/25 to-orange-500/10', border: 'border-amber-500/40', icon: 'text-amber-400', glow: 'rgba(245,158,11,0.4)' },
+      admin: { bg: 'from-orange-500/25 to-yellow-600/10', border: 'border-orange-500/40', icon: 'text-orange-400', glow: 'rgba(249,115,22,0.4)' },
+      shape: 'rounded-xl',
+    },
+    amoled: {
+      client: { bg: 'from-white/15 to-gray-500/5', border: 'border-white/30', icon: 'text-white', glow: 'rgba(255,255,255,0.2)' },
+      instructor: { bg: 'from-green-500/20 to-emerald-500/5', border: 'border-green-500/30', icon: 'text-green-400', glow: 'rgba(34,197,94,0.3)' },
+      admin: { bg: 'from-blue-500/20 to-indigo-500/5', border: 'border-blue-500/30', icon: 'text-blue-400', glow: 'rgba(59,130,246,0.3)' },
+      shape: 'rounded-lg',
+    },
+  };
+  return styles[themeId] || styles.fire;
 };
 
 const PanelSelector: React.FC = () => {
   const navigate = useNavigate();
   const { role, profile, isLoading, signOut, session, license } = useAuth();
   const { playClickSound } = useAudio();
-  const { themeConfig } = useTheme();
+  const { themeConfig, currentTheme } = useTheme();
   const [redirecting, setRedirecting] = useState(false);
   const { src, blur } = useProgressiveImage(bgHomeOptimized);
   const { preloadData, preloadStatus } = useDataPreloader();
   const hasPreloadedRef = useRef(false);
+
+  const themeStyles = useMemo(() => getThemePanelStyles(currentTheme), [currentTheme]);
 
   // Pré-carrega dados do dashboard durante o loading
   useEffect(() => {
@@ -131,93 +143,6 @@ const PanelSelector: React.FC = () => {
     return p;
   }, [session, profile, role, license, redirecting]);
 
-  // Cores dinâmicas baseadas no tema
-  const themeColors = useMemo(() => {
-    switch (themeConfig.id) {
-      case 'fire':
-        return {
-          client: 'from-orange-500/30 to-red-600/20 border-orange-500/40 text-orange-400',
-          instructor: 'from-yellow-500/30 to-orange-500/20 border-yellow-500/40 text-yellow-400',
-          admin: 'from-red-600/30 to-orange-700/20 border-red-600/40 text-red-400',
-          iconBg: 'bg-gradient-to-br from-orange-500/20 to-red-600/10',
-        };
-      case 'ocean':
-        return {
-          client: 'from-cyan-500/30 to-blue-600/20 border-cyan-500/40 text-cyan-400',
-          instructor: 'from-teal-500/30 to-cyan-500/20 border-teal-500/40 text-teal-400',
-          admin: 'from-blue-600/30 to-indigo-600/20 border-blue-600/40 text-blue-400',
-          iconBg: 'bg-gradient-to-br from-cyan-500/20 to-blue-600/10',
-        };
-      case 'forest':
-        return {
-          client: 'from-green-500/30 to-emerald-600/20 border-green-500/40 text-green-400',
-          instructor: 'from-lime-500/30 to-green-500/20 border-lime-500/40 text-lime-400',
-          admin: 'from-emerald-600/30 to-teal-600/20 border-emerald-600/40 text-emerald-400',
-          iconBg: 'bg-gradient-to-br from-green-500/20 to-emerald-600/10',
-        };
-      case 'lightning':
-        return {
-          client: 'from-yellow-400/30 to-amber-500/20 border-yellow-400/40 text-yellow-400',
-          instructor: 'from-amber-500/30 to-orange-500/20 border-amber-500/40 text-amber-400',
-          admin: 'from-orange-500/30 to-yellow-600/20 border-orange-500/40 text-orange-400',
-          iconBg: 'bg-gradient-to-br from-yellow-400/20 to-amber-500/10',
-        };
-      case 'galaxy':
-        return {
-          client: 'from-purple-500/30 to-violet-600/20 border-purple-500/40 text-purple-400',
-          instructor: 'from-fuchsia-500/30 to-purple-500/20 border-fuchsia-500/40 text-fuchsia-400',
-          admin: 'from-violet-600/30 to-indigo-600/20 border-violet-600/40 text-violet-400',
-          iconBg: 'bg-gradient-to-br from-purple-500/20 to-violet-600/10',
-        };
-      case 'iron':
-        return {
-          client: 'from-slate-400/30 to-zinc-500/20 border-slate-400/40 text-slate-300',
-          instructor: 'from-zinc-500/30 to-slate-600/20 border-zinc-500/40 text-zinc-300',
-          admin: 'from-gray-500/30 to-slate-600/20 border-gray-500/40 text-gray-300',
-          iconBg: 'bg-gradient-to-br from-slate-400/20 to-zinc-600/10',
-        };
-      case 'blood':
-        return {
-          client: 'from-red-600/30 to-rose-700/20 border-red-600/40 text-red-400',
-          instructor: 'from-rose-600/30 to-red-700/20 border-rose-600/40 text-rose-400',
-          admin: 'from-red-700/30 to-rose-800/20 border-red-700/40 text-red-500',
-          iconBg: 'bg-gradient-to-br from-red-600/20 to-rose-800/10',
-        };
-      case 'neon':
-        return {
-          client: 'from-pink-500/30 to-fuchsia-600/20 border-pink-500/40 text-pink-400',
-          instructor: 'from-cyan-400/30 to-blue-500/20 border-cyan-400/40 text-cyan-400',
-          admin: 'from-fuchsia-600/30 to-purple-600/20 border-fuchsia-600/40 text-fuchsia-400',
-          iconBg: 'bg-gradient-to-br from-pink-500/20 to-fuchsia-600/10',
-        };
-      case 'gold':
-        return {
-          client: 'from-yellow-500/30 to-amber-600/20 border-yellow-500/40 text-yellow-400',
-          instructor: 'from-amber-500/30 to-orange-500/20 border-amber-500/40 text-amber-400',
-          admin: 'from-orange-500/30 to-yellow-600/20 border-orange-500/40 text-orange-400',
-          iconBg: 'bg-gradient-to-br from-yellow-500/20 to-orange-500/10',
-        };
-      case 'amoled':
-        return {
-          client: 'from-primary/30 to-primary/10 border-primary/40 text-primary',
-          instructor: 'from-green-500/30 to-emerald-500/10 border-green-500/40 text-green-400',
-          admin: 'from-blue-500/30 to-indigo-500/10 border-blue-500/40 text-blue-400',
-          iconBg: 'bg-gradient-to-br from-primary/20 to-primary/5',
-        };
-      default:
-        return {
-          client: 'from-primary/30 to-primary/10 border-primary/40 text-primary',
-          instructor: 'from-green-500/30 to-emerald-500/10 border-green-500/40 text-green-400',
-          admin: 'from-blue-500/30 to-indigo-500/10 border-blue-500/40 text-blue-400',
-          iconBg: 'bg-gradient-to-br from-primary/20 to-primary/10',
-        };
-    }
-  }, [themeConfig.id]);
-
-  const getPanelColors = (panelId: string) => {
-    return themeColors[panelId as keyof typeof themeColors] || themeColors.client;
-  };
-
   useEffect(() => {
     if (!isLoading && !profile) {
       navigate('/');
@@ -226,7 +151,6 @@ const PanelSelector: React.FC = () => {
 
     if (!isLoading && role && role !== 'master') {
       setRedirecting(true);
-      // Redirecionamento imediato - sem delay
       if (role === 'admin') {
         navigate('/admin');
       } else if (role === 'instructor') {
@@ -346,12 +270,11 @@ const PanelSelector: React.FC = () => {
           Selecione o painel de acesso
         </p>
 
-        {/* Panel buttons - Cards maiores e temáticos com animação */}
-        <div className="grid grid-cols-3 gap-3 w-full">
+        {/* Panel buttons - Design limpo com ícones estilizados por tema */}
+        <div className="flex items-center justify-center gap-6 w-full">
           {panels.map((panel, index) => {
             const Icon = panel.icon;
-            const colors = getPanelColors(panel.id);
-            const glowColor = getGlowColor(themeConfig.id, panel.id);
+            const panelStyle = themeStyles[panel.id];
             return (
               <motion.button
                 key={panel.id}
@@ -360,44 +283,45 @@ const PanelSelector: React.FC = () => {
                 animate="visible"
                 variants={cardVariants}
                 whileHover={{ 
-                  scale: 1.05,
-                  boxShadow: `0 0 25px ${glowColor}, 0 0 50px ${glowColor}`,
+                  scale: 1.08,
+                  y: -4,
+                  boxShadow: `0 8px 30px ${panelStyle.glow}`,
                 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handlePanelSelect(panel)}
                 className={cn(
-                  'relative p-4 sm:p-5 bg-card/90 backdrop-blur-sm',
-                  'flex flex-col items-center gap-3',
-                  'transition-colors duration-200 shadow-lg',
-                  getCardShape(themeConfig.cardStyle),
-                  getBorderStyle(themeConfig.cardStyle),
-                  `bg-gradient-to-br ${colors}`
+                  'relative flex flex-col items-center gap-3 p-4',
+                  'bg-transparent transition-all duration-200'
                 )}
-                style={{
-                  boxShadow: `0 4px 20px ${glowColor.replace('0.5', '0.2').replace('0.4', '0.15').replace('0.6', '0.25')}`,
-                }}
               >
-                {/* Icon container com fundo temático */}
+                {/* Icon container com estilo do tema */}
                 <motion.div 
                   className={cn(
-                    'relative p-3 sm:p-4 rounded-xl transition-colors',
-                    themeColors.iconBg,
-                    'border border-primary/10'
+                    'relative p-4 sm:p-5 border-2 transition-all duration-200',
+                    `bg-gradient-to-br ${panelStyle.bg}`,
+                    panelStyle.border,
+                    themeStyles.shape,
+                    'shadow-lg backdrop-blur-sm'
                   )}
-                  whileHover={{ rotate: [0, -5, 5, 0], transition: { duration: 0.3 } }}
+                  style={{
+                    boxShadow: `0 4px 20px ${panelStyle.glow}`,
+                  }}
+                  whileHover={{ rotate: [0, -3, 3, 0], transition: { duration: 0.3 } }}
                 >
                   <Icon 
                     className={cn(
-                      'w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12',
-                      colors.split(' ').find(c => c.startsWith('text-'))
+                      'w-8 h-8 sm:w-10 sm:h-10',
+                      panelStyle.icon
                     )} 
-                    strokeWidth={2} 
+                    strokeWidth={1.8} 
                   />
                 </motion.div>
 
                 {/* Label */}
                 <span className={cn(
                   'font-bebas text-xs sm:text-sm tracking-wider text-center',
+                  panelStyle.icon,
+                  'opacity-90',
                   themeConfig.fontWeight === 'extra-bold' ? 'font-black' : 
                   themeConfig.fontWeight === 'bold' ? 'font-bold' : 'font-medium'
                 )}>
