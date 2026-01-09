@@ -288,19 +288,7 @@ const FitnessLoadingScreen: React.FC<FitnessLoadingScreenProps> = memo(({
   const { currentTheme } = useTheme();
   const config = useMemo(() => getThemeConfig(currentTheme), [currentTheme]);
 
-  const AnimationComponent = useMemo(() => {
-    switch (config.animation) {
-      case 'dumbbell': return <AnimatedDumbbell color={config.color} />;
-      case 'kettlebell': return <SwingingKettlebell color={config.color} />;
-      case 'heart': return <PulsingHeart color={config.color} />;
-      case 'dots': return <RunningDots color={config.color} />;
-      case 'plate': return <SpinningPlate color={config.color} />;
-      case 'rope': return <JumpingRope color={config.color} />;
-      case 'energy': return <EnergyBurst color={config.color} />;
-      default: return <AnimatedDumbbell color={config.color} />;
-    }
-  }, [config.animation, config.color]);
-
+  // Simplified animation for faster loading
   const ThemeIcon = config.icon;
 
   return (
@@ -309,98 +297,49 @@ const FitnessLoadingScreen: React.FC<FitnessLoadingScreenProps> = memo(({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.1 }}
+      transition={{ duration: 0.05 }}
     >
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 25% 25%, ${config.color} 1px, transparent 1px)`,
-          backgroundSize: '50px 50px'
-        }} />
-      </div>
-
-      {/* Main animation container */}
+      {/* Main animation container - simplified */}
       <motion.div
-        className="relative z-10 flex flex-col items-center gap-6"
-        initial={{ scale: 0.95, opacity: 0 }}
+        className="relative z-10 flex flex-col items-center gap-4"
+        initial={{ scale: 0.98, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.15 }}
+        transition={{ duration: 0.1 }}
       >
-        {/* Theme icon at top */}
+        {/* Theme icon with pulse */}
         <motion.div
-          animate={{ 
-            y: [0, -8, 0],
-            opacity: [0.5, 1, 0.5]
-          }}
-          transition={{ duration: 2, repeat: Infinity }}
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ duration: 0.6, repeat: Infinity }}
         >
           <ThemeIcon 
-            className="w-8 h-8"
+            className="w-12 h-12"
             style={{ color: config.color }}
           />
         </motion.div>
 
-        {/* Main fitness animation */}
-        <div className="relative">
-          {AnimationComponent}
-          
-          {/* Glow effect */}
+        {/* Loading text */}
+        <span 
+          className="font-bebas text-lg tracking-[0.2em] uppercase"
+          style={{ color: config.color }}
+        >
+          {message}
+        </span>
+        
+        {/* Simple progress bar - faster */}
+        <div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden">
           <motion.div
-            className="absolute inset-0 blur-2xl opacity-30"
+            className="h-full rounded-full"
             style={{ backgroundColor: config.color }}
-            animate={{ opacity: [0.2, 0.4, 0.2] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
+            initial={{ width: '0%' }}
+            animate={{ width: '100%' }}
+            transition={{ 
+              duration: 0.5, 
+              repeat: Infinity,
+              ease: 'linear'
+            }}
           />
         </div>
-
-        {/* Loading text */}
-        <div className="flex flex-col items-center gap-2">
-          <span 
-            className="font-bebas text-lg tracking-[0.2em] uppercase"
-            style={{ color: config.color }}
-          >
-            {message}
-          </span>
-          
-          {/* Progress bar - faster */}
-          <div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full rounded-full"
-              style={{ backgroundColor: config.color }}
-              initial={{ width: '0%' }}
-              animate={{ width: '100%' }}
-              transition={{ 
-                duration: 0.8, 
-                repeat: Infinity,
-                ease: 'easeInOut'
-              }}
-            />
-          </div>
-        </div>
       </motion.div>
-
-      {/* Floating particles */}
-      {[...Array(6)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-1 h-1 rounded-full"
-          style={{ 
-            backgroundColor: config.color,
-            left: `${15 + i * 15}%`,
-            top: `${20 + (i % 3) * 25}%`
-          }}
-          animate={{
-            y: [0, -30, 0],
-            opacity: [0.2, 0.6, 0.2],
-            scale: [0.5, 1, 0.5]
-          }}
-          transition={{
-            duration: 2 + i * 0.3,
-            repeat: Infinity,
-            delay: i * 0.2
-          }}
-        />
-      ))}
     </motion.div>
   );
 });
