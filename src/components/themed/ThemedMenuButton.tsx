@@ -13,105 +13,94 @@ interface ThemedMenuButtonProps {
   disabled?: boolean;
 }
 
-// Estilos específicos por tema - apenas ícones com estilo único
+// Estilos específicos por tema - cores otimizadas para legibilidade
 const getThemeStyles = (themeId: SportTheme) => {
   const styles: Record<SportTheme, {
     iconBg: string;
     iconColor: string;
     iconBorder: string;
-    glow: string;
+    glowColor: string;
     labelColor: string;
-    hoverEffect: string;
     shape: string;
   }> = {
     fire: {
-      iconBg: 'bg-gradient-to-br from-orange-500/20 via-red-500/15 to-yellow-500/10',
-      iconColor: 'text-orange-400',
-      iconBorder: 'border-orange-500/30',
-      glow: 'shadow-orange-500/20',
-      labelColor: 'text-orange-300',
-      hoverEffect: 'hover:shadow-orange-500/40 hover:border-orange-400/50',
+      iconBg: 'bg-gradient-to-br from-orange-600/30 via-red-600/25 to-orange-500/20',
+      iconColor: 'text-orange-500',
+      iconBorder: 'border-orange-500/50',
+      glowColor: 'rgba(249, 115, 22, 0.3)',
+      labelColor: 'text-orange-400',
       shape: 'rounded-xl',
     },
     ocean: {
-      iconBg: 'bg-gradient-to-br from-cyan-500/20 via-blue-500/15 to-teal-500/10',
+      iconBg: 'bg-gradient-to-br from-cyan-600/30 via-blue-600/25 to-teal-500/20',
       iconColor: 'text-cyan-400',
-      iconBorder: 'border-cyan-500/30',
-      glow: 'shadow-cyan-500/20',
+      iconBorder: 'border-cyan-500/50',
+      glowColor: 'rgba(6, 182, 212, 0.3)',
       labelColor: 'text-cyan-300',
-      hoverEffect: 'hover:shadow-cyan-500/40 hover:border-cyan-400/50',
       shape: 'rounded-2xl',
     },
     forest: {
-      iconBg: 'bg-gradient-to-br from-green-500/20 via-emerald-500/15 to-lime-500/10',
+      iconBg: 'bg-gradient-to-br from-green-600/30 via-emerald-600/25 to-green-500/20',
       iconColor: 'text-green-400',
-      iconBorder: 'border-green-500/30',
-      glow: 'shadow-green-500/20',
+      iconBorder: 'border-green-500/50',
+      glowColor: 'rgba(34, 197, 94, 0.3)',
       labelColor: 'text-green-300',
-      hoverEffect: 'hover:shadow-green-500/40 hover:border-green-400/50',
       shape: 'rounded-xl',
     },
     lightning: {
-      iconBg: 'bg-gradient-to-br from-yellow-400/20 via-amber-500/15 to-orange-400/10',
-      iconColor: 'text-yellow-400',
-      iconBorder: 'border-yellow-500/30',
-      glow: 'shadow-yellow-500/20',
-      labelColor: 'text-yellow-300',
-      hoverEffect: 'hover:shadow-yellow-500/40 hover:border-yellow-400/50',
+      iconBg: 'bg-gradient-to-br from-amber-600/35 via-yellow-600/30 to-orange-500/25',
+      iconColor: 'text-amber-400',
+      iconBorder: 'border-amber-500/60',
+      glowColor: 'rgba(245, 158, 11, 0.35)',
+      labelColor: 'text-amber-300',
       shape: 'rounded-lg',
     },
     galaxy: {
-      iconBg: 'bg-gradient-to-br from-purple-500/20 via-violet-500/15 to-fuchsia-500/10',
+      iconBg: 'bg-gradient-to-br from-purple-600/30 via-violet-600/25 to-fuchsia-500/20',
       iconColor: 'text-purple-400',
-      iconBorder: 'border-purple-500/30',
-      glow: 'shadow-purple-500/20',
+      iconBorder: 'border-purple-500/50',
+      glowColor: 'rgba(168, 85, 247, 0.3)',
       labelColor: 'text-purple-300',
-      hoverEffect: 'hover:shadow-purple-500/40 hover:border-purple-400/50',
       shape: 'rounded-3xl',
     },
     iron: {
-      iconBg: 'bg-gradient-to-br from-slate-400/20 via-zinc-500/15 to-gray-400/10',
-      iconColor: 'text-slate-300',
-      iconBorder: 'border-slate-400/30',
-      glow: 'shadow-slate-500/15',
-      labelColor: 'text-slate-300',
-      hoverEffect: 'hover:shadow-slate-400/30 hover:border-slate-400/50',
+      iconBg: 'bg-gradient-to-br from-zinc-700/40 via-slate-700/35 to-zinc-600/30',
+      iconColor: 'text-white',
+      iconBorder: 'border-zinc-500/60',
+      glowColor: 'rgba(161, 161, 170, 0.25)',
+      labelColor: 'text-zinc-200',
       shape: 'rounded-md',
     },
     blood: {
-      iconBg: 'bg-gradient-to-br from-red-600/20 via-rose-500/15 to-red-400/10',
+      iconBg: 'bg-gradient-to-br from-red-700/35 via-rose-600/30 to-red-500/25',
       iconColor: 'text-red-400',
-      iconBorder: 'border-red-500/30',
-      glow: 'shadow-red-500/20',
+      iconBorder: 'border-red-500/55',
+      glowColor: 'rgba(220, 38, 38, 0.3)',
       labelColor: 'text-red-300',
-      hoverEffect: 'hover:shadow-red-500/40 hover:border-red-400/50',
       shape: 'rounded-xl',
     },
     neon: {
-      iconBg: 'bg-gradient-to-br from-pink-500/20 via-fuchsia-500/15 to-cyan-500/10',
+      iconBg: 'bg-gradient-to-br from-pink-600/35 via-fuchsia-600/30 to-violet-500/25',
       iconColor: 'text-pink-400',
-      iconBorder: 'border-pink-500/30',
-      glow: 'shadow-pink-500/25',
+      iconBorder: 'border-pink-500/60',
+      glowColor: 'rgba(236, 72, 153, 0.35)',
       labelColor: 'text-pink-300',
-      hoverEffect: 'hover:shadow-pink-500/50 hover:border-pink-400/60',
       shape: 'rounded-2xl',
     },
     gold: {
-      iconBg: 'bg-gradient-to-br from-yellow-500/20 via-amber-500/15 to-orange-400/10',
-      iconColor: 'text-yellow-400',
-      iconBorder: 'border-yellow-500/30',
-      glow: 'shadow-yellow-500/20',
-      labelColor: 'text-yellow-300',
-      hoverEffect: 'hover:shadow-yellow-500/40 hover:border-yellow-400/50',
+      iconBg: 'bg-gradient-to-br from-amber-600/35 via-yellow-600/30 to-orange-500/25',
+      iconColor: 'text-amber-400',
+      iconBorder: 'border-amber-500/60',
+      glowColor: 'rgba(245, 158, 11, 0.35)',
+      labelColor: 'text-amber-300',
       shape: 'rounded-xl',
     },
     amoled: {
-      iconBg: 'bg-gradient-to-br from-white/10 via-gray-500/5 to-white/5',
+      iconBg: 'bg-gradient-to-br from-white/20 via-gray-400/15 to-white/10',
       iconColor: 'text-white',
-      iconBorder: 'border-white/20',
-      glow: 'shadow-white/10',
-      labelColor: 'text-white/90',
-      hoverEffect: 'hover:shadow-white/20 hover:border-white/40',
+      iconBorder: 'border-white/40',
+      glowColor: 'rgba(255, 255, 255, 0.15)',
+      labelColor: 'text-white',
       shape: 'rounded-lg',
     },
   };
@@ -140,32 +129,32 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
     <motion.button
       onClick={onClick}
       disabled={disabled}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.97 }}
       className={cn(
-        'relative flex flex-col items-center gap-2 p-3 sm:p-4',
+        'relative flex flex-col items-center gap-2.5 p-3 sm:p-4',
         'bg-transparent',
         'transition-all duration-200',
         disabled && 'opacity-50 pointer-events-none',
         'group'
       )}
     >
-      {/* Icon container - estilo por tema com glow pulsante */}
+      {/* Icon container - tamanho aumentado com glow pulsante */}
       <motion.div 
         className={cn(
-          'relative p-3 sm:p-4 border transition-all duration-300',
+          'relative p-4 sm:p-5 md:p-6 border-2 transition-all duration-300',
           themeStyles.iconBg,
           themeStyles.iconBorder,
           themeStyles.shape,
           'group-hover:animate-pulse-glow'
         )}
         style={{
-          boxShadow: `0 4px 15px ${themeStyles.glow.replace('shadow-', '').replace('/20', '')}`,
+          boxShadow: `0 6px 20px ${themeStyles.glowColor}`,
         }}
       >
         <Icon 
           className={cn(
-            'w-6 h-6 sm:w-8 sm:h-8 md:w-9 md:h-9',
+            'w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12',
             color || themeStyles.iconColor
           )} 
           strokeWidth={1.8} 
@@ -173,18 +162,17 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
 
         {/* Badge */}
         {badge && (
-          <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center shadow-lg">
+          <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center shadow-lg">
             {badge}
           </span>
         )}
       </motion.div>
 
-      {/* Label - discreto */}
+      {/* Label - maior e mais legível */}
       <span className={cn(
-        'font-bebas text-[10px] sm:text-xs tracking-wider text-center leading-tight',
+        'font-bebas text-xs sm:text-sm md:text-base tracking-wider text-center leading-tight',
         themeStyles.labelColor,
-        fontWeightClass,
-        'opacity-80'
+        fontWeightClass
       )}>
         {label}
       </span>
