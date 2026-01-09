@@ -34,7 +34,7 @@ import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
 import FitnessLoadingScreen from '@/components/FitnessLoadingScreen';
 
-import bgPanels from '@/assets/bg-panels-optimized.webp';
+import bgPanels from '@/assets/gym-hero-bg.jpeg';
 
 // Lazy load heavy components
 const MyStudents = lazy(() => import('@/components/instructor/MyStudents'));
