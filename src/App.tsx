@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useAutoNightMode } from "@/hooks/useAutoNightMode";
 import { clearExpiredCache } from "@/hooks/useOfflineStorage";
 import { initializeCache } from "@/hooks/useIndexedDBCache";
+import { clearAllCaches as clearIndexedDBCaches } from "@/lib/indexedDB";
 import { useOfflineDataPreloader } from "@/hooks/useOfflineDataPreloader";
 import { useCacheSizeMonitor } from "@/hooks/useCacheSizeMonitor";
 import OfflineIndicator from "@/components/OfflineIndicator";
@@ -107,6 +108,43 @@ const AppRoutes = () => {
 
 const App = () => {
   const [splashComplete, setSplashComplete] = useState(() => localStorage.getItem('splashShown') === APP_VERSION);
+
+  // Se a versão mudou, limpamos caches (SW CacheStorage + IndexedDB + offline localStorage)
+  // para evitar que o PWA sirva um vídeo/arquivos antigos.
+  useEffect(() => {
+    const shown = localStorage.getItem('splashShown');
+    if (shown === APP_VERSION) return;
+
+    const clearSystemCaches = async () => {
+      try {
+        // offline localStorage cache
+        for (const key of Object.keys(localStorage)) {
+          if (key.startsWith('francgympro_offline_')) {
+            localStorage.removeItem(key);
+          }
+        }
+
+        // IndexedDB cache (offline)
+        await clearIndexedDBCaches();
+
+        // Service Worker CacheStorage (PWA)
+        if ('caches' in window) {
+          const cacheKeys = await caches.keys();
+          await Promise.all(cacheKeys.map((k) => caches.delete(k)));
+        }
+
+        // Tenta atualizar SW (sem desregistrar)
+        if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((r) => r.update().catch(() => undefined)));
+        }
+      } catch (e) {
+        console.warn('[Cache] Falha ao limpar caches:', e);
+      }
+    };
+
+    clearSystemCaches();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
