@@ -21,7 +21,7 @@ const SimpleParticles = lazy(() => import('@/components/SimpleParticles'));
 const SportThemeSelector = lazy(() => import('@/components/SportThemeSelector'));
 const MiniMusicPlayer = lazy(() => import('@/components/MiniMusicPlayer'));
 const OfflineModeIndicator = lazy(() => import('@/components/OfflineModeIndicator'));
-const ThemeToggle = lazy(() => import('@/components/ThemeToggle'));
+
 
 const Home: React.FC = memo(() => {
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
@@ -217,10 +217,9 @@ const Home: React.FC = memo(() => {
         </div>
       </div>
 
-      {/* Fixed buttons - Theme Toggle e Sport Theme */}
+      {/* Fixed buttons - Sport Theme */}
       <Suspense fallback={null}>
-        <div className="fixed top-3 left-3 z-50 flex items-center gap-2 pt-safe">
-          <ThemeToggle />
+        <div className="fixed top-3 left-3 z-50 pt-safe">
           <SportThemeSelector compact />
         </div>
       </Suspense>
