@@ -46,99 +46,99 @@ const muscleGroups = [
   { 
     id: 'Peito', 
     name: 'Peito', 
-    color: 'from-red-500 to-red-600',
-    bgColor: 'bg-red-500/20',
-    borderColor: 'border-red-500/50',
-    textColor: 'text-red-400',
-    glowColor: 'shadow-red-500/30',
+    color: 'from-red-500 to-red-700',
+    bgColor: 'bg-red-500/30',
+    borderColor: 'border-red-500/60',
+    textColor: 'text-red-300',
+    glowColor: 'shadow-red-500/50',
     image: chestImage,
     description: 'Peitoral maior e menor'
   },
   { 
     id: 'Costas', 
     name: 'Costas', 
-    color: 'from-blue-500 to-blue-600',
-    bgColor: 'bg-blue-500/20',
-    borderColor: 'border-blue-500/50',
-    textColor: 'text-blue-400',
-    glowColor: 'shadow-blue-500/30',
+    color: 'from-blue-500 to-blue-700',
+    bgColor: 'bg-blue-500/30',
+    borderColor: 'border-blue-500/60',
+    textColor: 'text-blue-300',
+    glowColor: 'shadow-blue-500/50',
     image: backImage,
     description: 'Latíssimo, trapézio, romboides'
   },
   { 
     id: 'Ombros', 
     name: 'Ombros', 
-    color: 'from-orange-500 to-orange-600',
-    bgColor: 'bg-orange-500/20',
-    borderColor: 'border-orange-500/50',
-    textColor: 'text-orange-400',
-    glowColor: 'shadow-orange-500/30',
+    color: 'from-orange-500 to-orange-700',
+    bgColor: 'bg-orange-500/30',
+    borderColor: 'border-orange-500/60',
+    textColor: 'text-orange-300',
+    glowColor: 'shadow-orange-500/50',
     image: shouldersImage,
     description: 'Deltoides anterior, lateral e posterior'
   },
   { 
     id: 'Bíceps', 
     name: 'Bíceps', 
-    color: 'from-purple-500 to-purple-600',
-    bgColor: 'bg-purple-500/20',
-    borderColor: 'border-purple-500/50',
-    textColor: 'text-purple-400',
-    glowColor: 'shadow-purple-500/30',
+    color: 'from-purple-500 to-purple-700',
+    bgColor: 'bg-purple-500/30',
+    borderColor: 'border-purple-500/60',
+    textColor: 'text-purple-300',
+    glowColor: 'shadow-purple-500/50',
     image: bicepsImage,
     description: 'Bíceps braquial'
   },
   { 
     id: 'Tríceps', 
     name: 'Tríceps', 
-    color: 'from-pink-500 to-pink-600',
-    bgColor: 'bg-pink-500/20',
-    borderColor: 'border-pink-500/50',
-    textColor: 'text-pink-400',
-    glowColor: 'shadow-pink-500/30',
+    color: 'from-pink-500 to-pink-700',
+    bgColor: 'bg-pink-500/30',
+    borderColor: 'border-pink-500/60',
+    textColor: 'text-pink-300',
+    glowColor: 'shadow-pink-500/50',
     image: tricepsImage,
     description: 'Tríceps braquial (3 cabeças)'
   },
   { 
     id: 'Pernas', 
     name: 'Pernas', 
-    color: 'from-green-500 to-green-600',
-    bgColor: 'bg-green-500/20',
-    borderColor: 'border-green-500/50',
-    textColor: 'text-green-400',
-    glowColor: 'shadow-green-500/30',
+    color: 'from-green-500 to-green-700',
+    bgColor: 'bg-green-500/30',
+    borderColor: 'border-green-500/60',
+    textColor: 'text-green-300',
+    glowColor: 'shadow-green-500/50',
     image: legsImage,
     description: 'Quadríceps, isquiotibiais, panturrilha'
   },
   { 
     id: 'Abdômen', 
     name: 'Abdômen', 
-    color: 'from-yellow-500 to-yellow-600',
-    bgColor: 'bg-yellow-500/20',
-    borderColor: 'border-yellow-500/50',
-    textColor: 'text-yellow-400',
-    glowColor: 'shadow-yellow-500/30',
+    color: 'from-yellow-500 to-yellow-700',
+    bgColor: 'bg-yellow-500/30',
+    borderColor: 'border-yellow-500/60',
+    textColor: 'text-yellow-300',
+    glowColor: 'shadow-yellow-500/50',
     image: absImage,
     description: 'Reto abdominal, oblíquos'
   },
   { 
     id: 'Glúteos', 
     name: 'Glúteos', 
-    color: 'from-rose-500 to-rose-600',
-    bgColor: 'bg-rose-500/20',
-    borderColor: 'border-rose-500/50',
-    textColor: 'text-rose-400',
-    glowColor: 'shadow-rose-500/30',
+    color: 'from-rose-500 to-rose-700',
+    bgColor: 'bg-rose-500/30',
+    borderColor: 'border-rose-500/60',
+    textColor: 'text-rose-300',
+    glowColor: 'shadow-rose-500/50',
     image: glutesImage,
     description: 'Glúteo máximo, médio e mínimo'
   },
   { 
     id: 'Cardio', 
     name: 'Cardio', 
-    color: 'from-cyan-500 to-cyan-600',
-    bgColor: 'bg-cyan-500/20',
-    borderColor: 'border-cyan-500/50',
-    textColor: 'text-cyan-400',
-    glowColor: 'shadow-cyan-500/30',
+    color: 'from-cyan-500 to-cyan-700',
+    bgColor: 'bg-cyan-500/30',
+    borderColor: 'border-cyan-500/60',
+    textColor: 'text-cyan-300',
+    glowColor: 'shadow-cyan-500/50',
     image: cardioImage,
     description: 'Exercícios cardiovasculares'
   },
@@ -160,49 +160,48 @@ const MuscleCard: React.FC<{
       onClick={onClick}
       className={`relative p-3 sm:p-4 rounded-xl border-2 transition-all duration-300 text-center group overflow-hidden ${
         isSelected 
-          ? `${group.borderColor} ${group.bgColor} ring-2 ring-offset-2 ring-offset-background ring-primary/50 shadow-lg ${group.glowColor}` 
-          : 'border-border/30 bg-card/50 hover:border-primary/30 hover:bg-card/80'
+          ? `${group.borderColor} ${group.bgColor} ring-2 ring-offset-2 ring-offset-background ring-primary/50 shadow-xl ${group.glowColor}` 
+          : 'border-border/40 bg-card/70 hover:border-primary/40 hover:bg-card/90 hover:shadow-lg'
       }`}
     >
-      {/* Background gradient */}
+      {/* Background gradient - more vibrant */}
       <motion.div 
         className={`absolute inset-0 bg-gradient-to-br ${group.color} transition-opacity duration-300`}
         initial={{ opacity: 0 }}
-        animate={{ opacity: isSelected ? 0.15 : 0 }}
+        animate={{ opacity: isSelected ? 0.25 : 0.08 }}
       />
       
-      {/* Professional muscle group image */}
+      {/* Professional muscle group image - more vibrant */}
       <motion.div 
-        className="relative z-10 w-10 h-10 sm:w-12 sm:h-12 mb-1 mx-auto"
+        className="relative z-10 w-12 h-12 sm:w-14 sm:h-14 mb-1.5 mx-auto"
         animate={isSelected ? { 
           scale: [1, 1.1, 1],
         } : {
-          scale: [1, 1.05, 1],
-          opacity: [0.85, 1, 0.85],
+          scale: [1, 1.03, 1],
         }}
         transition={{ 
-          duration: isSelected ? 0.5 : 2.5, 
+          duration: isSelected ? 0.5 : 3, 
           repeat: Infinity, 
-          repeatDelay: isSelected ? 2 : 0,
+          repeatDelay: isSelected ? 2 : 0.5,
           ease: "easeInOut"
         }}
       >
         <img 
           src={group.image} 
           alt={group.name}
-          className={`w-full h-full object-contain drop-shadow-lg transition-all duration-300 ${
-            isSelected ? 'brightness-125 saturate-150' : 'brightness-100'
+          className={`w-full h-full object-contain drop-shadow-xl transition-all duration-300 ${
+            isSelected ? 'brightness-125 saturate-150 contrast-110' : 'brightness-110 saturate-125'
           }`}
         />
+        {/* Glow effect behind image */}
         <motion.div 
-          className={`absolute inset-0 rounded-full bg-gradient-to-br ${group.color} blur-sm`}
-          animate={isSelected ? {
-            opacity: [0.2, 0.35, 0.2],
-          } : {
-            opacity: [0.15, 0.25, 0.15],
+          className={`absolute inset-0 rounded-full bg-gradient-to-br ${group.color} blur-md -z-10`}
+          animate={{
+            opacity: isSelected ? [0.4, 0.6, 0.4] : [0.2, 0.35, 0.2],
+            scale: isSelected ? [0.9, 1.1, 0.9] : [0.9, 1, 0.9],
           }}
           transition={{
-            duration: isSelected ? 1 : 2.5,
+            duration: isSelected ? 1.5 : 3,
             repeat: Infinity,
             ease: "easeInOut"
           }}
