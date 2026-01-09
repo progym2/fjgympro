@@ -107,9 +107,9 @@ const MENU_ITEMS = [
   { icon: HardDrive, label: 'Backup & Sync', path: 'sync', color: 'text-slate-400' },
 ] as const;
 
-// Memoized menu grid - otimizado para mobile com scroll
+// Memoized menu grid - layout otimizado para caber na tela
 const MenuGrid = memo(({ onNavigate }: { onNavigate: (path: string) => void }) => (
-  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 pb-4">
+  <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-1.5 sm:gap-2 pb-2">
     {MENU_ITEMS.map((item) => (
       <ThemedMenuButton
         key={item.path}
