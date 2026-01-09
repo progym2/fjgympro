@@ -27,6 +27,7 @@ import {
 // Removed AnimatedLogo for performance
 import PanelSwitcher from '@/components/PanelSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
+import PanelThemeSelector from '@/components/shared/PanelThemeSelector';
 import ProfileAvatar from '@/components/shared/ProfileAvatar';
 import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
@@ -201,6 +202,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                <PanelThemeSelector />
                 <ThemeToggle />
                 {isMaster && <PanelSwitcher />}
                 {license && !isMaster && (
