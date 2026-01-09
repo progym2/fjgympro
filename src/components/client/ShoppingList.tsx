@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShoppingCart, Check, FileDown, Share2, Plus, Minus, 
@@ -117,9 +117,25 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ meals, daysMultiplier: init
   const [newItemName, setNewItemName] = useState('');
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [currentPdf, setCurrentPdf] = useState<{ doc: jsPDF; filename: string } | null>(null);
-  const [customPrices, setCustomPrices] = useState<Record<string, number>>({});
+  const [customPrices, setCustomPrices] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('shoppinglist_custom_prices');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
   const [editingPrice, setEditingPrice] = useState<{ itemId: string; name: string; currentPrice: number } | null>(null);
   const [tempPrice, setTempPrice] = useState('');
+
+  // Persist custom prices to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('shoppinglist_custom_prices', JSON.stringify(customPrices));
+    } catch (error) {
+      console.error('Failed to save custom prices:', error);
+    }
+  }, [customPrices]);
 
   // Aggregate foods from all meals with prices
   const shoppingItems = useMemo(() => {
