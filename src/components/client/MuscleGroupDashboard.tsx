@@ -4,6 +4,7 @@ import {
   Dumbbell, ArrowLeft, Search, Video, Plus, Heart, 
   Zap, X, ChevronRight, Loader2, Play, Flame, Target, Star
 } from 'lucide-react';
+import muscleGroupsImage from '@/assets/muscle-groups-pro.png';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,7 @@ interface MuscleGroupDashboardProps {
   onBack?: () => void;
 }
 
-// Muscle group data with icons and colors
+// Muscle group data with professional image
 const muscleGroups = [
   { 
     id: 'Peito', 
@@ -40,7 +41,6 @@ const muscleGroups = [
     borderColor: 'border-red-500/50',
     textColor: 'text-red-400',
     glowColor: 'shadow-red-500/30',
-    icon: '🏋️',
     description: 'Peitoral maior e menor'
   },
   { 
@@ -51,7 +51,6 @@ const muscleGroups = [
     borderColor: 'border-blue-500/50',
     textColor: 'text-blue-400',
     glowColor: 'shadow-blue-500/30',
-    icon: '💪',
     description: 'Latíssimo, trapézio, romboides'
   },
   { 
@@ -62,7 +61,6 @@ const muscleGroups = [
     borderColor: 'border-orange-500/50',
     textColor: 'text-orange-400',
     glowColor: 'shadow-orange-500/30',
-    icon: '🏆',
     description: 'Deltoides anterior, lateral e posterior'
   },
   { 
@@ -73,7 +71,6 @@ const muscleGroups = [
     borderColor: 'border-purple-500/50',
     textColor: 'text-purple-400',
     glowColor: 'shadow-purple-500/30',
-    icon: '💪',
     description: 'Bíceps braquial'
   },
   { 
@@ -84,7 +81,6 @@ const muscleGroups = [
     borderColor: 'border-pink-500/50',
     textColor: 'text-pink-400',
     glowColor: 'shadow-pink-500/30',
-    icon: '🦾',
     description: 'Tríceps braquial (3 cabeças)'
   },
   { 
@@ -95,7 +91,6 @@ const muscleGroups = [
     borderColor: 'border-green-500/50',
     textColor: 'text-green-400',
     glowColor: 'shadow-green-500/30',
-    icon: '🦵',
     description: 'Quadríceps, isquiotibiais, panturrilha'
   },
   { 
@@ -106,7 +101,6 @@ const muscleGroups = [
     borderColor: 'border-yellow-500/50',
     textColor: 'text-yellow-400',
     glowColor: 'shadow-yellow-500/30',
-    icon: '🔥',
     description: 'Reto abdominal, oblíquos'
   },
   { 
@@ -117,7 +111,6 @@ const muscleGroups = [
     borderColor: 'border-rose-500/50',
     textColor: 'text-rose-400',
     glowColor: 'shadow-rose-500/30',
-    icon: '🍑',
     description: 'Glúteo máximo, médio e mínimo'
   },
   { 
@@ -128,7 +121,6 @@ const muscleGroups = [
     borderColor: 'border-cyan-500/50',
     textColor: 'text-cyan-400',
     glowColor: 'shadow-cyan-500/30',
-    icon: '🏃',
     description: 'Exercícios cardiovasculares'
   },
 ];
@@ -160,16 +152,22 @@ const MuscleCard: React.FC<{
         animate={{ opacity: isSelected ? 0.15 : 0 }}
       />
       
-      {/* Animated emoji */}
+      {/* Professional muscle group image */}
       <motion.div 
-        className="relative z-10 text-2xl sm:text-3xl mb-1"
+        className="relative z-10 w-10 h-10 sm:w-12 sm:h-12 mb-1 mx-auto"
         animate={isSelected ? { 
-          scale: [1, 1.15, 1],
-          rotate: [0, 5, -5, 0]
+          scale: [1, 1.1, 1],
         } : {}}
         transition={{ duration: 0.5, repeat: isSelected ? Infinity : 0, repeatDelay: 2 }}
       >
-        {group.icon}
+        <img 
+          src={muscleGroupsImage} 
+          alt={group.name}
+          className={`w-full h-full object-contain drop-shadow-lg transition-all duration-300 ${
+            isSelected ? 'brightness-125 saturate-150' : 'brightness-100'
+          }`}
+        />
+        <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${group.color} opacity-20 blur-sm`} />
       </motion.div>
       
       <h4 className={`font-bebas text-sm sm:text-base tracking-wider relative z-10 ${isSelected ? group.textColor : 'text-foreground'}`}>
@@ -398,14 +396,18 @@ const MuscleGroupDashboard: React.FC<MuscleGroupDashboardProps> = ({ onSelectExe
             {/* Exercise List Header */}
             <div className="p-3 sm:p-4 border-b border-border/30 bg-background/50">
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <motion.span 
-                    className="text-2xl sm:text-3xl"
+              <div className="flex items-center gap-2">
+                  <motion.div 
+                    className="w-10 h-10 sm:w-12 sm:h-12"
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 1, repeat: Infinity, repeatDelay: 1 }}
                   >
-                    {selectedGroupData?.icon}
-                  </motion.span>
+                    <img 
+                      src={muscleGroupsImage} 
+                      alt={selectedGroupData?.name}
+                      className="w-full h-full object-contain drop-shadow-lg brightness-110 saturate-125"
+                    />
+                  </motion.div>
                   <div>
                     <h3 className={`font-bebas text-lg sm:text-xl ${selectedGroupData?.textColor}`}>
                       {selectedGroup?.toUpperCase()}
