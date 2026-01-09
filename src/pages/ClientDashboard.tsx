@@ -40,6 +40,7 @@ import FireParticles from '@/components/FireParticles';
 
 // Lazy load ALL components - include AboutDialog
 const AboutDialog = lazy(() => import('@/components/AboutDialog'));
+const DashboardWidgets = lazy(() => import('@/components/client/DashboardWidgets'));
 const Profile = lazy(() => import('@/components/client/Profile'));
 const WeightTracker = lazy(() => import('@/components/client/WeightTracker'));
 const HydrationTracker = lazy(() => import('@/components/client/HydrationTracker'));
@@ -162,9 +163,20 @@ const MenuGrid = memo(({ onNavigate }: { onNavigate: (path: string) => void }) =
 });
 MenuGrid.displayName = 'MenuGrid';
 
-// Home content - separated for better memoization
+// Home content - separated for better memoization with dashboard widgets
 const HomeContent = memo(({ onNavigate }: { onNavigate: (path: string) => void }) => (
-  <div className="space-y-5 pt-3 sm:pt-4">
+  <div className="space-y-4 pt-3 sm:pt-4">
+    {/* Dashboard Widgets - Quick Overview */}
+    <Suspense fallback={
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-24 rounded-xl animate-pulse bg-background/50 border border-border" />
+        ))}
+      </div>
+    }>
+      <DashboardWidgets />
+    </Suspense>
+    
     <Suspense fallback={null}>
       <FinancialAlerts />
       <LinkedInstructorCard />
