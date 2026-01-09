@@ -28,7 +28,8 @@ import PanelSwitcher from '@/components/PanelSwitcher';
 
 import PanelThemeSelector from '@/components/shared/PanelThemeSelector';
 import MenuSizeToggle from '@/components/shared/MenuSizeToggle';
-import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
+import LayoutModeToggle from '@/components/shared/LayoutModeToggle';
+import { ThemedMenuButton, ThemedListItem, ThemedHeader } from '@/components/themed';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
@@ -81,38 +82,38 @@ ComponentLoader.displayName = 'ComponentLoader';
 // Menu items - Softer colors for better readability
 const MENU_ITEMS = [
   // Core training features
-  { icon: Dumbbell, label: 'Meus Treinos', path: 'workouts', color: 'text-primary/80' },
-  { icon: Timer, label: 'Timer de Treino', path: 'timer', color: 'text-rose-400' },
-  { icon: Trophy, label: 'Recordes Pessoais', path: 'records', color: 'text-yellow-400' },
-  { icon: Target, label: 'Meu Progresso', path: 'progress', color: 'text-teal-400' },
+  { icon: Dumbbell, label: 'Meus Treinos', path: 'workouts', color: 'text-primary/80', description: 'Visualize e execute seus treinos' },
+  { icon: Timer, label: 'Timer de Treino', path: 'timer', color: 'text-rose-400', description: 'Cronômetro para seus exercícios' },
+  { icon: Trophy, label: 'Recordes Pessoais', path: 'records', color: 'text-yellow-400', description: 'Seus melhores desempenhos' },
+  { icon: Target, label: 'Meu Progresso', path: 'progress', color: 'text-teal-400', description: 'Acompanhe sua evolução' },
   
   // Body tracking
-  { icon: Scale, label: 'Peso e Evolução', path: 'weight', color: 'text-green-400' },
-  { icon: Droplets, label: 'Hidratação', path: 'hydration', color: 'text-cyan-400' },
-  { icon: Utensils, label: 'Plano Alimentar', path: 'nutrition', color: 'text-orange-400' },
-  { icon: Camera, label: 'Galeria Evolução', path: 'gallery', color: 'text-purple-400' },
+  { icon: Scale, label: 'Peso e Evolução', path: 'weight', color: 'text-green-400', description: 'Registre seu peso' },
+  { icon: Droplets, label: 'Hidratação', path: 'hydration', color: 'text-cyan-400', description: 'Controle de água diário' },
+  { icon: Utensils, label: 'Plano Alimentar', path: 'nutrition', color: 'text-orange-400', description: 'Sua dieta personalizada' },
+  { icon: Camera, label: 'Galeria Evolução', path: 'gallery', color: 'text-purple-400', description: 'Fotos do seu progresso' },
   
   // History & Stats
-  { icon: BarChart3, label: 'Evolução & Histórico', path: 'evolution', color: 'text-emerald-400' },
-  { icon: Flame, label: 'Histórico de Cargas', path: 'load-history', color: 'text-violet-400' },
-  { icon: Award, label: 'Metas Alcançadas', path: 'achievements', color: 'text-amber-400' },
-  { icon: Calendar, label: 'Agenda', path: 'schedule', color: 'text-purple-400' },
+  { icon: BarChart3, label: 'Evolução & Histórico', path: 'evolution', color: 'text-emerald-400', description: 'Histórico completo' },
+  { icon: Flame, label: 'Histórico de Cargas', path: 'load-history', color: 'text-violet-400', description: 'Cargas utilizadas' },
+  { icon: Award, label: 'Metas Alcançadas', path: 'achievements', color: 'text-amber-400', description: 'Suas conquistas' },
+  { icon: Calendar, label: 'Agenda', path: 'schedule', color: 'text-purple-400', description: 'Calendário de treinos' },
   
   // Profile & Connections
-  { icon: User, label: 'Meu Perfil', path: 'profile', color: 'text-blue-400' },
-  { icon: QrCode, label: 'Meu QR Code', path: 'qrcode', color: 'text-pink-400' },
-  { icon: UserPlus, label: 'Escanear Instrutor', path: 'scan-instructor', color: 'text-green-400' },
-  { icon: History, label: 'Histórico Vínculos', path: 'link-history', color: 'text-indigo-400' },
-  { icon: UserMinus, label: 'Desvincular', path: 'unlink', color: 'text-red-400' },
+  { icon: User, label: 'Meu Perfil', path: 'profile', color: 'text-blue-400', description: 'Dados pessoais' },
+  { icon: QrCode, label: 'Meu QR Code', path: 'qrcode', color: 'text-pink-400', description: 'Seu código único' },
+  { icon: UserPlus, label: 'Escanear Instrutor', path: 'scan-instructor', color: 'text-green-400', description: 'Vincular instrutor' },
+  { icon: History, label: 'Histórico Vínculos', path: 'link-history', color: 'text-indigo-400', description: 'Histórico de conexões' },
+  { icon: UserMinus, label: 'Desvincular', path: 'unlink', color: 'text-red-400', description: 'Remover vínculo' },
   
   // Offline & Sync
-  { icon: HardDrive, label: 'Download Offline', path: 'offline-download', color: 'text-emerald-400' },
-  { icon: HardDrive, label: 'Backup & Sync', path: 'sync', color: 'text-slate-400' },
+  { icon: HardDrive, label: 'Download Offline', path: 'offline-download', color: 'text-emerald-400', description: 'Baixar dados offline' },
+  { icon: HardDrive, label: 'Backup & Sync', path: 'sync', color: 'text-slate-400', description: 'Sincronização de dados' },
 ] as const;
 
-// Memoized menu grid - layout otimizado baseado no menuSize
+// Memoized menu grid - layout otimizado baseado no menuSize e menuLayout
 const MenuGrid = memo(({ onNavigate }: { onNavigate: (path: string) => void }) => {
-  const { menuSize } = useTheme();
+  const { menuSize, menuLayout } = useTheme();
   
   // Grid com menos colunas no modo "large" para ícones maiores
   const gridCols = menuSize === 'large'
@@ -123,6 +124,25 @@ const MenuGrid = memo(({ onNavigate }: { onNavigate: (path: string) => void }) =
     ? 'gap-2 sm:gap-3'
     : 'gap-1.5 sm:gap-2';
   
+  // List layout
+  if (menuLayout === 'list') {
+    return (
+      <div className="space-y-2 pb-6">
+        {MENU_ITEMS.map((item) => (
+          <ThemedListItem
+            key={item.path}
+            icon={item.icon}
+            label={item.label}
+            description={item.description}
+            color={item.color}
+            onClick={() => onNavigate(item.path)}
+          />
+        ))}
+      </div>
+    );
+  }
+  
+  // Grid layout (default)
   return (
     <div className={cn(gridCols, gridGap, 'grid pb-6')}>
       {MENU_ITEMS.map((item) => (
@@ -287,6 +307,7 @@ const ClientDashboard: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-0.5 sm:gap-1">
+                <LayoutModeToggle />
                 <MenuSizeToggle />
                 <PanelThemeSelector />
                 {isMaster && <PanelSwitcher />}

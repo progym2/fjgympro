@@ -22,6 +22,7 @@ export type SportTheme =
 export type CardStyle = 'rounded' | 'sharp' | 'hexagonal' | 'beveled' | 'organic';
 export type IconStyle = 'filled' | 'outlined' | 'duotone' | 'glow';
 export type LayoutStyle = 'grid' | 'list' | 'masonry' | 'cards';
+export type MenuLayoutMode = 'grid' | 'list';
 
 export interface ThemeConfig {
   id: SportTheme;
@@ -224,6 +225,8 @@ interface ThemeContextType {
   isSyncing: boolean;
   menuSize: MenuSizeMode;
   setMenuSize: (size: MenuSizeMode) => void;
+  menuLayout: MenuLayoutMode;
+  setMenuLayout: (layout: MenuLayoutMode) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -232,6 +235,7 @@ const THEME_STORAGE_KEY = 'francgym_sport_theme';
 const GLOBAL_THEME_KEY = 'francgym_global_theme';
 const HOVER_EFFECTS_KEY = 'francgym_hover_effects';
 const MENU_SIZE_KEY = 'francgym_menu_size';
+const MENU_LAYOUT_KEY = 'francgym_menu_layout';
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { profile } = useAuth();
@@ -245,6 +249,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [menuSize, setMenuSizeState] = useState<MenuSizeMode>(() => {
     const saved = localStorage.getItem(MENU_SIZE_KEY) as MenuSizeMode;
     return saved === 'compact' ? 'compact' : 'large';
+  });
+  const [menuLayout, setMenuLayoutState] = useState<MenuLayoutMode>(() => {
+    const saved = localStorage.getItem(MENU_LAYOUT_KEY) as MenuLayoutMode;
+    return saved === 'list' ? 'list' : 'grid';
   });
 
   // Carregar tema global do localStorage
@@ -410,6 +418,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     localStorage.setItem(MENU_SIZE_KEY, size);
   };
 
+  const setMenuLayout = (layout: MenuLayoutMode) => {
+    setMenuLayoutState(layout);
+    localStorage.setItem(MENU_LAYOUT_KEY, layout);
+  };
+
   // Aplicar hover effects no mount
   useEffect(() => {
     document.documentElement.setAttribute('data-hover-effects', String(hoverEffectsEnabled));
@@ -433,6 +446,8 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       isSyncing,
       menuSize,
       setMenuSize,
+      menuLayout,
+      setMenuLayout,
     }}>
       {children}
     </ThemeContext.Provider>
