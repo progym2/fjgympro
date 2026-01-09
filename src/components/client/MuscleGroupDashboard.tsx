@@ -176,8 +176,16 @@ const MuscleCard: React.FC<{
         className="relative z-10 w-10 h-10 sm:w-12 sm:h-12 mb-1 mx-auto"
         animate={isSelected ? { 
           scale: [1, 1.1, 1],
-        } : {}}
-        transition={{ duration: 0.5, repeat: isSelected ? Infinity : 0, repeatDelay: 2 }}
+        } : {
+          scale: [1, 1.05, 1],
+          opacity: [0.85, 1, 0.85],
+        }}
+        transition={{ 
+          duration: isSelected ? 0.5 : 2.5, 
+          repeat: Infinity, 
+          repeatDelay: isSelected ? 2 : 0,
+          ease: "easeInOut"
+        }}
       >
         <img 
           src={group.image} 
@@ -186,7 +194,19 @@ const MuscleCard: React.FC<{
             isSelected ? 'brightness-125 saturate-150' : 'brightness-100'
           }`}
         />
-        <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${group.color} opacity-20 blur-sm`} />
+        <motion.div 
+          className={`absolute inset-0 rounded-full bg-gradient-to-br ${group.color} blur-sm`}
+          animate={isSelected ? {
+            opacity: [0.2, 0.35, 0.2],
+          } : {
+            opacity: [0.15, 0.25, 0.15],
+          }}
+          transition={{
+            duration: isSelected ? 1 : 2.5,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
       </motion.div>
       
       <h4 className={`font-bebas text-sm sm:text-base tracking-wider relative z-10 ${isSelected ? group.textColor : 'text-foreground'}`}>
