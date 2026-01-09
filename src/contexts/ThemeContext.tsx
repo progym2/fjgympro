@@ -219,6 +219,7 @@ interface ThemeContextType {
   themeConfig: ThemeConfig;
   hoverEffectsEnabled: boolean;
   setHoverEffectsEnabled: (enabled: boolean) => void;
+  isSyncing: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -415,6 +416,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       themeConfig,
       hoverEffectsEnabled,
       setHoverEffectsEnabled,
+      isSyncing,
     }}>
       {children}
     </ThemeContext.Provider>
