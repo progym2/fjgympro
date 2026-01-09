@@ -70,6 +70,7 @@ const FloatingLinkRequests = lazy(() => import('@/components/client/FloatingLink
 const BackupRestorePanel = lazy(() => import('@/components/shared/BackupRestorePanel'));
 const SyncSettings = lazy(() => import('@/components/client/SyncSettings'));
 const OfflineDownload = lazy(() => import('@/components/client/OfflineDownload'));
+const HealthIntegrations = lazy(() => import('@/components/client/HealthIntegrations'));
 
 // Import loading skeletons
 import PageLoadingSkeleton from '@/components/ui/loading-skeleton';
@@ -108,6 +109,9 @@ const MENU_ITEMS = [
   { icon: UserPlus, label: 'Escanear Instrutor', path: 'scan-instructor', color: 'text-green-400', description: 'Vincular instrutor' },
   { icon: History, label: 'Histórico Vínculos', path: 'link-history', color: 'text-indigo-400', description: 'Histórico de conexões' },
   { icon: UserMinus, label: 'Desvincular', path: 'unlink', color: 'text-red-400', description: 'Remover vínculo' },
+  
+  // Health & Devices
+  { icon: Heart, label: 'Saúde & Wearables', path: 'health', color: 'text-red-400', description: 'Relógios e dispositivos' },
   
   // Offline & Sync & Settings
   { icon: HardDrive, label: 'Download Offline', path: 'offline-download', color: 'text-emerald-400', description: 'Baixar dados offline' },
@@ -384,6 +388,7 @@ const ClientDashboard: React.FC = () => {
               <Route path="backup" element={<BackupRestorePanel />} />
               <Route path="sync" element={<SyncSettings />} />
               <Route path="offline-download" element={<OfflineDownload />} />
+              <Route path="health" element={<HealthIntegrations />} />
             </Routes>
           </Suspense>
         </main>
