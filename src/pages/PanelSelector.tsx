@@ -42,6 +42,7 @@ const panels: PanelOption[] = [
 ];
 
 // Estilos únicos por tema para os botões do PanelSelector
+// Estilos únicos por tema - cores otimizadas para legibilidade (sem cinza, preto no lugar)
 const getThemePanelStyles = (themeId: SportTheme) => {
   const styles: Record<SportTheme, {
     client: { bg: string; border: string; icon: string; glow: string };
@@ -50,63 +51,63 @@ const getThemePanelStyles = (themeId: SportTheme) => {
     shape: string;
   }> = {
     fire: {
-      client: { bg: 'from-orange-500/25 to-yellow-500/10', border: 'border-orange-500/40', icon: 'text-orange-400', glow: 'rgba(249,115,22,0.4)' },
-      instructor: { bg: 'from-yellow-500/25 to-amber-500/10', border: 'border-yellow-500/40', icon: 'text-yellow-400', glow: 'rgba(234,179,8,0.4)' },
-      admin: { bg: 'from-red-500/25 to-orange-600/10', border: 'border-red-500/40', icon: 'text-red-400', glow: 'rgba(220,38,38,0.4)' },
+      client: { bg: 'from-orange-600/35 to-red-600/25', border: 'border-orange-500/60', icon: 'text-orange-400', glow: 'rgba(249,115,22,0.4)' },
+      instructor: { bg: 'from-amber-600/35 to-orange-600/25', border: 'border-amber-500/60', icon: 'text-amber-400', glow: 'rgba(245,158,11,0.4)' },
+      admin: { bg: 'from-red-600/35 to-orange-700/25', border: 'border-red-500/60', icon: 'text-red-400', glow: 'rgba(220,38,38,0.4)' },
       shape: 'rounded-xl',
     },
     ocean: {
-      client: { bg: 'from-cyan-500/25 to-blue-500/10', border: 'border-cyan-500/40', icon: 'text-cyan-400', glow: 'rgba(6,182,212,0.4)' },
-      instructor: { bg: 'from-teal-500/25 to-cyan-500/10', border: 'border-teal-500/40', icon: 'text-teal-400', glow: 'rgba(20,184,166,0.4)' },
-      admin: { bg: 'from-blue-500/25 to-indigo-500/10', border: 'border-blue-500/40', icon: 'text-blue-400', glow: 'rgba(59,130,246,0.4)' },
+      client: { bg: 'from-cyan-600/35 to-blue-600/25', border: 'border-cyan-500/60', icon: 'text-cyan-400', glow: 'rgba(6,182,212,0.4)' },
+      instructor: { bg: 'from-teal-600/35 to-cyan-600/25', border: 'border-teal-500/60', icon: 'text-teal-400', glow: 'rgba(20,184,166,0.4)' },
+      admin: { bg: 'from-blue-600/35 to-indigo-600/25', border: 'border-blue-500/60', icon: 'text-blue-400', glow: 'rgba(59,130,246,0.4)' },
       shape: 'rounded-2xl',
     },
     forest: {
-      client: { bg: 'from-green-500/25 to-emerald-500/10', border: 'border-green-500/40', icon: 'text-green-400', glow: 'rgba(34,197,94,0.4)' },
-      instructor: { bg: 'from-lime-500/25 to-green-500/10', border: 'border-lime-500/40', icon: 'text-lime-400', glow: 'rgba(132,204,22,0.4)' },
-      admin: { bg: 'from-emerald-500/25 to-teal-500/10', border: 'border-emerald-500/40', icon: 'text-emerald-400', glow: 'rgba(16,185,129,0.4)' },
+      client: { bg: 'from-green-600/35 to-emerald-600/25', border: 'border-green-500/60', icon: 'text-green-400', glow: 'rgba(34,197,94,0.4)' },
+      instructor: { bg: 'from-lime-600/35 to-green-600/25', border: 'border-lime-500/60', icon: 'text-lime-400', glow: 'rgba(132,204,22,0.4)' },
+      admin: { bg: 'from-emerald-600/35 to-teal-600/25', border: 'border-emerald-500/60', icon: 'text-emerald-400', glow: 'rgba(16,185,129,0.4)' },
       shape: 'rounded-xl',
     },
     lightning: {
-      client: { bg: 'from-yellow-400/25 to-amber-400/10', border: 'border-yellow-400/40', icon: 'text-yellow-400', glow: 'rgba(250,204,21,0.4)' },
-      instructor: { bg: 'from-amber-500/25 to-orange-400/10', border: 'border-amber-500/40', icon: 'text-amber-400', glow: 'rgba(245,158,11,0.4)' },
-      admin: { bg: 'from-orange-500/25 to-yellow-500/10', border: 'border-orange-500/40', icon: 'text-orange-400', glow: 'rgba(249,115,22,0.4)' },
+      client: { bg: 'from-amber-600/40 to-yellow-600/30', border: 'border-amber-500/70', icon: 'text-amber-400', glow: 'rgba(245,158,11,0.45)' },
+      instructor: { bg: 'from-orange-600/40 to-amber-600/30', border: 'border-orange-500/70', icon: 'text-orange-400', glow: 'rgba(249,115,22,0.45)' },
+      admin: { bg: 'from-yellow-600/40 to-orange-600/30', border: 'border-yellow-500/70', icon: 'text-yellow-400', glow: 'rgba(234,179,8,0.45)' },
       shape: 'rounded-lg',
     },
     galaxy: {
-      client: { bg: 'from-purple-500/25 to-violet-500/10', border: 'border-purple-500/40', icon: 'text-purple-400', glow: 'rgba(168,85,247,0.4)' },
-      instructor: { bg: 'from-fuchsia-500/25 to-purple-500/10', border: 'border-fuchsia-500/40', icon: 'text-fuchsia-400', glow: 'rgba(217,70,239,0.4)' },
-      admin: { bg: 'from-violet-500/25 to-indigo-500/10', border: 'border-violet-500/40', icon: 'text-violet-400', glow: 'rgba(139,92,246,0.4)' },
+      client: { bg: 'from-purple-600/35 to-violet-600/25', border: 'border-purple-500/60', icon: 'text-purple-400', glow: 'rgba(168,85,247,0.4)' },
+      instructor: { bg: 'from-fuchsia-600/35 to-purple-600/25', border: 'border-fuchsia-500/60', icon: 'text-fuchsia-400', glow: 'rgba(217,70,239,0.4)' },
+      admin: { bg: 'from-violet-600/35 to-indigo-600/25', border: 'border-violet-500/60', icon: 'text-violet-400', glow: 'rgba(139,92,246,0.4)' },
       shape: 'rounded-3xl',
     },
     iron: {
-      client: { bg: 'from-slate-400/25 to-zinc-500/10', border: 'border-slate-400/40', icon: 'text-slate-300', glow: 'rgba(148,163,184,0.3)' },
-      instructor: { bg: 'from-zinc-500/25 to-gray-500/10', border: 'border-zinc-500/40', icon: 'text-zinc-300', glow: 'rgba(161,161,170,0.3)' },
-      admin: { bg: 'from-gray-500/25 to-slate-600/10', border: 'border-gray-500/40', icon: 'text-gray-300', glow: 'rgba(107,114,128,0.3)' },
+      client: { bg: 'from-zinc-700/45 to-black/35', border: 'border-zinc-500/70', icon: 'text-white', glow: 'rgba(161,161,170,0.3)' },
+      instructor: { bg: 'from-slate-700/45 to-black/35', border: 'border-slate-500/70', icon: 'text-white', glow: 'rgba(148,163,184,0.3)' },
+      admin: { bg: 'from-neutral-700/45 to-black/35', border: 'border-neutral-500/70', icon: 'text-white', glow: 'rgba(115,115,115,0.3)' },
       shape: 'rounded-md',
     },
     blood: {
-      client: { bg: 'from-red-600/25 to-rose-600/10', border: 'border-red-600/40', icon: 'text-red-400', glow: 'rgba(220,38,38,0.4)' },
-      instructor: { bg: 'from-rose-600/25 to-red-600/10', border: 'border-rose-600/40', icon: 'text-rose-400', glow: 'rgba(225,29,72,0.4)' },
-      admin: { bg: 'from-red-700/25 to-rose-700/10', border: 'border-red-700/40', icon: 'text-red-500', glow: 'rgba(185,28,28,0.4)' },
+      client: { bg: 'from-red-700/40 to-rose-700/30', border: 'border-red-600/65', icon: 'text-red-400', glow: 'rgba(220,38,38,0.45)' },
+      instructor: { bg: 'from-rose-700/40 to-red-700/30', border: 'border-rose-600/65', icon: 'text-rose-400', glow: 'rgba(225,29,72,0.45)' },
+      admin: { bg: 'from-red-800/40 to-rose-800/30', border: 'border-red-700/65', icon: 'text-red-500', glow: 'rgba(185,28,28,0.45)' },
       shape: 'rounded-xl',
     },
     neon: {
-      client: { bg: 'from-pink-500/25 to-fuchsia-500/10', border: 'border-pink-500/50', icon: 'text-pink-400', glow: 'rgba(236,72,153,0.5)' },
-      instructor: { bg: 'from-cyan-400/25 to-blue-500/10', border: 'border-cyan-400/50', icon: 'text-cyan-400', glow: 'rgba(34,211,238,0.5)' },
-      admin: { bg: 'from-fuchsia-500/25 to-purple-500/10', border: 'border-fuchsia-500/50', icon: 'text-fuchsia-400', glow: 'rgba(192,38,211,0.5)' },
+      client: { bg: 'from-pink-600/40 to-fuchsia-600/30', border: 'border-pink-500/70', icon: 'text-pink-400', glow: 'rgba(236,72,153,0.5)' },
+      instructor: { bg: 'from-cyan-500/40 to-blue-600/30', border: 'border-cyan-400/70', icon: 'text-cyan-400', glow: 'rgba(34,211,238,0.5)' },
+      admin: { bg: 'from-fuchsia-600/40 to-purple-600/30', border: 'border-fuchsia-500/70', icon: 'text-fuchsia-400', glow: 'rgba(192,38,211,0.5)' },
       shape: 'rounded-2xl',
     },
     gold: {
-      client: { bg: 'from-yellow-500/25 to-amber-500/10', border: 'border-yellow-500/40', icon: 'text-yellow-400', glow: 'rgba(234,179,8,0.4)' },
-      instructor: { bg: 'from-amber-500/25 to-orange-500/10', border: 'border-amber-500/40', icon: 'text-amber-400', glow: 'rgba(245,158,11,0.4)' },
-      admin: { bg: 'from-orange-500/25 to-yellow-600/10', border: 'border-orange-500/40', icon: 'text-orange-400', glow: 'rgba(249,115,22,0.4)' },
+      client: { bg: 'from-amber-600/40 to-yellow-600/30', border: 'border-amber-500/70', icon: 'text-amber-400', glow: 'rgba(245,158,11,0.45)' },
+      instructor: { bg: 'from-orange-600/40 to-amber-600/30', border: 'border-orange-500/70', icon: 'text-orange-400', glow: 'rgba(249,115,22,0.45)' },
+      admin: { bg: 'from-yellow-600/40 to-orange-600/30', border: 'border-yellow-500/70', icon: 'text-yellow-500', glow: 'rgba(234,179,8,0.45)' },
       shape: 'rounded-xl',
     },
     amoled: {
-      client: { bg: 'from-white/15 to-gray-500/5', border: 'border-white/30', icon: 'text-white', glow: 'rgba(255,255,255,0.2)' },
-      instructor: { bg: 'from-green-500/20 to-emerald-500/5', border: 'border-green-500/30', icon: 'text-green-400', glow: 'rgba(34,197,94,0.3)' },
-      admin: { bg: 'from-blue-500/20 to-indigo-500/5', border: 'border-blue-500/30', icon: 'text-blue-400', glow: 'rgba(59,130,246,0.3)' },
+      client: { bg: 'from-white/25 to-gray-400/15', border: 'border-white/50', icon: 'text-white', glow: 'rgba(255,255,255,0.25)' },
+      instructor: { bg: 'from-green-600/30 to-emerald-600/20', border: 'border-green-500/50', icon: 'text-green-400', glow: 'rgba(34,197,94,0.35)' },
+      admin: { bg: 'from-blue-600/30 to-indigo-600/20', border: 'border-blue-500/50', icon: 'text-blue-400', glow: 'rgba(59,130,246,0.35)' },
       shape: 'rounded-lg',
     },
   };
@@ -287,10 +288,10 @@ const PanelSelector: React.FC = () => {
                 onClick={() => handlePanelSelect(panel)}
                 className="relative flex flex-col items-center gap-3 p-4 bg-transparent transition-all duration-200 group"
               >
-                {/* Icon container com estilo do tema e glow pulsante */}
+                {/* Icon container - tamanho aumentado com glow pulsante */}
                 <motion.div 
                   className={cn(
-                    'relative p-4 sm:p-5 border-2 transition-all duration-300',
+                    'relative p-5 sm:p-6 md:p-7 border-2 transition-all duration-300',
                     `bg-gradient-to-br ${panelStyle.bg}`,
                     panelStyle.border,
                     themeStyles.shape,
@@ -298,12 +299,12 @@ const PanelSelector: React.FC = () => {
                     'group-hover:animate-pulse-glow'
                   )}
                   style={{
-                    boxShadow: `0 4px 15px ${panelStyle.glow}`,
+                    boxShadow: `0 6px 20px ${panelStyle.glow}`,
                   }}
                 >
                   <Icon 
                     className={cn(
-                      'w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300',
+                      'w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 transition-transform duration-300',
                       panelStyle.icon,
                       'group-hover:scale-110'
                     )} 
