@@ -11,8 +11,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
 
-// Background image
-import bgHome from '@/assets/bg-home-optimized.webp';
+// Background image - using the fire gym background
+import bgHome from '@/assets/gym-bg-fire.jpeg';
 
 // Lazy load heavy components
 const LoginDialog = lazy(() => import('@/components/LoginDialog'));
