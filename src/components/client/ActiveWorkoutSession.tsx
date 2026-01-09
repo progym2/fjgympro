@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import IntegratedTimer from './IntegratedTimer';
 import YouTubePlayer from '@/components/shared/YouTubePlayer';
+import { useThemeStyles } from '@/lib/themeStyles';
 
 interface Exercise {
   id: string;
@@ -72,6 +73,7 @@ const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
   startedAt = new Date(),
   isInstructorPlan = false
 }) => {
+  const themeStyles = useThemeStyles();
   // Session timer - starts immediately when component mounts
   const [sessionTime, setSessionTime] = useState(() => {
     // Calculate elapsed time since session started
@@ -190,7 +192,7 @@ const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
       className="fixed inset-0 z-50 bg-background flex flex-col"
     >
       {/* Top Bar - Professional Timer Design */}
-      <div className="bg-gradient-to-r from-card via-card to-card/95 border-b border-border/50 p-3 safe-area-top">
+      <div className={`bg-gradient-to-r ${themeStyles.cardBg} border-b ${themeStyles.cardBorder} p-3 safe-area-top`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button 
@@ -202,7 +204,7 @@ const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
               <X size={20} />
             </Button>
             <div>
-              <h1 className="font-bebas text-lg text-primary">{planName}</h1>
+              <h1 className={`font-bebas text-lg ${themeStyles.titleColor}`}>{planName}</h1>
               <p className="text-[10px] text-muted-foreground">
                 {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
               </p>
@@ -211,11 +213,12 @@ const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
           
           {/* Professional Session Timer */}
           <motion.div 
-            className="relative flex items-center gap-1 px-4 py-2 rounded-xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 border border-primary/30 shadow-lg shadow-primary/10"
+            className={`relative flex items-center gap-1 px-4 py-2 rounded-xl ${themeStyles.highlightBg} border ${themeStyles.cardBorder} shadow-lg`}
+            style={{ boxShadow: `0 4px 15px ${themeStyles.glowColor}` }}
             animate={{ 
               boxShadow: isSessionPaused 
                 ? '0 0 0 rgba(0,0,0,0)' 
-                : ['0 0 10px rgba(var(--primary), 0.2)', '0 0 20px rgba(var(--primary), 0.3)', '0 0 10px rgba(var(--primary), 0.2)']
+                : [`0 0 10px ${themeStyles.glowColor}`, `0 0 20px ${themeStyles.glowColor}`, `0 0 10px ${themeStyles.glowColor}`]
             }}
             transition={{ repeat: Infinity, duration: 2 }}
           >
@@ -241,19 +244,19 @@ const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
                   strokeDasharray={88}
                   strokeDashoffset={isSessionPaused ? 88 : 0}
                   strokeLinecap="round"
-                  className="text-primary"
+                  className={themeStyles.iconColor}
                   animate={isSessionPaused ? {} : { 
                     strokeDashoffset: [88, 0, 88] 
                   }}
                   transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                 />
               </svg>
-              <Timer size={14} className="text-primary relative z-10" />
+              <Timer size={14} className={themeStyles.iconColor} />
             </div>
             
             {/* Time Display */}
             <div className="flex flex-col items-end">
-              <span className="font-mono text-lg font-bold tracking-wider text-foreground">
+              <span className={`font-mono text-lg font-bold tracking-wider ${themeStyles.titleColor}`}>
                 {formatTime(sessionTime)}
               </span>
               <span className="text-[8px] text-muted-foreground uppercase tracking-widest">
@@ -267,7 +270,7 @@ const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
         <div className="mt-2">
           <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
             <span>{completedCount}/{totalCount} exercícios</span>
-            <span className="font-bold text-primary">{progress}%</span>
+            <span className={`font-bold ${themeStyles.titleColor}`}>{progress}%</span>
           </div>
           <Progress value={progress} className="h-1.5" />
         </div>
@@ -276,13 +279,13 @@ const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
       {/* Main Content */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Exercise List - Left/Top - More compact */}
-        <div className="lg:w-72 border-b lg:border-b-0 lg:border-r border-border/50 bg-card/50">
-          <div className="p-2 border-b border-border/50 flex items-center justify-between">
-            <h2 className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-              <Dumbbell size={12} />
+        <div className={`lg:w-72 border-b lg:border-b-0 lg:border-r ${themeStyles.cardBorder} ${themeStyles.cardBg}`}>
+          <div className={`p-2 border-b ${themeStyles.cardBorder} flex items-center justify-between`}>
+            <h2 className={`text-xs font-bold flex items-center gap-1.5 ${themeStyles.titleColor}`}>
+              <Dumbbell size={12} className={themeStyles.iconColor} />
               Exercícios
             </h2>
-            <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+            <Badge variant="outline" className={`text-[9px] px-1.5 py-0 border ${themeStyles.cardBorder}`}>
               Toque ● para concluir
             </Badge>
           </div>
@@ -297,10 +300,10 @@ const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
                         key={exercise.id}
                         className={`w-full p-2 rounded-lg text-left transition-all flex items-center gap-2 ${
                           isCurrent
-                            ? 'bg-primary/20 border border-primary/50'
+                            ? `${themeStyles.highlightBg} border ${themeStyles.cardBorder}`
                             : isCompleted
                             ? 'bg-green-500/10 border border-green-500/30'
-                            : 'bg-muted/30 hover:bg-muted/50 border border-transparent'
+                            : `${themeStyles.tipBg} hover:opacity-80 border border-transparent`
                         }`}
                         whileHover={{ scale: 1.01 }}
                       >
@@ -310,8 +313,8 @@ const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
                             isCompleted 
                               ? 'bg-green-500 text-white hover:bg-green-600' 
                               : isCurrent
-                              ? 'bg-primary text-primary-foreground hover:bg-primary/80'
-                              : 'bg-muted hover:bg-primary/50 hover:text-primary-foreground'
+                              ? `${themeStyles.highlightBg} ${themeStyles.titleColor} border ${themeStyles.cardBorder}`
+                              : `${themeStyles.tipBg} ${themeStyles.accentColor} hover:opacity-80`
                           }`}
                           onClick={() => {
                             if (isCompleted) {

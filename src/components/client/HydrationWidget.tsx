@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Droplets, X } from 'lucide-react';
+import { Droplets, X, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import DraggableFloatingButton from '@/components/shared/DraggableFloatingButton';
-
+import { useThemeStyles } from '@/lib/themeStyles';
+import { Badge } from '@/components/ui/badge';
 interface HydrationRecord {
   id: string;
   amount_ml: number;
@@ -95,6 +96,7 @@ const HydrationWidget: React.FC<HydrationWidgetProps> = ({
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { isSfxEnabled } = useAudio();
+  const themeStyles = useThemeStyles();
   const [records, setRecords] = useState<HydrationRecord[]>([]);
   const [dailyGoal, setDailyGoal] = useState(2000);
   const [saving, setSaving] = useState(false);
@@ -260,14 +262,17 @@ const HydrationWidget: React.FC<HydrationWidgetProps> = ({
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.8 }}
-        className="w-56 bg-card/95 backdrop-blur-xl rounded-xl border border-cyan-500/30 shadow-xl shadow-cyan-500/10 overflow-hidden"
+        className={`w-56 ${themeStyles.cardBg} backdrop-blur-xl rounded-xl border ${themeStyles.cardBorder} shadow-xl overflow-hidden`}
+        style={{ boxShadow: `0 4px 20px ${themeStyles.glowColor}` }}
       >
         {/* Header - Compact */}
-        <div className="relative p-3 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-b border-cyan-500/20">
+        <div className={`relative p-3 bg-gradient-to-r ${themeStyles.tipBg} border-b ${themeStyles.tipBorder}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Droplets className="w-4 h-4 text-cyan-400" />
-              <span className="text-sm font-medium text-cyan-400">Hidratação</span>
+              <div className={`p-1.5 rounded-lg ${themeStyles.iconBg}`}>
+                <Droplets className={`w-4 h-4 ${themeStyles.iconColor}`} />
+              </div>
+              <span className={`text-sm font-bold ${themeStyles.titleColor}`}>Hidratação</span>
             </div>
             <button
               onClick={() => setExpanded(false)}
@@ -283,10 +288,10 @@ const HydrationWidget: React.FC<HydrationWidgetProps> = ({
         {/* Progress Bar */}
         <div className="space-y-1">
           <div className="flex justify-between text-xs">
-            <span className="text-foreground font-medium">{totalToday}ml</span>
+            <span className={`font-bold ${themeStyles.titleColor}`}>{totalToday}ml</span>
             <span className="text-muted-foreground">/ {dailyGoal}ml</span>
           </div>
-          <div className="h-2 bg-background/50 rounded-full overflow-hidden">
+          <div className={`h-2 ${themeStyles.cardBg} rounded-full overflow-hidden border ${themeStyles.cardBorder}`}>
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progressPercentage}%` }}
@@ -294,7 +299,7 @@ const HydrationWidget: React.FC<HydrationWidgetProps> = ({
             />
           </div>
           {remaining > 0 && (
-            <p className="text-[10px] text-muted-foreground">Faltam {remaining}ml</p>
+            <p className={`text-[10px] ${themeStyles.accentColor}`}>Faltam {remaining}ml</p>
           )}
         </div>
 
@@ -391,9 +396,9 @@ const HydrationWidget: React.FC<HydrationWidgetProps> = ({
                 whileTap={{ scale: 0.95 }}
                 onClick={() => addWater(amount)}
                 disabled={saving || pouringAnimation}
-                className="py-1.5 px-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
+                className={`py-1.5 px-1 rounded-lg ${themeStyles.tipBg} border ${themeStyles.tipBorder} hover:opacity-80 transition-colors disabled:opacity-50`}
               >
-                <span className="text-[10px] text-cyan-400 font-medium">+{amount}</span>
+                <span className={`text-[10px] font-bold ${themeStyles.titleColor}`}>+{amount}</span>
               </motion.button>
             ))}
           </div>
@@ -405,7 +410,7 @@ const HydrationWidget: React.FC<HydrationWidgetProps> = ({
               setExpanded(false);
               navigate('/client/hydration');
             }}
-            className="w-full text-[10px] text-cyan-400/70 hover:text-cyan-400 transition-colors"
+            className={`w-full text-[10px] ${themeStyles.accentColor} hover:opacity-80 transition-colors font-medium`}
           >
             Ver detalhes →
           </button>
