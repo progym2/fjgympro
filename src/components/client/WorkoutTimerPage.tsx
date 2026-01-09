@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { useAudio } from '@/contexts/AudioContext';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 
 type TimerMode = 'stopwatch' | 'countdown' | 'tabata' | 'rest';
 
@@ -38,6 +39,9 @@ const WorkoutTimerPage: React.FC = () => {
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastTickRef = useRef<number>(0);
+
+  // ESC to go back
+  useEscapeBack({ to: '/client', disableWhen: [isRunning] });
 
   // Play completion sound
   const playCompletionSound = useCallback(() => {
@@ -231,6 +235,18 @@ const WorkoutTimerPage: React.FC = () => {
       animate={{ opacity: 1 }}
       className="space-y-4 max-w-md mx-auto"
     >
+      {/* Sticky Back Button */}
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm py-2 -mx-2 px-2 border-b border-border/30">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => navigate('/client')}
+          className="bg-card/80 hover:bg-card text-foreground border-border/50"
+        >
+          <ArrowLeft size={16} className="mr-2" /> Voltar
+        </Button>
+      </div>
+
       {/* Compact Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -241,19 +257,14 @@ const WorkoutTimerPage: React.FC = () => {
             <h2 className="text-lg font-bebas text-primary">TIMER</h2>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="h-8 w-8"
-            onClick={toggleSfx}
-          >
-            {isSfxEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-          </Button>
-          <Button variant="ghost" size="sm" className="h-8" onClick={() => navigate('/client')}>
-            <ArrowLeft size={16} className="mr-1" /> Voltar
-          </Button>
-        </div>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          className="h-8 w-8"
+          onClick={toggleSfx}
+        >
+          {isSfxEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+        </Button>
       </div>
 
       {/* Compact Mode Selector */}

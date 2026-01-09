@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Dumbbell, Play, CheckCircle, ChevronRight, 
   Trash2, Plus, Calendar, Lock, 
-  Clock, Target, Flame, Timer, Settings2, Eye
+  Clock, Target, Flame, Timer, Settings2, Eye, ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,9 +22,11 @@ import WorkoutScheduleEditor from './WorkoutScheduleEditor';
 import WorkoutDetailsModal from './WorkoutDetailsModal';
 import HydrationWidget from './HydrationWidget';
 import WorkoutWeeklyStats from './WorkoutWeeklyStats';
+import DefaultWorkoutPlans from './DefaultWorkoutPlans';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useThemeStyles } from '@/lib/themeStyles';
 import { cn } from '@/lib/utils';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -117,8 +119,12 @@ const SimpleWorkouts: React.FC = () => {
   const [bannerMinimized, setBannerMinimized] = useState(false);
   const [scheduleEditorPlan, setScheduleEditorPlan] = useState<WorkoutPlan | null>(null);
   const [detailsModalPlan, setDetailsModalPlan] = useState<WorkoutPlan | null>(null);
+  const [showDefaultPlans, setShowDefaultPlans] = useState(false);
   const today = new Date();
   const todayDayOfWeek = today.getDay();
+
+  // ESC to go back
+  useEscapeBack({ to: '/client', disableWhen: [showActiveSession, !!deleteConfirm, !!scheduleEditorPlan, !!detailsModalPlan] });
 
   // Auto-minimize banner after 30 seconds
   useEffect(() => {
@@ -515,6 +521,18 @@ const SimpleWorkouts: React.FC = () => {
       {/* Floating Hydration Widget */}
       <HydrationWidget />
       
+      {/* Sticky Back Button */}
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm py-2 -mx-2 px-2 border-b border-border/30">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => navigate('/client')}
+          className="bg-card/80 hover:bg-card text-foreground border-border/50"
+        >
+          <ArrowLeft size={16} className="mr-2" /> Voltar
+        </Button>
+      </div>
+
       {/* Header */}
       <div className={cn(
         "flex items-center justify-between p-3 rounded-xl backdrop-blur-md",
@@ -523,21 +541,22 @@ const SimpleWorkouts: React.FC = () => {
         themeStyles.cardBorder
       )}>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate('/client')}
-            className={cn("text-sm transition-colors", themeStyles.accentColor, "hover:opacity-80")}
-          >
-            ← Voltar
-          </button>
           <h2 className={cn("text-xl sm:text-2xl font-bebas flex items-center gap-2", themeStyles.titleColor)}>
             <Dumbbell className="w-6 h-6" />
             MEUS TREINOS
           </h2>
         </div>
-        <Button size="sm" onClick={() => navigate('/client/timer')} variant="outline">
-          <Clock size={16} className="mr-1" />
-          Timer
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            size="sm" 
+            onClick={() => navigate('/client/timer')} 
+            variant="outline"
+            className="bg-rose-500/20 border-rose-500/50 text-rose-400 hover:bg-rose-500/30"
+          >
+            <Timer size={16} className="mr-1" />
+            Timer
+          </Button>
+        </div>
       </div>
 
       {/* Active Workout Banner - Only show continue button if workout is from today */}
@@ -686,13 +705,24 @@ const SimpleWorkouts: React.FC = () => {
             Nenhum treino para {DAYS_FULL[selectedDay].toLowerCase()}
           </p>
           <p className="text-xs text-muted-foreground/70 mb-4">
-            Crie um treino ou peça ao seu instrutor
+            Crie um treino ou use nossos planos prontos para iniciantes
           </p>
-          <Button onClick={() => navigate('/client/workouts/new')}>
-            <Plus size={16} className="mr-1" />
-            Criar Meu Treino
-          </Button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+            <Button onClick={() => navigate('/client/workouts/new')}>
+              <Plus size={16} className="mr-1" />
+              Criar Meu Treino
+            </Button>
+            <Button variant="outline" onClick={() => setShowDefaultPlans(!showDefaultPlans)}>
+              <Dumbbell size={16} className="mr-1" />
+              {showDefaultPlans ? 'Ocultar Planos' : 'Ver Planos Prontos'}
+            </Button>
+          </div>
         </motion.div>
+      )}
+
+      {/* Default Workout Plans for Beginners */}
+      {(showDefaultPlans || (availablePlans.length === 0 && plans.length === 0)) && (
+        <DefaultWorkoutPlans onPlanCreated={fetchData} />
       )}
 
       {/* Info for future days with countdown - minimizes after 30s */}
