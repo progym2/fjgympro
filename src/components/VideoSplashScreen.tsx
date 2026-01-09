@@ -56,7 +56,7 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = memo(({ onComplete }
     
     setIsExiting(true);
     setProgress(100);
-    sessionStorage.setItem('splashShown', 'true');
+    localStorage.setItem('splashShown', 'true');
     
     // Smooth exit with fade
     setTimeout(() => {
