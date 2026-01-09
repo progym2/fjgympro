@@ -31,7 +31,7 @@ import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
 import FitnessLoadingScreen from '@/components/FitnessLoadingScreen';
 
-import bgPanels from '@/assets/gym-hero-bg.jpeg';
+import bgPanels from '@/assets/gym-bg-fire.jpeg';
 
 // Lazy load ALL components - include AboutDialog
 const AboutDialog = lazy(() => import('@/components/AboutDialog'));
@@ -227,7 +227,7 @@ const ClientDashboard: React.FC = () => {
 
   return (
     <div className="h-[100dvh] relative overflow-hidden bg-background">
-      {/* Progressive background */}
+      {/* Progressive background with fire theme */}
       <div 
         className="absolute inset-0 transition-all duration-500"
         style={{
@@ -238,7 +238,9 @@ const ClientDashboard: React.FC = () => {
           transform: bgLoaded ? 'scale(1)' : 'scale(1.05)',
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background/90" />
+      {/* Vibrant overlay with fire accent */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background/80" />
+      <div className="absolute inset-0 bg-gradient-to-t from-orange-950/20 via-transparent to-transparent" />
 
       <div className="relative z-10 h-full flex flex-col pb-14 overflow-y-auto overflow-x-hidden overscroll-contain pt-safe">
         <div className="h-16 sm:h-18" />
