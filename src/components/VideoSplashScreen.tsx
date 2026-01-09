@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
 
 // App version - increment this to show splash again after updates
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.0.1';
 
 interface VideoSplashScreenProps {
   onComplete: () => void;
@@ -10,6 +10,7 @@ interface VideoSplashScreenProps {
 const VideoSplashScreen: React.FC<VideoSplashScreenProps> = memo(({ onComplete }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [videoReady, setVideoReady] = useState(false);
+  const [needsUserPlay, setNeedsUserPlay] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -67,10 +68,23 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = memo(({ onComplete }
 
   const handleCanPlayThrough = () => {
     setVideoReady(true);
-    // Auto-start playing
+
+    // Ensure normal playback speed
+    if (videoRef.current) {
+      videoRef.current.playbackRate = 1;
+    }
+
+    // Try autoplay; if blocked (common on mobile), ask user to tap to start
     videoRef.current?.play().catch(() => {
-      // If autoplay fails, complete immediately
-      handleComplete();
+      setNeedsUserPlay(true);
+    });
+  };
+
+  const handleUserPlay = () => {
+    setNeedsUserPlay(false);
+    videoRef.current?.play().catch(() => {
+      // keep overlay if still blocked
+      setNeedsUserPlay(true);
     });
   };
 
@@ -79,21 +93,11 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = memo(({ onComplete }
     handleComplete();
   };
 
-  // Timeout fallback - if video doesn't load in 8 seconds, skip
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (!videoReady && !hasCompletedRef.current) {
-        handleComplete();
-      }
-    }, 8000);
-    return () => clearTimeout(timeout);
-  }, [videoReady]);
-
   if (!isVisible) return null;
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden transition-opacity duration-400 ${isExiting ? 'opacity-0' : 'opacity-100'}`}
+      className={`fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden transition-opacity duration-[400ms] ${isExiting ? 'opacity-0' : 'opacity-100'}`}
       onClick={handleSkip}
       style={{ touchAction: 'manipulation' }}
     >
@@ -120,6 +124,22 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = memo(({ onComplete }
       {!videoReady && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-10 h-10 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
+        </div>
+      )}
+
+      {/* Autoplay blocked overlay */}
+      {needsUserPlay && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleUserPlay();
+            }}
+            className="px-4 py-3 rounded-md bg-black/60 text-white text-sm"
+          >
+            Toque para iniciar
+          </button>
         </div>
       )}
 
