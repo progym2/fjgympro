@@ -106,10 +106,7 @@ const AppRoutes = () => {
 };
 
 const App = () => {
-  const [splashComplete, setSplashComplete] = useState(() => {
-    // Check if splash was already shown
-    return sessionStorage.getItem('splashShown') === 'true';
-  });
+  const [splashComplete, setSplashComplete] = useState(false);
 
   return (
     <QueryClientProvider client={queryClient}>
