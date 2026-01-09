@@ -4,7 +4,17 @@ import {
   Dumbbell, ArrowLeft, Search, Video, Plus, Heart, 
   Zap, X, ChevronRight, Loader2, Play, Flame, Target, Star
 } from 'lucide-react';
-import muscleGroupsImage from '@/assets/muscle-groups-pro.png';
+
+// Import individual muscle group images
+import chestImage from '@/assets/muscles/chest.png';
+import backImage from '@/assets/muscles/back.png';
+import shouldersImage from '@/assets/muscles/shoulders.png';
+import bicepsImage from '@/assets/muscles/biceps.png';
+import tricepsImage from '@/assets/muscles/triceps.png';
+import legsImage from '@/assets/muscles/legs.png';
+import absImage from '@/assets/muscles/abs.png';
+import glutesImage from '@/assets/muscles/glutes.png';
+import cardioImage from '@/assets/muscles/cardio.png';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -31,7 +41,7 @@ interface MuscleGroupDashboardProps {
   onBack?: () => void;
 }
 
-// Muscle group data with professional image
+// Muscle group data with individual images
 const muscleGroups = [
   { 
     id: 'Peito', 
@@ -41,6 +51,7 @@ const muscleGroups = [
     borderColor: 'border-red-500/50',
     textColor: 'text-red-400',
     glowColor: 'shadow-red-500/30',
+    image: chestImage,
     description: 'Peitoral maior e menor'
   },
   { 
@@ -51,6 +62,7 @@ const muscleGroups = [
     borderColor: 'border-blue-500/50',
     textColor: 'text-blue-400',
     glowColor: 'shadow-blue-500/30',
+    image: backImage,
     description: 'Latíssimo, trapézio, romboides'
   },
   { 
@@ -61,6 +73,7 @@ const muscleGroups = [
     borderColor: 'border-orange-500/50',
     textColor: 'text-orange-400',
     glowColor: 'shadow-orange-500/30',
+    image: shouldersImage,
     description: 'Deltoides anterior, lateral e posterior'
   },
   { 
@@ -71,6 +84,7 @@ const muscleGroups = [
     borderColor: 'border-purple-500/50',
     textColor: 'text-purple-400',
     glowColor: 'shadow-purple-500/30',
+    image: bicepsImage,
     description: 'Bíceps braquial'
   },
   { 
@@ -81,6 +95,7 @@ const muscleGroups = [
     borderColor: 'border-pink-500/50',
     textColor: 'text-pink-400',
     glowColor: 'shadow-pink-500/30',
+    image: tricepsImage,
     description: 'Tríceps braquial (3 cabeças)'
   },
   { 
@@ -91,6 +106,7 @@ const muscleGroups = [
     borderColor: 'border-green-500/50',
     textColor: 'text-green-400',
     glowColor: 'shadow-green-500/30',
+    image: legsImage,
     description: 'Quadríceps, isquiotibiais, panturrilha'
   },
   { 
@@ -101,6 +117,7 @@ const muscleGroups = [
     borderColor: 'border-yellow-500/50',
     textColor: 'text-yellow-400',
     glowColor: 'shadow-yellow-500/30',
+    image: absImage,
     description: 'Reto abdominal, oblíquos'
   },
   { 
@@ -111,6 +128,7 @@ const muscleGroups = [
     borderColor: 'border-rose-500/50',
     textColor: 'text-rose-400',
     glowColor: 'shadow-rose-500/30',
+    image: glutesImage,
     description: 'Glúteo máximo, médio e mínimo'
   },
   { 
@@ -121,6 +139,7 @@ const muscleGroups = [
     borderColor: 'border-cyan-500/50',
     textColor: 'text-cyan-400',
     glowColor: 'shadow-cyan-500/30',
+    image: cardioImage,
     description: 'Exercícios cardiovasculares'
   },
 ];
@@ -161,7 +180,7 @@ const MuscleCard: React.FC<{
         transition={{ duration: 0.5, repeat: isSelected ? Infinity : 0, repeatDelay: 2 }}
       >
         <img 
-          src={muscleGroupsImage} 
+          src={group.image} 
           alt={group.name}
           className={`w-full h-full object-contain drop-shadow-lg transition-all duration-300 ${
             isSelected ? 'brightness-125 saturate-150' : 'brightness-100'
@@ -403,7 +422,7 @@ const MuscleGroupDashboard: React.FC<MuscleGroupDashboardProps> = ({ onSelectExe
                     transition={{ duration: 1, repeat: Infinity, repeatDelay: 1 }}
                   >
                     <img 
-                      src={muscleGroupsImage} 
+                      src={selectedGroupData?.image} 
                       alt={selectedGroupData?.name}
                       className="w-full h-full object-contain drop-shadow-lg brightness-110 saturate-125"
                     />
