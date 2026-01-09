@@ -203,7 +203,7 @@ const InstructorDashboard: React.FC = () => {
       {/* Fire particles effect */}
       <FireParticles count={20} />
 
-      <div className="relative z-10 h-full flex flex-col pb-12 pt-safe overflow-y-auto overflow-x-hidden overscroll-none">
+      <div className="relative z-10 h-full flex flex-col pb-12 overflow-y-auto overflow-x-hidden overscroll-none">
         <ThemedHeader>
           <div className="container mx-auto px-2 py-1.5 sm:py-2">
             <div className="flex items-center justify-between gap-1.5">

@@ -109,7 +109,7 @@ const MENU_ITEMS = [
 
 // Memoized menu grid - layout otimizado para caber na tela
 const MenuGrid = memo(({ onNavigate }: { onNavigate: (path: string) => void }) => (
-  <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-1.5 sm:gap-2 pb-2">
+  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 pb-6">
     {MENU_ITEMS.map((item) => (
       <ThemedMenuButton
         key={item.path}
@@ -246,7 +246,7 @@ const ClientDashboard: React.FC = () => {
       {/* Fire particles effect */}
       <FireParticles count={20} />
 
-      <div className="relative z-10 h-full flex flex-col pb-12 overflow-y-auto overflow-x-hidden overscroll-none pt-safe">
+      <div className="relative z-10 h-full flex flex-col pb-12 overflow-y-auto overflow-x-hidden overscroll-none">
         
         <ThemedHeader>
           <div className="container mx-auto px-2 py-1.5 sm:py-2">
