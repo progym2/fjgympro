@@ -5,7 +5,7 @@ import {
   Apple, Beef, Wheat, Droplets, Coffee, Moon, Sun, 
   Flame, Target, ChevronRight, Check, Sparkles, History,
   Copy, Clock, Zap, TrendingDown, TrendingUp, Scale, 
-  Lightbulb, LayoutTemplate, FileDown, Share2
+  Lightbulb, LayoutTemplate, FileDown, Share2, ShoppingCart
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/dialog';
 import { exportMealPlanToPDF, shareMealPlanViaWhatsApp } from '@/lib/nutritionPdfExport';
 import SharePdfDialog from './SharePdfDialog';
+import ShoppingList from './ShoppingList';
 import jsPDF from 'jspdf';
 
 interface FoodItem {
@@ -213,6 +214,7 @@ const InteractiveMealBuilder: React.FC = () => {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showShoppingList, setShowShoppingList] = useState(false);
   const [currentPdf, setCurrentPdf] = useState<{ doc: jsPDF; filename: string } | null>(null);
 
   useEffect(() => {
@@ -665,7 +667,40 @@ const InteractiveMealBuilder: React.FC = () => {
           <Share2 className="w-4 h-4" />
           <span className="hidden sm:inline">Compartilhar</span>
         </Button>
+
+        {/* Shopping List Button */}
+        <Button 
+          variant={showShoppingList ? "default" : "outline"}
+          size="sm" 
+          className="gap-2"
+          onClick={() => setShowShoppingList(!showShoppingList)}
+        >
+          <ShoppingCart className="w-4 h-4" />
+          <span className="hidden sm:inline">Lista de Compras</span>
+        </Button>
       </div>
+
+      {/* Shopping List Panel */}
+      <AnimatePresence>
+        {showShoppingList && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <Card className="bg-gradient-to-br from-emerald-500/10 to-green-500/10 border-emerald-500/30">
+              <CardContent className="pt-6">
+                <ShoppingList 
+                  meals={meals} 
+                  daysMultiplier={7}
+                  onClose={() => setShowShoppingList(false)} 
+                />
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Share Dialog */}
       <SharePdfDialog
