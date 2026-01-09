@@ -1,7 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { User, Dumbbell, Shield, Info, Volume2, VolumeX } from 'lucide-react';
+import { User, Dumbbell, Shield, Info, Volume2, VolumeX, Play } from 'lucide-react';
 
 import DigitalClock from '@/components/DigitalClock';
 import ThemedHomeButton from '@/components/ThemedHomeButton';
@@ -99,6 +99,12 @@ const Home: React.FC = memo(() => {
   const handleLoginClose = useCallback(() => setLoginDialogOpen(false), []);
   const handleAboutClose = useCallback(() => setAboutDialogOpen(false), []);
   const handleToggleSfx = useCallback(() => { playClickSound(); toggleSfx(); }, [playClickSound, toggleSfx]);
+  
+  const handleReplayIntro = useCallback(() => {
+    playClickSound();
+    localStorage.removeItem('splashShown');
+    window.location.reload();
+  }, [playClickSound]);
 
   return (
     <div
@@ -226,13 +232,22 @@ const Home: React.FC = memo(() => {
 
       <button
         onClick={handleToggleSfx}
-        className={`fixed bottom-16 left-3 z-50 p-2.5 rounded-xl bg-black/40 backdrop-blur-sm transition-all ${
+        className={`fixed bottom-24 left-3 z-50 p-2.5 rounded-xl bg-black/40 backdrop-blur-sm transition-all ${
           isSfxEnabled ? 'text-emerald-400 hover:bg-emerald-500/20' : 'text-white/50 hover:bg-white/10'
         }`}
         aria-label={isSfxEnabled ? 'Desativar sons' : 'Ativar sons'}
         title={isSfxEnabled ? 'Sons ativos' : 'Sons desativados'}
       >
         {isSfxEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+      </button>
+
+      <button
+        onClick={handleReplayIntro}
+        className="fixed bottom-16 left-3 z-50 p-2.5 rounded-xl bg-black/40 backdrop-blur-sm text-white/70 hover:text-white hover:bg-black/60 transition-all"
+        aria-label="Ver intro novamente"
+        title="Ver intro novamente"
+      >
+        <Play size={18} />
       </button>
 
       {/* Mini Music Player - lazy */}
