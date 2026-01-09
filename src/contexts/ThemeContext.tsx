@@ -209,6 +209,8 @@ export const SPORT_THEMES: ThemeConfig[] = [
   },
 ];
 
+export type MenuSizeMode = 'large' | 'compact';
+
 interface ThemeContextType {
   currentTheme: SportTheme;
   setTheme: (theme: SportTheme) => void;
@@ -220,6 +222,8 @@ interface ThemeContextType {
   hoverEffectsEnabled: boolean;
   setHoverEffectsEnabled: (enabled: boolean) => void;
   isSyncing: boolean;
+  menuSize: MenuSizeMode;
+  setMenuSize: (size: MenuSizeMode) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -227,6 +231,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const THEME_STORAGE_KEY = 'francgym_sport_theme';
 const GLOBAL_THEME_KEY = 'francgym_global_theme';
 const HOVER_EFFECTS_KEY = 'francgym_hover_effects';
+const MENU_SIZE_KEY = 'francgym_menu_size';
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { profile } = useAuth();
@@ -236,6 +241,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [hoverEffectsEnabled, setHoverEffectsEnabledState] = useState<boolean>(() => {
     const saved = localStorage.getItem(HOVER_EFFECTS_KEY);
     return saved !== 'false';
+  });
+  const [menuSize, setMenuSizeState] = useState<MenuSizeMode>(() => {
+    const saved = localStorage.getItem(MENU_SIZE_KEY) as MenuSizeMode;
+    return saved === 'compact' ? 'compact' : 'large';
   });
 
   // Carregar tema global do localStorage
@@ -396,6 +405,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     document.documentElement.setAttribute('data-hover-effects', String(enabled));
   };
 
+  const setMenuSize = (size: MenuSizeMode) => {
+    setMenuSizeState(size);
+    localStorage.setItem(MENU_SIZE_KEY, size);
+  };
+
   // Aplicar hover effects no mount
   useEffect(() => {
     document.documentElement.setAttribute('data-hover-effects', String(hoverEffectsEnabled));
@@ -417,6 +431,8 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       hoverEffectsEnabled,
       setHoverEffectsEnabled,
       isSyncing,
+      menuSize,
+      setMenuSize,
     }}>
       {children}
     </ThemeContext.Provider>

@@ -5,6 +5,26 @@ import { LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
+// Tamanhos baseados na configuração de menu
+const MENU_SIZES = {
+  large: {
+    container: 'gap-2 p-2.5 sm:p-3 min-h-[96px] sm:min-h-[108px]',
+    iconWrapper: 'p-3 sm:p-3.5',
+    icon: 'w-7 h-7 sm:w-8 sm:h-8',
+    label: 'text-[11px] sm:text-xs md:text-sm',
+    badge: 'text-[9px] sm:text-[10px] -top-1.5 -right-1.5 min-w-[16px]',
+    shadow: '0 5px 14px',
+  },
+  compact: {
+    container: 'gap-1 p-1.5 sm:p-2 min-h-[72px] sm:min-h-[80px]',
+    iconWrapper: 'p-2 sm:p-2.5',
+    icon: 'w-5 h-5 sm:w-6 sm:h-6',
+    label: 'text-[9px] sm:text-[10px]',
+    badge: 'text-[8px] sm:text-[9px] -top-1 -right-1 min-w-[14px]',
+    shadow: '0 3px 10px',
+  },
+};
+
 interface ThemedMenuButtonProps {
   icon: LucideIcon;
   label: string;
@@ -118,9 +138,10 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
   disabled = false,
   tooltip
 }) => {
-  const { themeConfig, currentTheme } = useTheme();
+  const { themeConfig, currentTheme, menuSize } = useTheme();
 
   const themeStyles = useMemo(() => getThemeStyles(currentTheme), [currentTheme]);
+  const sizeStyles = MENU_SIZES[menuSize];
 
   const fontWeightClass = themeConfig.fontWeight === 'extra-bold' 
     ? 'font-black' 
@@ -134,53 +155,59 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
       disabled={disabled}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
+      className={cn(
+        'relative flex flex-col items-center justify-center',
+        sizeStyles.container,
+        'bg-transparent',
+        'transition-all duration-200',
+        disabled && 'opacity-50 pointer-events-none',
+        'group w-full'
+      )}
+    >
+      {/* Icon container */}
+      <motion.div 
         className={cn(
-          'relative flex flex-col items-center justify-center gap-2 p-2.5 sm:p-3',
-          'bg-transparent',
-          'transition-all duration-200',
-          disabled && 'opacity-50 pointer-events-none',
-          'group w-full min-h-[96px] sm:min-h-[108px]'
+          'relative border-2 transition-all duration-300',
+          sizeStyles.iconWrapper,
+          themeStyles.iconBg,
+          themeStyles.iconBorder,
+          themeStyles.shape,
+          'group-hover:animate-pulse-glow'
         )}
+        style={{
+          boxShadow: `${sizeStyles.shadow} ${themeStyles.glowColor}`,
+        }}
       >
-        {/* Icon container - tamanho otimizado */}
-        <motion.div 
+        <Icon 
           className={cn(
-            'relative p-3 sm:p-3.5 border-2 transition-all duration-300',
-            themeStyles.iconBg,
-            themeStyles.iconBorder,
-            themeStyles.shape,
-            'group-hover:animate-pulse-glow'
-          )}
-          style={{
-            boxShadow: `0 5px 14px ${themeStyles.glowColor}`,
-          }}
-        >
-          <Icon 
-            className={cn(
-              'w-7 h-7 sm:w-8 sm:h-8',
-              color || themeStyles.iconColor
-            )} 
-            strokeWidth={2} 
-          />
+            sizeStyles.icon,
+            color || themeStyles.iconColor
+          )} 
+          strokeWidth={2} 
+        />
 
-          {/* Badge */}
-          {badge && (
-            <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[9px] sm:text-[10px] font-bold px-1 py-0.5 rounded-full min-w-[16px] text-center shadow-lg">
-              {badge}
-            </span>
-          )}
-        </motion.div>
+        {/* Badge */}
+        {badge && (
+          <span className={cn(
+            'absolute bg-primary text-primary-foreground font-bold px-1 py-0.5 rounded-full text-center shadow-lg',
+            sizeStyles.badge
+          )}>
+            {badge}
+          </span>
+        )}
+      </motion.div>
 
-        {/* Label - legível e compacto */}
-        <span className={cn(
-          'font-bebas text-[11px] sm:text-xs md:text-sm tracking-wide text-center leading-tight',
-          'max-w-full px-0.5 line-clamp-2',
-          themeStyles.labelColor,
-          fontWeightClass
-        )}>
-          {label}
-        </span>
-      </motion.button>
+      {/* Label */}
+      <span className={cn(
+        'font-bebas tracking-wide text-center leading-tight',
+        'max-w-full px-0.5 line-clamp-2',
+        sizeStyles.label,
+        themeStyles.labelColor,
+        fontWeightClass
+      )}>
+        {label}
+      </span>
+    </motion.button>
   );
 
   if (tooltip) {

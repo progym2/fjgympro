@@ -28,9 +28,12 @@ import {
 import PanelSwitcher from '@/components/PanelSwitcher';
 
 import PanelThemeSelector from '@/components/shared/PanelThemeSelector';
+import MenuSizeToggle from '@/components/shared/MenuSizeToggle';
 import ProfileAvatar from '@/components/shared/ProfileAvatar';
 import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
+import { useTheme } from '@/contexts/ThemeContext';
+import { cn } from '@/lib/utils';
 import FitnessLoadingScreen from '@/components/FitnessLoadingScreen';
 
 import bgPanels from '@/assets/gym-bg-fire.jpeg';
@@ -78,6 +81,7 @@ const AdminDashboard: React.FC = () => {
   const { user, profile, role, license, signOut, licenseExpired, isLicenseValid, isLoading: authLoading } = useAuth();
   const { playClickSound } = useAudio();
   const { isLoaded: bgLoaded } = useProgressiveImage(bgPanels);
+  const { menuSize } = useTheme();
   const [aboutOpen, setAboutOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -207,6 +211,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center gap-0.5 sm:gap-1">
+                <MenuSizeToggle />
                 <PanelThemeSelector />
                 {isMaster && <PanelSwitcher />}
                 {license && !isMaster && (
@@ -245,7 +250,12 @@ const AdminDashboard: React.FC = () => {
                     <UserCPFSearch />
                   </Suspense>
                   
-                  <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-1 sm:gap-2">
+                  <div className={cn(
+                    'grid pb-4',
+                    menuSize === 'large'
+                      ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3'
+                      : 'grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-1.5 sm:gap-2'
+                  )}>
                     {allMenuItems.map((item) => (
                       <ThemedMenuButton
                         key={item.path}
