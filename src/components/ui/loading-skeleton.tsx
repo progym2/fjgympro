@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { cn } from '@/lib/utils';
 
 interface SkeletonProps {
@@ -6,11 +6,11 @@ interface SkeletonProps {
   variant?: 'default' | 'circular' | 'rounded';
 }
 
-const Skeleton: React.FC<SkeletonProps> = ({ className, variant = 'default' }) => {
+const Skeleton: React.FC<SkeletonProps> = memo(({ className, variant = 'default' }) => {
   return (
     <div
       className={cn(
-        'animate-pulse bg-muted',
+        'animate-pulse bg-muted/50',
         variant === 'circular' && 'rounded-full',
         variant === 'rounded' && 'rounded-lg',
         variant === 'default' && 'rounded-md',
@@ -18,12 +18,14 @@ const Skeleton: React.FC<SkeletonProps> = ({ className, variant = 'default' }) =
       )}
     />
   );
-};
+});
+Skeleton.displayName = 'Skeleton';
 
-// Menu button skeleton for home screen
-export const MenuButtonSkeleton: React.FC = () => (
-  <div className="w-24 h-28 sm:w-28 sm:h-32 md:w-32 md:h-36 bg-muted/30 animate-pulse rounded-2xl" />
-);
+// Menu button skeleton for home screen - faster animation
+export const MenuButtonSkeleton = memo(() => (
+  <div className="w-20 h-24 sm:w-24 sm:h-28 bg-muted/20 animate-pulse rounded-xl" />
+));
+MenuButtonSkeleton.displayName = 'MenuButtonSkeleton';
 
 // Card skeleton for dashboard items
 export const CardSkeleton: React.FC<{ className?: string }> = ({ className }) => (
