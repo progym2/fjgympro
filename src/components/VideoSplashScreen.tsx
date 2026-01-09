@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
 
+// App version - increment this to show splash again after updates
+export const APP_VERSION = '1.0.0';
+
 interface VideoSplashScreenProps {
   onComplete: () => void;
 }
@@ -42,21 +45,9 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = memo(({ onComplete }
     if (hasCompletedRef.current) return;
     hasCompletedRef.current = true;
     
-    // Fade out audio smoothly
-    if (videoRef.current) {
-      const fadeAudio = setInterval(() => {
-        if (videoRef.current && videoRef.current.volume > 0.1) {
-          videoRef.current.volume -= 0.1;
-        } else {
-          clearInterval(fadeAudio);
-          if (videoRef.current) videoRef.current.volume = 0;
-        }
-      }, 50);
-    }
-    
     setIsExiting(true);
     setProgress(100);
-    localStorage.setItem('splashShown', 'true');
+    localStorage.setItem('splashShown', APP_VERSION);
     
     // Smooth exit with fade
     setTimeout(() => {
@@ -109,9 +100,10 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = memo(({ onComplete }
       {/* Dark background */}
       <div className="absolute inset-0 bg-black" />
 
-      {/* Video with sound - preload auto for faster loading */}
+      {/* Video muted - preload auto for faster loading */}
       <video
         ref={videoRef}
+        muted
         playsInline
         autoPlay
         preload="auto"
