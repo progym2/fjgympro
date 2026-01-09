@@ -26,6 +26,17 @@ import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import UnsavedChangesDialog from '@/components/UnsavedChangesDialog';
 import YouTubePlayer from '@/components/shared/YouTubePlayer';
 
+// Import muscle group images
+import chestImage from '@/assets/muscles/chest-pro.png';
+import backImage from '@/assets/muscles/back-pro.png';
+import shouldersImage from '@/assets/muscles/shoulders-pro.png';
+import bicepsImage from '@/assets/muscles/biceps-pro.png';
+import tricepsImage from '@/assets/muscles/triceps-pro.png';
+import legsImage from '@/assets/muscles/legs-pro.png';
+import absImage from '@/assets/muscles/abs-pro.png';
+import glutesImage from '@/assets/muscles/glutes-pro.png';
+import cardioImage from '@/assets/muscles/cardio-pro.png';
+
 interface Exercise {
   id: string;
   name: string;
@@ -59,15 +70,15 @@ const daysOfWeek = [
 
 // Muscle groups with visual representation
 const muscleGroups = [
-  { id: 'Peito', icon: '🏋️', color: 'from-red-500 to-red-600', bgColor: 'bg-red-500/20', textColor: 'text-red-400', borderColor: 'border-red-500/50' },
-  { id: 'Costas', icon: '💪', color: 'from-blue-500 to-blue-600', bgColor: 'bg-blue-500/20', textColor: 'text-blue-400', borderColor: 'border-blue-500/50' },
-  { id: 'Ombros', icon: '🏆', color: 'from-orange-500 to-orange-600', bgColor: 'bg-orange-500/20', textColor: 'text-orange-400', borderColor: 'border-orange-500/50' },
-  { id: 'Bíceps', icon: '💪', color: 'from-purple-500 to-purple-600', bgColor: 'bg-purple-500/20', textColor: 'text-purple-400', borderColor: 'border-purple-500/50' },
-  { id: 'Tríceps', icon: '🦾', color: 'from-pink-500 to-pink-600', bgColor: 'bg-pink-500/20', textColor: 'text-pink-400', borderColor: 'border-pink-500/50' },
-  { id: 'Pernas', icon: '🦵', color: 'from-green-500 to-green-600', bgColor: 'bg-green-500/20', textColor: 'text-green-400', borderColor: 'border-green-500/50' },
-  { id: 'Abdômen', icon: '🔥', color: 'from-yellow-500 to-yellow-600', bgColor: 'bg-yellow-500/20', textColor: 'text-yellow-400', borderColor: 'border-yellow-500/50' },
-  { id: 'Glúteos', icon: '🍑', color: 'from-rose-500 to-rose-600', bgColor: 'bg-rose-500/20', textColor: 'text-rose-400', borderColor: 'border-rose-500/50' },
-  { id: 'Cardio', icon: '🏃', color: 'from-cyan-500 to-cyan-600', bgColor: 'bg-cyan-500/20', textColor: 'text-cyan-400', borderColor: 'border-cyan-500/50' },
+  { id: 'Peito', icon: '🏋️', image: chestImage, color: 'from-red-500 to-red-600', bgColor: 'bg-red-500/20', textColor: 'text-red-400', borderColor: 'border-red-500/50' },
+  { id: 'Costas', icon: '💪', image: backImage, color: 'from-blue-500 to-blue-600', bgColor: 'bg-blue-500/20', textColor: 'text-blue-400', borderColor: 'border-blue-500/50' },
+  { id: 'Ombros', icon: '🏆', image: shouldersImage, color: 'from-orange-500 to-orange-600', bgColor: 'bg-orange-500/20', textColor: 'text-orange-400', borderColor: 'border-orange-500/50' },
+  { id: 'Bíceps', icon: '💪', image: bicepsImage, color: 'from-purple-500 to-purple-600', bgColor: 'bg-purple-500/20', textColor: 'text-purple-400', borderColor: 'border-purple-500/50' },
+  { id: 'Tríceps', icon: '🦾', image: tricepsImage, color: 'from-pink-500 to-pink-600', bgColor: 'bg-pink-500/20', textColor: 'text-pink-400', borderColor: 'border-pink-500/50' },
+  { id: 'Pernas', icon: '🦵', image: legsImage, color: 'from-green-500 to-green-600', bgColor: 'bg-green-500/20', textColor: 'text-green-400', borderColor: 'border-green-500/50' },
+  { id: 'Abdômen', icon: '🔥', image: absImage, color: 'from-yellow-500 to-yellow-600', bgColor: 'bg-yellow-500/20', textColor: 'text-yellow-400', borderColor: 'border-yellow-500/50' },
+  { id: 'Glúteos', icon: '🍑', image: glutesImage, color: 'from-rose-500 to-rose-600', bgColor: 'bg-rose-500/20', textColor: 'text-rose-400', borderColor: 'border-rose-500/50' },
+  { id: 'Cardio', icon: '🏃', image: cardioImage, color: 'from-cyan-500 to-cyan-600', bgColor: 'bg-cyan-500/20', textColor: 'text-cyan-400', borderColor: 'border-cyan-500/50' },
 ];
 
 // Workout templates
@@ -503,10 +514,10 @@ const CreateClientWorkout: React.FC<CreateClientWorkoutProps> = ({ onBack, onSuc
               </Button>
             )}
             <Button 
-              variant="outline" 
+              variant="default" 
               size="sm" 
               onClick={() => setShowTemplates(!showTemplates)}
-              className="h-7 text-xs"
+              className="h-7 text-xs bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md"
             >
               <FileText size={12} className="mr-1" />
               {showTemplates ? 'Ocultar' : 'Ver Templates'}
@@ -527,16 +538,16 @@ const CreateClientWorkout: React.FC<CreateClientWorkoutProps> = ({ onBack, onSuc
                   key={template.id}
                   onClick={() => applyTemplate(template)}
                   disabled={loadingTemplate}
-                  className="p-3 rounded-lg bg-card/80 border border-border/50 hover:border-primary/50 transition-colors text-left"
+                  className="p-3 rounded-lg bg-card border-2 border-border/60 hover:border-primary/60 hover:bg-card/90 transition-all text-left shadow-sm hover:shadow-md"
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-lg">{template.icon}</span>
-                    <span className="font-bebas text-sm text-primary">{template.name}</span>
+                    <span className="font-bold text-sm text-foreground">{template.name}</span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mb-2">{template.description}</p>
+                  <p className="text-[10px] text-foreground/70 font-medium mb-2">{template.description}</p>
                   <div className="flex flex-wrap gap-1">
                     {template.days.map((day, idx) => (
-                      <Badge key={idx} variant="outline" className="text-[9px] h-4">
+                      <Badge key={idx} variant="secondary" className="text-[9px] h-5 font-semibold bg-primary/20 text-primary border-0">
                         {day.label.split(' - ')[0]}
                       </Badge>
                     ))}
@@ -608,22 +619,27 @@ const CreateClientWorkout: React.FC<CreateClientWorkoutProps> = ({ onBack, onSuc
               <button
                 key={group.id}
                 onClick={() => setSelectedMuscleGroup(isActive ? null : group.id)}
-                className={`relative p-2 sm:p-3 rounded-xl border-2 transition-colors duration-100 ${
+                className={`relative p-2 sm:p-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center ${
                   isActive 
-                    ? `${group.borderColor} ${group.bgColor} shadow-lg` 
-                    : 'border-border/30 bg-background/50 hover:border-primary/30'
+                    ? `${group.borderColor} ${group.bgColor} shadow-lg ring-2 ring-offset-1 ring-offset-background ring-primary/40` 
+                    : 'border-border/40 bg-card/80 hover:border-primary/40 hover:shadow-md'
                 }`}
               >
-                <span className={`text-xl sm:text-2xl block ${isActive ? 'scale-110' : ''} transition-transform duration-100`}>
-                  {group.icon}
-                </span>
-                <span className={`text-[10px] sm:text-xs font-bebas ${isActive ? group.textColor : 'text-muted-foreground'}`}>
+                {/* Muscle Image */}
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden mb-1 ${isActive ? 'ring-2 ring-primary/50' : ''}`}>
+                  <img 
+                    src={group.image} 
+                    alt={group.id} 
+                    className={`w-full h-full object-cover ${isActive ? 'brightness-110 saturate-125' : 'brightness-90'} transition-all duration-200`}
+                  />
+                </div>
+                <span className={`text-[10px] sm:text-xs font-bold tracking-wide ${isActive ? group.textColor : 'text-foreground/80'}`}>
                   {group.id}
                 </span>
                 
                 {/* Count badge */}
                 {count > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary text-primary-foreground text-[10px] sm:text-xs flex items-center justify-center font-bold shadow-lg">
                     {count}
                   </span>
                 )}
@@ -644,15 +660,21 @@ const CreateClientWorkout: React.FC<CreateClientWorkoutProps> = ({ onBack, onSuc
             transition={{ duration: 0.15 }}
             className={`rounded-xl border-2 ${getMuscleGroupData(selectedMuscleGroup)?.borderColor} ${getMuscleGroupData(selectedMuscleGroup)?.bgColor} overflow-hidden`}
           >
-            <div className="p-3 border-b border-border/30 bg-background/50">
+            <div className="p-3 border-b border-border/30 bg-card/90">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">{getMuscleGroupData(selectedMuscleGroup)?.icon}</span>
+                  <div className="w-8 h-8 rounded-lg overflow-hidden">
+                    <img 
+                      src={getMuscleGroupData(selectedMuscleGroup)?.image} 
+                      alt={selectedMuscleGroup} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <div>
-                    <h3 className={`font-bebas text-sm ${getMuscleGroupData(selectedMuscleGroup)?.textColor}`}>
-                      2️⃣ SELECIONE OS EXERCÍCIOS
+                    <h3 className={`font-bold text-sm ${getMuscleGroupData(selectedMuscleGroup)?.textColor}`}>
+                      SELECIONE OS EXERCÍCIOS
                     </h3>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-[10px] text-foreground/60 font-medium">
                       {loadingGroup ? 'Carregando...' : `${groupExercises.length} disponíveis`}
                     </p>
                   </div>
