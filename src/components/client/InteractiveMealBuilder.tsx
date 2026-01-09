@@ -38,7 +38,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { exportMealPlanToPDF } from '@/lib/nutritionPdfExport';
+import { exportMealPlanToPDF, shareMealPlanViaWhatsApp } from '@/lib/nutritionPdfExport';
+import SharePdfDialog from './SharePdfDialog';
+import jsPDF from 'jspdf';
 
 interface FoodItem {
   id: string;
@@ -210,6 +212,8 @@ const InteractiveMealBuilder: React.FC = () => {
   const [addedFoodId, setAddedFoodId] = useState<string | null>(null);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [currentPdf, setCurrentPdf] = useState<{ doc: jsPDF; filename: string } | null>(null);
 
   useEffect(() => {
     if (profile?.profile_id) {
@@ -523,34 +527,48 @@ const InteractiveMealBuilder: React.FC = () => {
     }
   };
 
+  const getExportOptions = () => ({
+    planName: planName || 'Meu Cardápio',
+    meals: meals.map(m => ({
+      name: m.name,
+      time: m.time,
+      foods: m.foods.map(f => ({
+        name: f.name,
+        calories: f.calories,
+        protein: f.protein,
+        carbs: f.carbs,
+        fat: f.fat,
+        portion: f.portion,
+      })),
+    })),
+    goals: dailyGoals,
+    totals: getTotals(),
+    userName: profile?.full_name || undefined,
+  });
+
   const handleExportPDF = () => {
     if (meals.every(m => m.foods.length === 0)) {
       toast.error('Adicione alimentos ao cardápio antes de exportar');
       return;
     }
 
-    const currentTotals = getTotals();
-    
-    exportMealPlanToPDF({
-      planName: planName || 'Meu Cardápio',
-      meals: meals.map(m => ({
-        name: m.name,
-        time: m.time,
-        foods: m.foods.map(f => ({
-          name: f.name,
-          calories: f.calories,
-          protein: f.protein,
-          carbs: f.carbs,
-          fat: f.fat,
-          portion: f.portion,
-        })),
-      })),
-      goals: dailyGoals,
-      totals: currentTotals,
-      userName: profile?.full_name || undefined,
-    });
-
+    const result = exportMealPlanToPDF(getExportOptions());
     toast.success('PDF exportado com sucesso!');
+  };
+
+  const handleShare = () => {
+    if (meals.every(m => m.foods.length === 0)) {
+      toast.error('Adicione alimentos ao cardápio antes de compartilhar');
+      return;
+    }
+
+    const result = exportMealPlanToPDF(getExportOptions());
+    setCurrentPdf(result);
+    setShowShareDialog(true);
+  };
+
+  const handleWhatsAppShare = () => {
+    shareMealPlanViaWhatsApp(getExportOptions());
   };
 
   const filteredFoods = selectedCategory === 'todos' 
@@ -636,7 +654,29 @@ const InteractiveMealBuilder: React.FC = () => {
           <FileDown className="w-4 h-4" />
           <span className="hidden sm:inline">Exportar</span> PDF
         </Button>
+
+        {/* Share Button */}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="gap-2"
+          onClick={handleShare}
+        >
+          <Share2 className="w-4 h-4" />
+          <span className="hidden sm:inline">Compartilhar</span>
+        </Button>
       </div>
+
+      {/* Share Dialog */}
+      <SharePdfDialog
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        pdfDoc={currentPdf?.doc || null}
+        filename={currentPdf?.filename || ''}
+        messageType="meal_plan"
+        senderName={profile?.full_name || ''}
+        onWhatsAppShare={handleWhatsAppShare}
+      />
 
       {/* Smart Suggestions Panel */}
       <AnimatePresence>

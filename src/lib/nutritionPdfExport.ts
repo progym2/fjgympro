@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
 
 // Extend jsPDF type for autotable
 declare module 'jspdf' {
@@ -66,6 +67,14 @@ interface ExportChartsOptions {
   goals: NutritionGoals & { hydration: number };
   averages: NutritionTotals & { hydration: number };
   userName?: string;
+}
+
+export interface ShareOptions {
+  method: 'whatsapp' | 'email';
+  recipientEmail?: string;
+  recipientName?: string;
+  senderName?: string;
+  message?: string;
 }
 
 // Brand colors
@@ -215,7 +224,7 @@ function addGoalsBox(doc: jsPDF, y: number, goals: NutritionGoals, totals: Nutri
   return y + 42;
 }
 
-export function exportMealPlanToPDF(options: ExportMealPlanOptions): void {
+export function exportMealPlanToPDF(options: ExportMealPlanOptions): { doc: jsPDF; filename: string } {
   const { planName, meals, goals, totals, userName } = options;
   
   const doc = new jsPDF();
@@ -333,9 +342,11 @@ export function exportMealPlanToPDF(options: ExportMealPlanOptions): void {
   // Save the PDF
   const filename = `cardapio-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
   doc.save(filename);
+  
+  return { doc, filename };
 }
 
-export function exportNutritionChartsToPDF(options: ExportChartsOptions): void {
+export function exportNutritionChartsToPDF(options: ExportChartsOptions): { doc: jsPDF; filename: string } {
   const { periodLabel, viewMode, dailyData, goals, averages, userName } = options;
   
   const doc = new jsPDF();
@@ -450,4 +461,94 @@ export function exportNutritionChartsToPDF(options: ExportChartsOptions): void {
   // Save the PDF
   const filename = `relatorio-nutricional-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
   doc.save(filename);
+  
+  return { doc, filename };
+}
+
+// Share via WhatsApp
+export function shareViaWhatsApp(message: string): void {
+  const encodedMessage = encodeURIComponent(message);
+  const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+  window.open(whatsappUrl, '_blank');
+}
+
+// Share meal plan via WhatsApp with summary
+export function shareMealPlanViaWhatsApp(options: ExportMealPlanOptions): void {
+  const { planName, totals, goals, userName } = options;
+  
+  const message = `🍽️ *${planName}*${userName ? ` - ${userName}` : ''}
+
+📊 *Resumo Nutricional:*
+• Calorias: ${totals.calories}/${goals.calories} kcal
+• Proteína: ${totals.protein}/${goals.protein}g
+• Carboidratos: ${totals.carbs}/${goals.carbs}g
+• Gorduras: ${totals.fat}/${goals.fat}g
+
+📱 _Cardápio gerado pelo GymFit Pro_
+💡 Para ver o cardápio completo, solicite o PDF por email!`;
+
+  shareViaWhatsApp(message);
+}
+
+// Share charts via WhatsApp with summary
+export function shareChartsSummaryViaWhatsApp(options: ExportChartsOptions): void {
+  const { periodLabel, averages, goals, dailyData } = options;
+  
+  const daysOnTarget = dailyData.filter(d => 
+    d.calories >= goals.calories * 0.8 && d.calories <= goals.calories * 1.1
+  ).length;
+  
+  const message = `📈 *Relatório Nutricional*
+📅 Período: ${periodLabel}
+
+📊 *Médias do Período:*
+• Calorias: ${averages.calories} kcal/dia
+• Proteína: ${averages.protein}g/dia
+• Carboidratos: ${averages.carbs}g/dia
+• Gorduras: ${averages.fat}g/dia
+• Hidratação: ${averages.hydration}ml/dia
+
+🎯 Dias na meta: ${daysOnTarget}/${dailyData.length}
+
+📱 _Relatório gerado pelo GymFit Pro_`;
+
+  shareViaWhatsApp(message);
+}
+
+// Send PDF via email
+export async function sendPdfViaEmail(
+  pdfDoc: jsPDF,
+  filename: string,
+  recipientEmail: string,
+  recipientName: string,
+  senderName: string,
+  messageType: 'meal_plan' | 'nutrition_report'
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Convert PDF to base64
+    const pdfBase64 = pdfDoc.output('datauristring').split(',')[1];
+    
+    const response = await supabase.functions.invoke('send-nutrition-pdf', {
+      body: {
+        recipientEmail,
+        recipientName,
+        senderName,
+        subject: messageType === 'meal_plan' 
+          ? 'Cardápio Nutricional - GymFit Pro' 
+          : 'Relatório Nutricional - GymFit Pro',
+        pdfBase64,
+        pdfFilename: filename,
+        messageType,
+      },
+    });
+
+    if (response.error) {
+      throw new Error(response.error.message);
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error sending PDF via email:', error);
+    return { success: false, error: error.message };
+  }
 }
