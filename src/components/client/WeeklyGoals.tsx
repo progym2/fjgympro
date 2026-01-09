@@ -68,7 +68,7 @@ export const WeeklyGoals: React.FC = () => {
   const [newGoal, setNewGoal] = useState({ goal_type: 'workouts', target_value: '' });
 
   const handleBack = useCallback(() => navigate('/client'), [navigate]);
-  useEscapeBack(handleBack, !showCreateDialog && !showNotificationsDialog && !editingGoal);
+  useEscapeBack({ to: '/client', disableWhen: [showCreateDialog, showNotificationsDialog, !!editingGoal] });
 
   const profileId = profile?.profile_id;
 
