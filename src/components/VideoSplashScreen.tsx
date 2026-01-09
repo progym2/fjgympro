@@ -42,15 +42,27 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = memo(({ onComplete }
     if (hasCompletedRef.current) return;
     hasCompletedRef.current = true;
     
+    // Fade out audio smoothly
+    if (videoRef.current) {
+      const fadeAudio = setInterval(() => {
+        if (videoRef.current && videoRef.current.volume > 0.1) {
+          videoRef.current.volume -= 0.1;
+        } else {
+          clearInterval(fadeAudio);
+          if (videoRef.current) videoRef.current.volume = 0;
+        }
+      }, 50);
+    }
+    
     setIsExiting(true);
     setProgress(100);
     sessionStorage.setItem('splashShown', 'true');
     
-    // Quick exit - no extra delays
+    // Smooth exit with fade
     setTimeout(() => {
       setIsVisible(false);
       onComplete();
-    }, 200);
+    }, 400);
   };
 
   const handleVideoEnd = () => {
@@ -90,17 +102,16 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = memo(({ onComplete }
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden transition-opacity duration-200 ${isExiting ? 'opacity-0' : 'opacity-100'}`}
+      className={`fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden transition-opacity duration-400 ${isExiting ? 'opacity-0' : 'opacity-100'}`}
       onClick={handleSkip}
       style={{ touchAction: 'manipulation' }}
     >
-      {/* Simple dark background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-black" />
+      {/* Dark background */}
+      <div className="absolute inset-0 bg-black" />
 
-      {/* Video - preload auto for faster loading */}
+      {/* Video with sound - preload auto for faster loading */}
       <video
         ref={videoRef}
-        muted
         playsInline
         autoPlay
         preload="auto"
@@ -108,7 +119,7 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = memo(({ onComplete }
         onError={handleVideoError}
         onCanPlayThrough={handleCanPlayThrough}
         onLoadedData={() => setVideoReady(true)}
-        className={`w-full h-full object-contain transition-opacity duration-150 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
+        className={`w-full h-full object-cover transition-opacity duration-300 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
       >
         <source src="/video/splash.mp4" type="video/mp4" />
       </video>
