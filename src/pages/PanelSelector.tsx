@@ -282,36 +282,30 @@ const PanelSelector: React.FC = () => {
                 initial="hidden"
                 animate="visible"
                 variants={cardVariants}
-                whileHover={{ 
-                  scale: 1.08,
-                  y: -4,
-                  boxShadow: `0 8px 30px ${panelStyle.glow}`,
-                }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.06, y: -3 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => handlePanelSelect(panel)}
-                className={cn(
-                  'relative flex flex-col items-center gap-3 p-4',
-                  'bg-transparent transition-all duration-200'
-                )}
+                className="relative flex flex-col items-center gap-3 p-4 bg-transparent transition-all duration-200 group"
               >
-                {/* Icon container com estilo do tema */}
+                {/* Icon container com estilo do tema e glow pulsante */}
                 <motion.div 
                   className={cn(
-                    'relative p-4 sm:p-5 border-2 transition-all duration-200',
+                    'relative p-4 sm:p-5 border-2 transition-all duration-300',
                     `bg-gradient-to-br ${panelStyle.bg}`,
                     panelStyle.border,
                     themeStyles.shape,
-                    'shadow-lg backdrop-blur-sm'
+                    'backdrop-blur-sm',
+                    'group-hover:animate-pulse-glow'
                   )}
                   style={{
-                    boxShadow: `0 4px 20px ${panelStyle.glow}`,
+                    boxShadow: `0 4px 15px ${panelStyle.glow}`,
                   }}
-                  whileHover={{ rotate: [0, -3, 3, 0], transition: { duration: 0.3 } }}
                 >
                   <Icon 
                     className={cn(
-                      'w-8 h-8 sm:w-10 sm:h-10',
-                      panelStyle.icon
+                      'w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300',
+                      panelStyle.icon,
+                      'group-hover:scale-110'
                     )} 
                     strokeWidth={1.8} 
                   />

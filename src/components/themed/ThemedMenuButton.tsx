@@ -140,27 +140,27 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
     <motion.button
       onClick={onClick}
       disabled={disabled}
-      whileHover={{ scale: 1.03, y: -2 }}
-      whileTap={{ scale: 0.97 }}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
       className={cn(
         'relative flex flex-col items-center gap-2 p-3 sm:p-4',
-        'bg-transparent backdrop-blur-sm',
+        'bg-transparent',
         'transition-all duration-200',
-        themeStyles.hoverEffect,
-        disabled && 'opacity-50 pointer-events-none'
+        disabled && 'opacity-50 pointer-events-none',
+        'group'
       )}
     >
-      {/* Icon container - estilo por tema */}
+      {/* Icon container - estilo por tema com glow pulsante */}
       <motion.div 
         className={cn(
-          'relative p-3 sm:p-4 border transition-all duration-200',
+          'relative p-3 sm:p-4 border transition-all duration-300',
           themeStyles.iconBg,
           themeStyles.iconBorder,
           themeStyles.shape,
-          `shadow-lg ${themeStyles.glow}`
+          'group-hover:animate-pulse-glow'
         )}
-        whileHover={{ 
-          boxShadow: `0 0 20px ${themeStyles.glow.replace('shadow-', '').replace('/20', '/40')}` 
+        style={{
+          boxShadow: `0 4px 15px ${themeStyles.glow.replace('shadow-', '').replace('/20', '')}`,
         }}
       >
         <Icon 

@@ -681,3 +681,23 @@ html[data-hover-effects="false"] {
     box-shadow: none;
   }
 }
+
+/* Pulse glow animation for hover effects */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 4px 15px currentColor;
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 8px 25px currentColor, 0 0 40px currentColor;
+    transform: scale(1.02);
+  }
+}
+
+.group:hover .group-hover\:animate-pulse-glow {
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
