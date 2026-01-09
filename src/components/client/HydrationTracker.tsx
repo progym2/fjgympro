@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -438,7 +438,7 @@ const TimerPreset: React.FC<{
   </motion.button>
 );
 
-const HydrationTracker: React.FC = () => {
+const HydrationTracker = forwardRef<HTMLDivElement>((_, ref) => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [records, setRecords] = useState<HydrationRecord[]>([]);
@@ -1613,6 +1613,8 @@ const HydrationTracker: React.FC = () => {
       </div>
     </motion.div>
   );
-};
+});
+
+HydrationTracker.displayName = 'HydrationTracker';
 
 export default HydrationTracker;

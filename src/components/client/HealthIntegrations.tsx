@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Heart, Smartphone, AlertCircle, Check,
@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import useHealthKit from '@/hooks/useHealthKit';
 import ClientPageHeader from './ClientPageHeader';
 
-const HealthIntegrations: React.FC = () => {
+const HealthIntegrations = forwardRef<HTMLDivElement>((_, ref) => {
   const navigate = useNavigate();
   const {
     isAvailable,
@@ -118,8 +118,8 @@ const HealthIntegrations: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 pb-6">
-      <ClientPageHeader 
+    <div ref={ref} className="space-y-4 pb-6">
+      <ClientPageHeader
         title="Integrações de Saúde" 
         icon={<Heart />}
       />
@@ -432,6 +432,8 @@ const HealthIntegrations: React.FC = () => {
       </Tabs>
     </div>
   );
-};
+});
+
+HealthIntegrations.displayName = 'HealthIntegrations';
 
 export default HealthIntegrations;

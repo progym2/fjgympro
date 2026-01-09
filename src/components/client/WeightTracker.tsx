@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Scale, Plus, TrendingUp, TrendingDown, Minus } from 'lucide-react';
@@ -23,7 +23,7 @@ interface WeightRecord {
   recorded_at: string;
 }
 
-const WeightTracker: React.FC = () => {
+const WeightTracker = forwardRef<HTMLDivElement>((_, ref) => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [records, setRecords] = useState<WeightRecord[]>([]);
@@ -302,6 +302,8 @@ const WeightTracker: React.FC = () => {
       </div>
     </motion.div>
   );
-};
+});
+
+WeightTracker.displayName = 'WeightTracker';
 
 export default WeightTracker;

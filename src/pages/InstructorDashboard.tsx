@@ -94,10 +94,10 @@ const InstructorDashboard: React.FC = () => {
     localStorage.setItem('widget_instructor_notifications_visible', String(visible));
   };
 
-  // Initial loading effect
+  // Ultra-fast initial loading
   useEffect(() => {
     if (!authLoading && profile) {
-      const timer = setTimeout(() => setInitialLoading(false), 800);
+      const timer = setTimeout(() => setInitialLoading(false), 100);
       return () => clearTimeout(timer);
     }
   }, [authLoading, profile]);

@@ -89,10 +89,10 @@ const AdminDashboard: React.FC = () => {
 
   const isMaster = role === 'master';
 
-  // Initial loading effect
+  // Ultra-fast initial loading
   useEffect(() => {
     if (!authLoading && profile) {
-      const timer = setTimeout(() => setInitialLoading(false), 800);
+      const timer = setTimeout(() => setInitialLoading(false), 100);
       return () => clearTimeout(timer);
     }
   }, [authLoading, profile]);
