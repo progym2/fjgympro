@@ -228,9 +228,10 @@ const GLOBAL_THEME_KEY = 'francgym_global_theme';
 const HOVER_EFFECTS_KEY = 'francgym_hover_effects';
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { profile, role } = useAuth();
+  const { profile } = useAuth();
   const [currentTheme, setCurrentTheme] = useState<SportTheme>('fire');
   const [globalTheme, setGlobalTheme] = useState<SportTheme | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [hoverEffectsEnabled, setHoverEffectsEnabledState] = useState<boolean>(() => {
     const saved = localStorage.getItem(HOVER_EFFECTS_KEY);
     return saved !== 'false';
@@ -267,13 +268,47 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
-  // Carregar tema do usuário do localStorage
+  // Carregar tema do banco de dados quando o perfil estiver disponível
   useEffect(() => {
-    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as SportTheme;
-    if (savedTheme && SPORT_THEMES.find(t => t.id === savedTheme)) {
-      setCurrentTheme(savedTheme);
-    }
-  }, []);
+    const loadThemeFromDB = async () => {
+      if (!profile?.id) {
+        // Fallback para localStorage se não houver perfil
+        const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as SportTheme;
+        if (savedTheme && SPORT_THEMES.find(t => t.id === savedTheme)) {
+          setCurrentTheme(savedTheme);
+        }
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('user_theme_preferences')
+          .select('theme')
+          .eq('profile_id', profile.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Erro ao carregar tema:', error);
+          return;
+        }
+
+        if (data?.theme && SPORT_THEMES.find(t => t.id === data.theme)) {
+          setCurrentTheme(data.theme as SportTheme);
+          localStorage.setItem(THEME_STORAGE_KEY, data.theme);
+        } else {
+          // Se não houver tema no banco, usar localStorage
+          const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as SportTheme;
+          if (savedTheme && SPORT_THEMES.find(t => t.id === savedTheme)) {
+            setCurrentTheme(savedTheme);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar tema do banco:', error);
+      }
+    };
+
+    loadThemeFromDB();
+  }, [profile?.id]);
 
   const activeTheme = globalTheme || currentTheme;
   const themeConfig = SPORT_THEMES.find(t => t.id === activeTheme) || SPORT_THEMES[0];
@@ -324,9 +359,34 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return () => clearTimeout(timer);
   }, [activeTheme, themeConfig]);
 
-  const setTheme = (theme: SportTheme) => {
+  const setTheme = async (theme: SportTheme) => {
     setCurrentTheme(theme);
     localStorage.setItem(THEME_STORAGE_KEY, theme);
+
+    // Salvar no banco de dados se o usuário estiver autenticado
+    if (profile?.id && !isSyncing) {
+      setIsSyncing(true);
+      try {
+        const { error } = await supabase
+          .from('user_theme_preferences')
+          .upsert(
+            { 
+              profile_id: profile.id, 
+              theme: theme,
+              updated_at: new Date().toISOString()
+            },
+            { onConflict: 'profile_id' }
+          );
+
+        if (error) {
+          console.error('Erro ao salvar tema:', error);
+        }
+      } catch (error) {
+        console.error('Erro ao sincronizar tema:', error);
+      } finally {
+        setIsSyncing(false);
+      }
+    }
   };
 
   const setHoverEffectsEnabled = (enabled: boolean) => {
