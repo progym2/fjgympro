@@ -397,11 +397,11 @@ const InteractiveMealBuilder: React.FC = () => {
           >
             <CardHeader className="py-3 px-4">
               <CardTitle className="text-sm flex items-center justify-between">
-                <span className="flex items-center gap-2 font-semibold text-foreground">
+                <span className="flex items-center gap-2">
                   <span className="text-orange-500">{meal.icon}</span>
-                  <span className="text-base tracking-wide">{meal.name}</span>
+                  <span className="text-sm font-medium text-foreground">{meal.name}</span>
                 </span>
-                <Badge variant="outline" className="text-xs bg-background/80 text-foreground border-border">{meal.time}</Badge>
+                <Badge variant="outline" className="text-xs bg-background/80 text-muted-foreground border-border">{meal.time}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-3 pt-0">
