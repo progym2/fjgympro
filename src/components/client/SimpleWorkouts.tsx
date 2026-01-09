@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Dumbbell, Play, CheckCircle, ChevronRight, 
   Trash2, Plus, Calendar, Lock, 
-  Clock, Target, Flame, Timer, Settings2, Eye, ArrowLeft
+  Clock, Target, Flame, Timer, Settings2, Eye, ArrowLeft, ChevronDown
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,6 +27,7 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useThemeStyles } from '@/lib/themeStyles';
 import { cn } from '@/lib/utils';
 import { useEscapeBack } from '@/hooks/useEscapeBack';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -120,6 +121,7 @@ const SimpleWorkouts: React.FC = () => {
   const [scheduleEditorPlan, setScheduleEditorPlan] = useState<WorkoutPlan | null>(null);
   const [detailsModalPlan, setDetailsModalPlan] = useState<WorkoutPlan | null>(null);
   const [showDefaultPlans, setShowDefaultPlans] = useState(false);
+  const [workoutsExpanded, setWorkoutsExpanded] = useState(true);
   const today = new Date();
   const todayDayOfWeek = today.getDay();
 
@@ -535,28 +537,26 @@ const SimpleWorkouts: React.FC = () => {
 
       {/* Header */}
       <div className={cn(
-        "flex items-center justify-between p-3 rounded-xl backdrop-blur-md",
+        "flex items-center justify-between p-2 rounded-xl backdrop-blur-md",
         themeStyles.cardBg,
         'border',
         themeStyles.cardBorder
       )}>
         <div className="flex items-center gap-2">
-          <h2 className={cn("text-xl sm:text-2xl font-bebas flex items-center gap-2", themeStyles.titleColor)}>
-            <Dumbbell className="w-6 h-6" />
+          <h2 className={cn("text-lg sm:text-xl font-bebas flex items-center gap-2", themeStyles.titleColor)}>
+            <Dumbbell className="w-5 h-5" />
             MEUS TREINOS
           </h2>
         </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            size="sm" 
-            onClick={() => navigate('/client/timer')} 
-            variant="outline"
-            className="bg-rose-500/20 border-rose-500/50 text-rose-400 hover:bg-rose-500/30"
-          >
-            <Timer size={16} className="mr-1" />
-            Timer
-          </Button>
-        </div>
+        <Button 
+          size="sm" 
+          onClick={() => navigate('/client/timer')} 
+          variant="outline"
+          className="bg-rose-500/20 border-rose-500/50 text-rose-400 hover:bg-rose-500/30 h-8 text-xs"
+        >
+          <Timer size={14} className="mr-1" />
+          Timer
+        </Button>
       </div>
 
       {/* Active Workout Banner - Only show continue button if workout is from today */}
@@ -595,22 +595,21 @@ const SimpleWorkouts: React.FC = () => {
         </motion.div>
       )}
 
-      {/* Day Selector */}
+      {/* Day Selector - Compact */}
       <div className={cn(
-        "rounded-xl p-4 backdrop-blur-md border",
+        "rounded-xl p-3 backdrop-blur-md border",
         themeStyles.cardBg,
         themeStyles.cardBorder
       )}>
-        <p className={cn("text-xs mb-3 flex items-center gap-1", themeStyles.accentColor)}>
-          <Calendar size={14} />
-          Selecione o dia para ver seus exercícios:
+        <p className={cn("text-xs mb-2 flex items-center gap-1", themeStyles.accentColor)}>
+          <Calendar size={12} />
+          Selecione o dia:
         </p>
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
           {DAYS.map((day, index) => {
             const isSelected = selectedDay === index;
             const isCurrentDay = todayDayOfWeek === index;
             const isFutureDay = index > todayDayOfWeek;
-            const isPastDay = index < todayDayOfWeek;
             const hasExercises = plans.some(p => {
               const planExercises = exercises[p.id] || [];
               const hasSpecificDays = planExercises.some(e => e.day_of_week !== null);
@@ -618,12 +617,10 @@ const SimpleWorkouts: React.FC = () => {
               return planExercises.some(e => e.day_of_week === index);
             });
 
-            // Calculate the date for each day of the week
             const dayDiff = index - todayDayOfWeek;
             const dayDate = new Date(today);
             dayDate.setDate(today.getDate() + dayDiff);
             const dayNumber = dayDate.getDate();
-            const monthShort = format(dayDate, 'MMM', { locale: ptBR });
 
             return (
               <motion.button
@@ -631,7 +628,7 @@ const SimpleWorkouts: React.FC = () => {
                 onClick={() => setSelectedDay(index)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className={`flex-shrink-0 w-16 rounded-xl flex flex-col items-center justify-center transition-all duration-200 py-2 ${
+                className={`flex-shrink-0 w-12 rounded-lg flex flex-col items-center justify-center transition-all duration-200 py-1.5 ${
                   isSelected
                     ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
                     : isCurrentDay
@@ -643,24 +640,21 @@ const SimpleWorkouts: React.FC = () => {
                     : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'
                 }`}
               >
-                <span className="text-[10px] font-medium uppercase tracking-wide opacity-70">{day}</span>
-                <span className={`text-lg font-bold leading-tight ${isSelected ? '' : isCurrentDay ? 'text-primary' : ''}`}>
+                <span className="text-[9px] font-medium uppercase tracking-wide opacity-70">{day}</span>
+                <span className={`text-sm font-bold leading-tight ${isSelected ? '' : isCurrentDay ? 'text-primary' : ''}`}>
                   {dayNumber}
-                </span>
-                <span className={`text-[9px] uppercase tracking-wider ${isSelected ? 'opacity-80' : 'opacity-50'}`}>
-                  {monthShort}
                 </span>
                 
                 {/* Indicators */}
-                <div className="flex items-center gap-0.5 mt-1 h-3">
+                <div className="flex items-center gap-0.5 mt-0.5 h-2">
                   {isCurrentDay && !isSelected && (
                     <div className="w-1 h-1 rounded-full bg-primary animate-pulse" />
                   )}
                   {isFutureDay && hasExercises && (
-                    <Lock size={8} className="text-amber-500/70" />
+                    <Lock size={6} className="text-amber-500/70" />
                   )}
                   {hasExercises && !isCurrentDay && !isFutureDay && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                    <div className="w-1 h-1 rounded-full bg-green-500" />
                   )}
                 </div>
               </motion.button>
@@ -671,54 +665,88 @@ const SimpleWorkouts: React.FC = () => {
 
       {/* Selected Day Info */}
       <div className="flex items-center justify-between">
-        <h3 className="font-bebas text-lg text-muted-foreground">
+        <h3 className={cn("font-bebas text-lg", themeStyles.titleColor)}>
           {DAYS_FULL[selectedDay]}
           {selectedDay === todayDayOfWeek && (
-            <Badge className="ml-2 bg-primary/20 text-primary">HOJE</Badge>
+            <Badge className="ml-2 text-base font-bold px-3 py-1 bg-primary/20 text-primary">HOJE</Badge>
           )}
         </h3>
         <Button 
           size="sm" 
           onClick={() => navigate('/client/workouts/new')}
-          className="bg-primary hover:bg-primary/90"
+          className="bg-primary hover:bg-primary/90 h-8 text-xs"
         >
-          <Plus size={16} className="mr-1" />
+          <Plus size={14} className="mr-1" />
           Criar Treino
         </Button>
       </div>
 
-      {/* Weekly Stats & History */}
-      <WorkoutWeeklyStats />
+      {/* Collapsible Workouts Section */}
+      <Collapsible open={workoutsExpanded} onOpenChange={setWorkoutsExpanded}>
+        <CollapsibleTrigger asChild>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={cn(
+              "flex items-center justify-between p-3 rounded-xl cursor-pointer border transition-all duration-300 hover:shadow-lg",
+              "bg-gradient-to-br from-card via-card to-primary/5",
+              "border-primary/20"
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", themeStyles.iconBg)}>
+                <Target className={cn("w-4 h-4", themeStyles.iconColor)} />
+              </div>
+              <div>
+                <h3 className={cn("font-bebas text-sm tracking-wide", themeStyles.titleColor)}>
+                  PLANOS DE TREINO
+                </h3>
+                <p className={cn("text-xs", themeStyles.accentColor)}>
+                  {availablePlans.length} {availablePlans.length === 1 ? 'plano disponível' : 'planos disponíveis'}
+                </p>
+              </div>
+            </div>
+            <ChevronDown className={cn(
+              "w-5 h-5 transition-transform duration-300",
+              themeStyles.iconColor,
+              workoutsExpanded && "rotate-180"
+            )} />
+          </motion.div>
+        </CollapsibleTrigger>
 
-      {/* Push Notifications Setup */}
-      <PushNotificationSetup />
+        <CollapsibleContent className="pt-3 space-y-3">
+          {/* Weekly Stats & History */}
+          <WorkoutWeeklyStats />
 
-      {/* No Plans Message */}
-      {availablePlans.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-card/80 backdrop-blur-md rounded-xl p-8 border border-border/50 text-center"
-        >
-          <Dumbbell className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-          <p className="text-muted-foreground mb-2">
-            Nenhum treino para {DAYS_FULL[selectedDay].toLowerCase()}
-          </p>
-          <p className="text-xs text-muted-foreground/70 mb-4">
-            Crie um treino ou use nossos planos prontos para iniciantes
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-            <Button onClick={() => navigate('/client/workouts/new')}>
-              <Plus size={16} className="mr-1" />
-              Criar Meu Treino
-            </Button>
-            <Button variant="outline" onClick={() => setShowDefaultPlans(!showDefaultPlans)}>
-              <Dumbbell size={16} className="mr-1" />
-              {showDefaultPlans ? 'Ocultar Planos' : 'Ver Planos Prontos'}
-            </Button>
-          </div>
-        </motion.div>
-      )}
+          {/* Push Notifications Setup */}
+          <PushNotificationSetup />
+
+          {/* No Plans Message */}
+          {availablePlans.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-card/80 backdrop-blur-md rounded-xl p-6 border border-border/50 text-center"
+            >
+              <Dumbbell className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
+              <p className="text-muted-foreground mb-2 text-sm">
+                Nenhum treino para {DAYS_FULL[selectedDay].toLowerCase()}
+              </p>
+              <p className="text-xs text-muted-foreground/70 mb-3">
+                Crie um treino ou use nossos planos prontos para iniciantes
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                <Button size="sm" onClick={() => navigate('/client/workouts/new')}>
+                  <Plus size={14} className="mr-1" />
+                  Criar Meu Treino
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setShowDefaultPlans(!showDefaultPlans)}>
+                  <Dumbbell size={14} className="mr-1" />
+                  {showDefaultPlans ? 'Ocultar Planos' : 'Ver Planos Prontos'}
+                </Button>
+              </div>
+            </motion.div>
+          )}
 
       {/* Default Workout Plans for Beginners */}
       {(showDefaultPlans || (availablePlans.length === 0 && plans.length === 0)) && (
@@ -1082,8 +1110,9 @@ const SimpleWorkouts: React.FC = () => {
           })}
         </AnimatePresence>
       </div>
+        </CollapsibleContent>
+      </Collapsible>
 
-      {/* Delete Confirmation */}
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent>

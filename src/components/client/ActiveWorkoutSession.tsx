@@ -341,7 +341,7 @@ const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
                           <p className={`text-xs font-medium truncate ${isCompleted ? 'line-through opacity-60' : ''}`}>
                             {exercise.exercise?.name}
                           </p>
-                          <p className="text-[9px] text-muted-foreground">
+                          <p className="text-[9px] text-foreground/70">
                             {exercise.sets}x{exercise.reps} {exercise.weight_kg ? `• ${exercise.weight_kg}kg` : ''}
                           </p>
                         </button>
