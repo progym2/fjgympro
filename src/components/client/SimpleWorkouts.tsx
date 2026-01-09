@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Dumbbell, Play, CheckCircle, ChevronRight, 
   Trash2, Plus, Calendar, Lock, 
@@ -102,6 +102,7 @@ const muscleColors: Record<string, string> = {
 
 const SimpleWorkouts = forwardRef<HTMLDivElement>((_, ref) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { profile } = useAuth();
   const { sendWorkoutAvailableNotification } = usePushNotifications();
   const themeStyles = useThemeStyles();
@@ -120,10 +121,18 @@ const SimpleWorkouts = forwardRef<HTMLDivElement>((_, ref) => {
   const [bannerMinimized, setBannerMinimized] = useState(false);
   const [scheduleEditorPlan, setScheduleEditorPlan] = useState<WorkoutPlan | null>(null);
   const [detailsModalPlan, setDetailsModalPlan] = useState<WorkoutPlan | null>(null);
-  const [showDefaultPlans, setShowDefaultPlans] = useState(false);
+  const [showDefaultPlans, setShowDefaultPlans] = useState(() => searchParams.get('plans') === '1');
   const [workoutsExpanded, setWorkoutsExpanded] = useState(true);
   const today = new Date();
   const todayDayOfWeek = today.getDay();
+
+  // Clear URL param after reading
+  useEffect(() => {
+    if (searchParams.get('plans') === '1') {
+      searchParams.delete('plans');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // ESC to go back
   useEscapeBack({ to: '/client', disableWhen: [showActiveSession, !!deleteConfirm, !!scheduleEditorPlan, !!detailsModalPlan] });

@@ -4,7 +4,7 @@ import {
   User, Scale, Droplets, Utensils, Dumbbell, 
   TrendingUp, QrCode, LogOut, Info,
   Calendar, Award, UserMinus, History, BarChart3, Trophy, Timer, UserPlus, Loader2, Camera, HardDrive,
-  Target, Zap, Flame, Heart
+  Target, Zap, Flame, Heart, Sparkles
 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -87,6 +87,7 @@ import { Settings } from 'lucide-react';
 const MENU_ITEMS = [
   // Core training features
   { icon: Dumbbell, label: 'Meus Treinos', path: 'workouts', color: 'text-primary/80', description: 'Visualize e execute seus treinos' },
+  { icon: Sparkles, label: 'Planos Prontos', path: 'workouts?plans=1', color: 'text-amber-400', description: 'Modelos de treino para iniciantes' },
   { icon: Timer, label: 'Timer de Treino', path: 'timer', color: 'text-rose-400', description: 'Cronômetro para seus exercícios' },
   { icon: Trophy, label: 'Recordes Pessoais', path: 'records', color: 'text-yellow-400', description: 'Seus melhores desempenhos' },
   { icon: Target, label: 'Meu Progresso', path: 'progress', color: 'text-teal-400', description: 'Acompanhe sua evolução' },
