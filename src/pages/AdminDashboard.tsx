@@ -179,7 +179,7 @@ const AdminDashboard: React.FC = () => {
       <div className="absolute inset-0 bg-gradient-to-t from-orange-950/10 via-transparent to-transparent" />
       {/* Fire particles effect */}
       <FireParticles count={20} />
-      <div className="relative z-10 h-full flex flex-col pb-12 overflow-y-auto overflow-x-hidden overscroll-none pt-safe">
+      <div className="relative z-10 h-full flex flex-col pb-12 overflow-y-auto overflow-x-hidden overscroll-none">
         <ThemedHeader className="sticky top-0">
           <div className="container mx-auto px-2 py-1.5 sm:py-2">
             <div className="flex items-center justify-between gap-1.5">
