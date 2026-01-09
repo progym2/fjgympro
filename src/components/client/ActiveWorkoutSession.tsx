@@ -374,21 +374,47 @@ const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
               /* Rest Timer Panel - Compact */
               <motion.div
                 key="rest"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="flex-1 flex flex-col items-center justify-center p-4 bg-green-500/5 relative"
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 300, 
+                  damping: 25,
+                  duration: 0.4 
+                }}
+                className={`flex-1 flex flex-col items-center justify-center p-4 bg-green-500/5 relative`}
               >
                 {/* Session timer visible during rest */}
-                <div className="absolute top-3 right-3 bg-card/80 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                  <span className="font-mono text-xs font-bold">{formatTime(sessionTime)}</span>
-                </div>
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className={`absolute top-3 right-3 ${themeStyles.cardBg} backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1.5 border ${themeStyles.cardBorder}`}
+                >
+                  <motion.div 
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                    className={`w-1.5 h-1.5 rounded-full ${themeStyles.highlightBg}`} 
+                  />
+                  <span className={`font-mono text-xs font-bold ${themeStyles.titleColor}`}>{formatTime(sessionTime)}</span>
+                </motion.div>
                 
-                <Badge className="bg-green-500/20 text-green-500 mb-2">DESCANSO</Badge>
-                <p className="text-xs text-muted-foreground mb-4 text-center">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", delay: 0.1 }}
+                >
+                  <Badge className="bg-green-500/20 text-green-500 mb-2 border border-green-500/30">DESCANSO</Badge>
+                </motion.div>
+                <motion.p 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className={`text-xs mb-4 text-center ${themeStyles.accentColor}`}
+                >
                   Próximo: {exercises[currentExerciseIndex]?.exercise?.name}
-                </p>
+                </motion.p>
                 
                 <IntegratedTimer
                   exerciseName="Descanso"
@@ -398,31 +424,54 @@ const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
                   onRestComplete={handleRestComplete}
                 />
                 
-                <Button 
-                  size="sm"
-                  className="mt-3 bg-primary"
-                  onClick={handleRestComplete}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
                 >
-                  <SkipForward size={14} className="mr-1" />
-                  Pular
-                </Button>
+                  <Button 
+                    size="sm"
+                    className={`mt-3 ${themeStyles.highlightBg} ${themeStyles.titleColor} border ${themeStyles.cardBorder}`}
+                    onClick={handleRestComplete}
+                  >
+                    <SkipForward size={14} className="mr-1" />
+                    Pular
+                  </Button>
+                </motion.div>
               </motion.div>
             ) : currentExercise ? (
-              /* Active Exercise Panel - Compact */
+              /* Active Exercise Panel - Compact with enhanced animations */
               <motion.div
                 key={currentExercise.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: 50, scale: 0.95 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: -50, scale: 0.95 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 300, 
+                  damping: 25,
+                  duration: 0.4 
+                }}
                 className="flex-1 flex flex-col p-3 overflow-auto"
               >
-                {/* Compact Exercise Header */}
-                <div className="flex items-center justify-between mb-3">
+                {/* Compact Exercise Header with staggered animation */}
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="flex items-center justify-between mb-3"
+                >
                   <div className="flex items-center gap-2">
-                    <Badge className={`text-[10px] ${muscleColors[currentExercise.exercise?.muscle_group || ''] || 'bg-muted'}`}>
-                      {currentExercise.exercise?.muscle_group || 'Geral'}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", delay: 0.15 }}
+                    >
+                      <Badge className={`text-[10px] ${muscleColors[currentExercise.exercise?.muscle_group || ''] || 'bg-muted'}`}>
+                        {currentExercise.exercise?.muscle_group || 'Geral'}
+                      </Badge>
+                    </motion.div>
+                    <span className={`text-xs ${themeStyles.accentColor}`}>
                       {currentExerciseIndex + 1}/{totalCount}
                     </span>
                   </div>
@@ -441,42 +490,62 @@ const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
                       Demo
                     </Button>
                   )}
-                </div>
+                </motion.div>
 
-                <h2 className="text-xl font-bebas text-primary mb-3">
+                <motion.h2 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className={`text-xl font-bebas mb-3 ${themeStyles.titleColor}`}
+                >
                   {currentExercise.exercise?.name}
-                </h2>
+                </motion.h2>
 
-                {/* Compact Exercise Stats - Inline */}
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  <div className="bg-card border border-border/50 rounded-lg p-2 text-center">
-                    <p className="text-lg font-bold">{currentExercise.sets}x{currentExercise.reps}</p>
+                {/* Compact Exercise Stats - Inline with animations */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  className="grid grid-cols-3 gap-2 mb-3"
+                >
+                  <div className={`${themeStyles.cardBg} border ${themeStyles.cardBorder} rounded-lg p-2 text-center`}>
+                    <p className={`text-lg font-bold ${themeStyles.titleColor}`}>{currentExercise.sets}x{currentExercise.reps}</p>
                     <p className="text-[10px] text-muted-foreground">Séries</p>
                   </div>
-                  <div className="bg-card border border-border/50 rounded-lg p-2 text-center">
+                  <div className={`${themeStyles.cardBg} border ${themeStyles.cardBorder} rounded-lg p-2 text-center`}>
                     <p className="text-lg font-bold text-orange-500">{currentExercise.weight_kg || 0}kg</p>
                     <p className="text-[10px] text-muted-foreground">Peso</p>
                   </div>
-                  <div className="bg-card border border-border/50 rounded-lg p-2 text-center">
+                  <div className={`${themeStyles.cardBg} border ${themeStyles.cardBorder} rounded-lg p-2 text-center`}>
                     <p className="text-lg font-bold text-green-500">{currentExercise.rest_seconds}s</p>
                     <p className="text-[10px] text-muted-foreground">Descanso</p>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Description - compact */}
                 {currentExercise.exercise?.description && (
-                  <div className="p-2 bg-muted/30 rounded-lg mb-3">
-                    <p className="text-xs text-muted-foreground line-clamp-2">
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className={`p-2 ${themeStyles.tipBg} rounded-lg mb-3 border ${themeStyles.tipBorder}`}
+                  >
+                    <p className={`text-xs line-clamp-2 ${themeStyles.tipText}`}>
                       {currentExercise.exercise.description}
                     </p>
-                  </div>
+                  </motion.div>
                 )}
 
                 {/* Action Buttons - Simplified: Mark entire exercise as done */}
-                <div className="mt-auto space-y-2">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35 }}
+                  className="mt-auto space-y-2"
+                >
                   {isCurrentCompleted ? (
-                    <div className="flex items-center justify-between bg-green-500/10 rounded-lg p-3">
-                      <Badge className="bg-green-500/20 text-green-500">
+                    <div className="flex items-center justify-between bg-green-500/10 rounded-lg p-3 border border-green-500/30">
+                      <Badge className="bg-green-500/20 text-green-500 border border-green-500/30">
                         <CheckCircle size={14} className="mr-1" />
                         Concluído
                       </Badge>
@@ -494,16 +563,19 @@ const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
                       )}
                     </div>
                   ) : (
-                    <Button
-                      size="lg"
-                      className="w-full h-12 bg-primary hover:bg-primary/90"
-                      onClick={() => handleCompleteExercise(currentExercise)}
-                    >
-                      <CheckCircle size={20} className="mr-2" />
-                      Marcar Exercício Concluído
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                      <Button
+                        size="lg"
+                        className={`w-full h-12 ${themeStyles.highlightBg} ${themeStyles.titleColor} border ${themeStyles.cardBorder}`}
+                        style={{ boxShadow: `0 4px 15px ${themeStyles.glowColor}` }}
+                        onClick={() => handleCompleteExercise(currentExercise)}
+                      >
+                        <CheckCircle size={20} className="mr-2" />
+                        Marcar Exercício Concluído
+                      </Button>
+                    </motion.div>
                   )}
-                </div>
+                </motion.div>
               </motion.div>
             ) : (
               /* All Done - Session Summary - Compact Layout */

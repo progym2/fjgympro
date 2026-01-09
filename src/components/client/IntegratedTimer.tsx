@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { useThemeStyles } from '@/lib/themeStyles';
 
 type TimerMode = 'stopwatch' | 'countdown' | 'emom' | 'amrap' | 'tabata' | 'rest';
 
@@ -39,6 +40,7 @@ const IntegratedTimer: React.FC<IntegratedTimerProps> = ({
   isResting = false,
   restDuration = 60
 }) => {
+  const themeStyles = useThemeStyles();
   const [mode, setMode] = useState<TimerMode>(isResting ? 'rest' : 'stopwatch');
   const [time, setTime] = useState(isResting ? restDuration : 0);
   const [isRunning, setIsRunning] = useState(isResting);
@@ -281,7 +283,7 @@ const IntegratedTimer: React.FC<IntegratedTimerProps> = ({
       case 'tabata': return tabataPhase === 'work' ? 'text-red-500' : 'text-green-500';
       case 'rest': return 'text-green-500';
       case 'countdown': return 'text-orange-500';
-      default: return 'text-primary';
+      default: return themeStyles.titleColor;
     }
   };
 
@@ -313,12 +315,13 @@ const IntegratedTimer: React.FC<IntegratedTimerProps> = ({
         <Button
           onClick={() => setIsExpanded(true)}
           className={`rounded-full w-16 h-16 shadow-lg ${
-            isRunning ? 'bg-primary animate-pulse' : 'bg-card border border-border'
+            isRunning ? `${themeStyles.highlightBg} animate-pulse` : `${themeStyles.cardBg} border ${themeStyles.cardBorder}`
           }`}
+          style={{ boxShadow: `0 4px 15px ${themeStyles.glowColor}` }}
         >
           <div className="text-center">
             <Timer className={`w-5 h-5 mx-auto ${getModeColor()}`} />
-            <span className="text-[10px] font-mono">{formatTime(time)}</span>
+            <span className={`text-[10px] font-mono ${themeStyles.titleColor}`}>{formatTime(time)}</span>
           </div>
         </Button>
       </motion.div>
@@ -329,15 +332,18 @@ const IntegratedTimer: React.FC<IntegratedTimerProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card/95 backdrop-blur-xl rounded-xl border border-border/50 shadow-2xl overflow-hidden"
+      className={`${themeStyles.cardBg} backdrop-blur-xl rounded-xl border ${themeStyles.cardBorder} shadow-2xl overflow-hidden`}
+      style={{ boxShadow: `0 4px 20px ${themeStyles.glowColor}` }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-border/50 bg-muted/30">
+      <div className={`flex items-center justify-between p-3 border-b ${themeStyles.cardBorder} ${themeStyles.tipBg}`}>
         <div className="flex items-center gap-2">
-          <Timer className={`w-4 h-4 ${getModeColor()}`} />
-          <span className="text-sm font-medium">Timer</span>
+          <div className={`p-1.5 rounded-lg ${themeStyles.iconBg}`}>
+            <Timer className={`w-4 h-4 ${themeStyles.iconColor}`} />
+          </div>
+          <span className={`text-sm font-bold ${themeStyles.titleColor}`}>Timer</span>
           {exerciseName && (
-            <Badge variant="outline" className="text-[10px]">
+            <Badge variant="outline" className={`text-[10px] border ${themeStyles.cardBorder} ${themeStyles.accentColor}`}>
               {exerciseName}
             </Badge>
           )}
@@ -363,7 +369,7 @@ const IntegratedTimer: React.FC<IntegratedTimerProps> = ({
       </div>
 
       {/* Mode Selector */}
-      <div className="flex gap-1 p-2 bg-muted/20 overflow-x-auto">
+      <div className={`flex gap-1 p-2 ${themeStyles.tipBg} overflow-x-auto`}>
         {[
           { mode: 'stopwatch' as TimerMode, icon: Clock, label: 'Crono' },
           { mode: 'countdown' as TimerMode, icon: Timer, label: 'Contagem' },
@@ -376,7 +382,7 @@ const IntegratedTimer: React.FC<IntegratedTimerProps> = ({
             key={m}
             size="sm"
             variant={mode === m ? 'default' : 'ghost'}
-            className={`flex-shrink-0 text-xs px-2 h-7 ${mode === m ? 'bg-primary' : ''}`}
+            className={`flex-shrink-0 text-xs px-2 h-7 ${mode === m ? `${themeStyles.highlightBg} ${themeStyles.titleColor} border ${themeStyles.cardBorder}` : ''}`}
             onClick={() => switchMode(m)}
           >
             <Icon size={12} className="mr-1" />
@@ -389,13 +395,13 @@ const IntegratedTimer: React.FC<IntegratedTimerProps> = ({
       <div className="p-4 text-center">
         {/* Mode-specific info */}
         {mode === 'emom' && (
-          <div className="text-xs text-muted-foreground mb-2">
+          <div className={`text-xs mb-2 ${themeStyles.accentColor}`}>
             Round {emomRound}/{emom.rounds} • Cada {emom.intervalTime}s
           </div>
         )}
         {mode === 'amrap' && (
-          <div className="text-xs text-muted-foreground mb-2">
-            Reps: <span className="text-primary font-bold">{amrapReps}</span>
+          <div className={`text-xs mb-2 ${themeStyles.accentColor}`}>
+            Reps: <span className={`font-bold ${themeStyles.titleColor}`}>{amrapReps}</span>
           </div>
         )}
         {mode === 'tabata' && (
@@ -403,13 +409,13 @@ const IntegratedTimer: React.FC<IntegratedTimerProps> = ({
             <Badge className={tabataPhase === 'work' ? 'bg-red-500' : 'bg-green-500'}>
               {tabataPhase === 'work' ? 'TRABALHO' : 'DESCANSO'}
             </Badge>
-            <span className="text-xs text-muted-foreground">
+            <span className={`text-xs ${themeStyles.accentColor}`}>
               Round {tabataRound}/{tabata.rounds}
             </span>
           </div>
         )}
         {mode === 'rest' && (
-          <div className="text-xs text-green-500 mb-2">
+          <div className="text-xs text-green-500 mb-2 font-bold">
             ⏸ DESCANSANDO
           </div>
         )}
@@ -417,9 +423,11 @@ const IntegratedTimer: React.FC<IntegratedTimerProps> = ({
         {/* Main Timer */}
         <motion.div
           key={time}
-          initial={{ scale: 1.05 }}
-          animate={{ scale: 1 }}
+          initial={{ scale: 1.05, opacity: 0.8 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
           className={`text-5xl font-mono font-bold ${getModeColor()} tabular-nums`}
+          style={{ textShadow: `0 0 20px ${themeStyles.glowColor}` }}
         >
           {formatTime(time)}
         </motion.div>
@@ -431,29 +439,32 @@ const IntegratedTimer: React.FC<IntegratedTimerProps> = ({
       </div>
 
       {/* Controls */}
-      <div className="flex items-center justify-center gap-3 p-3 border-t border-border/50">
+      <div className={`flex items-center justify-center gap-3 p-3 border-t ${themeStyles.cardBorder}`}>
         <Button
           size="icon"
           variant="outline"
-          className="h-10 w-10 rounded-full"
+          className={`h-10 w-10 rounded-full border ${themeStyles.cardBorder}`}
           onClick={resetTimer}
         >
           <RotateCcw size={18} />
         </Button>
 
-        <Button
-          size="icon"
-          className={`h-14 w-14 rounded-full ${isRunning ? 'bg-orange-500 hover:bg-orange-600' : 'bg-primary'}`}
-          onClick={() => setIsRunning(!isRunning)}
-        >
-          {isRunning ? <Pause size={24} /> : <Play size={24} className="ml-0.5" />}
-        </Button>
+        <motion.div whileTap={{ scale: 0.95 }}>
+          <Button
+            size="icon"
+            className={`h-14 w-14 rounded-full ${isRunning ? 'bg-orange-500 hover:bg-orange-600' : `${themeStyles.highlightBg} ${themeStyles.titleColor} border ${themeStyles.cardBorder}`}`}
+            style={{ boxShadow: `0 4px 15px ${themeStyles.glowColor}` }}
+            onClick={() => setIsRunning(!isRunning)}
+          >
+            {isRunning ? <Pause size={24} /> : <Play size={24} className="ml-0.5" />}
+          </Button>
+        </motion.div>
 
         {mode === 'amrap' && (
           <Button
             size="icon"
             variant="outline"
-            className="h-10 w-10 rounded-full"
+            className={`h-10 w-10 rounded-full border ${themeStyles.cardBorder}`}
             onClick={() => setAmrapReps(r => r + 1)}
           >
             <span className="text-sm font-bold">+1</span>
