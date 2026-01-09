@@ -179,39 +179,38 @@ const AdminDashboard: React.FC = () => {
       <div className="absolute inset-0 bg-gradient-to-t from-orange-950/10 via-transparent to-transparent" />
       {/* Fire particles effect */}
       <FireParticles count={20} />
-      <div className="relative z-10 h-full flex flex-col pb-14 overflow-y-auto overflow-x-hidden overscroll-none pt-safe">
-        <div className="h-16 sm:h-18" />
+      <div className="relative z-10 h-full flex flex-col pb-12 overflow-y-auto overflow-x-hidden overscroll-none pt-safe">
         <ThemedHeader className="sticky top-0">
-          <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
+          <div className="container mx-auto px-2 py-1.5 sm:py-2">
+            <div className="flex items-center justify-between gap-1.5">
+              <div className="flex items-center gap-1.5 min-w-0">
                 <ProfileAvatar 
                   profileId={profile?.profile_id} 
                   fallbackName={profile?.full_name || profile?.username}
-                  size="md"
+                  size="sm"
                 />
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <h1 className="text-base sm:text-lg md:text-xl font-bebas text-primary tracking-wider truncate">
+                  <div className="flex items-center gap-1">
+                    <h1 className="text-sm sm:text-base font-bebas text-primary tracking-wider truncate">
                       PAINEL GERENTE
                     </h1>
                     <LicenseTimer />
                     {isMaster && (
-                      <span className="px-1 py-0.5 bg-primary/20 text-primary text-[9px] sm:text-[10px] font-bold rounded-full border border-primary/50 whitespace-nowrap">
+                      <span className="px-1 py-0.5 bg-primary/20 text-primary text-[8px] sm:text-[9px] font-bold rounded-full border border-primary/50 whitespace-nowrap">
                         MASTER
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">
                     {profile?.full_name || profile?.username || 'Admin'}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5 sm:gap-1">
                 <PanelThemeSelector />
                 {isMaster && <PanelSwitcher />}
                 {license && !isMaster && (
-                  <span className={`hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full ${
+                  <span className={`hidden sm:inline-block px-1 py-0.5 text-[9px] font-medium rounded-full ${
                     license.type === 'demo' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/50' : 
                     license.type === 'trial' ? 'bg-blue-500/20 text-blue-500 border border-blue-500/50' : 
                     'bg-green-500/20 text-green-500 border border-green-500/50'
@@ -221,23 +220,23 @@ const AdminDashboard: React.FC = () => {
                 )}
                 <button 
                   onClick={() => { playClickSound(); setAboutOpen(true); }} 
-                  className="p-1.5 sm:p-2 rounded-lg bg-background/50 border border-border hover:border-primary/50 transition-colors active:scale-95"
+                  className="p-1 sm:p-1.5 rounded-lg bg-background/50 border border-border hover:border-primary/50 transition-colors active:scale-95"
                 >
-                  <Info size={16} className="text-muted-foreground" />
+                  <Info size={14} className="text-muted-foreground" />
                 </button>
                 <button 
                   onClick={confirmLogout} 
-                  className="p-1.5 sm:p-2 rounded-lg bg-destructive/20 border border-destructive/50 hover:bg-destructive/30 transition-colors flex items-center gap-1 active:scale-95"
+                  className="p-1 sm:p-1.5 rounded-lg bg-destructive/20 border border-destructive/50 hover:bg-destructive/30 transition-colors flex items-center gap-0.5 active:scale-95"
                 >
-                  <LogOut size={16} className="text-destructive" />
-                  <span className="hidden sm:inline text-[10px] text-destructive font-medium">Sair</span>
+                  <LogOut size={14} className="text-destructive" />
+                  <span className="hidden sm:inline text-[9px] text-destructive font-medium">Sair</span>
                 </button>
               </div>
             </div>
           </div>
         </ThemedHeader>
 
-        <main className="flex-1 container mx-auto px-2 sm:px-4 py-3 sm:py-4 md:py-6 momentum-scroll">
+        <main className="flex-1 container mx-auto px-1 sm:px-3 py-1 sm:py-2 momentum-scroll">
           <Suspense fallback={<ComponentLoader />}>
             <Routes>
               <Route path="/" element={
@@ -246,7 +245,7 @@ const AdminDashboard: React.FC = () => {
                     <UserCPFSearch />
                   </Suspense>
                   
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-1 sm:gap-2">
                     {allMenuItems.map((item) => (
                       <ThemedMenuButton
                         key={item.path}
