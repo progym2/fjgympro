@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, User, Dumbbell, Loader2, AlertCircle, Eye, Key, Edit2, Type } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
-import { useTheme, SportTheme } from '@/contexts/ThemeContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,133 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-
-// Estilos por tema para o painel de busca
-const getSearchThemeStyles = (themeId: SportTheme) => {
-  const styles: Record<SportTheme, {
-    cardBg: string;
-    cardBorder: string;
-    titleColor: string;
-    accentColor: string;
-    tipBg: string;
-    tipBorder: string;
-    tipText: string;
-    highlightBg: string;
-    highlightText: string;
-  }> = {
-    fire: {
-      cardBg: 'bg-black/70',
-      cardBorder: 'border-orange-500/40',
-      titleColor: 'text-orange-500',
-      accentColor: 'text-orange-400',
-      tipBg: 'bg-orange-500/10',
-      tipBorder: 'border-orange-500/30',
-      tipText: 'text-orange-400',
-      highlightBg: 'bg-orange-500/30',
-      highlightText: 'text-orange-400',
-    },
-    ocean: {
-      cardBg: 'bg-slate-950/80',
-      cardBorder: 'border-cyan-500/40',
-      titleColor: 'text-cyan-400',
-      accentColor: 'text-cyan-300',
-      tipBg: 'bg-cyan-500/10',
-      tipBorder: 'border-cyan-500/30',
-      tipText: 'text-cyan-300',
-      highlightBg: 'bg-cyan-500/30',
-      highlightText: 'text-cyan-300',
-    },
-    forest: {
-      cardBg: 'bg-emerald-950/80',
-      cardBorder: 'border-green-500/40',
-      titleColor: 'text-green-400',
-      accentColor: 'text-green-300',
-      tipBg: 'bg-green-500/10',
-      tipBorder: 'border-green-500/30',
-      tipText: 'text-green-300',
-      highlightBg: 'bg-green-500/30',
-      highlightText: 'text-green-300',
-    },
-    lightning: {
-      cardBg: 'bg-black/80',
-      cardBorder: 'border-amber-500/50',
-      titleColor: 'text-amber-400',
-      accentColor: 'text-amber-300',
-      tipBg: 'bg-amber-500/15',
-      tipBorder: 'border-amber-500/40',
-      tipText: 'text-amber-300',
-      highlightBg: 'bg-amber-500/30',
-      highlightText: 'text-amber-300',
-    },
-    galaxy: {
-      cardBg: 'bg-violet-950/80',
-      cardBorder: 'border-purple-500/40',
-      titleColor: 'text-purple-400',
-      accentColor: 'text-purple-300',
-      tipBg: 'bg-purple-500/10',
-      tipBorder: 'border-purple-500/30',
-      tipText: 'text-purple-300',
-      highlightBg: 'bg-purple-500/30',
-      highlightText: 'text-purple-300',
-    },
-    iron: {
-      cardBg: 'bg-black/85',
-      cardBorder: 'border-zinc-500/50',
-      titleColor: 'text-white',
-      accentColor: 'text-zinc-200',
-      tipBg: 'bg-zinc-700/30',
-      tipBorder: 'border-zinc-500/40',
-      tipText: 'text-zinc-200',
-      highlightBg: 'bg-zinc-500/30',
-      highlightText: 'text-white',
-    },
-    blood: {
-      cardBg: 'bg-black/80',
-      cardBorder: 'border-red-500/50',
-      titleColor: 'text-red-400',
-      accentColor: 'text-red-300',
-      tipBg: 'bg-red-500/15',
-      tipBorder: 'border-red-500/40',
-      tipText: 'text-red-300',
-      highlightBg: 'bg-red-500/30',
-      highlightText: 'text-red-300',
-    },
-    neon: {
-      cardBg: 'bg-black/85',
-      cardBorder: 'border-pink-500/50',
-      titleColor: 'text-pink-400',
-      accentColor: 'text-pink-300',
-      tipBg: 'bg-pink-500/15',
-      tipBorder: 'border-pink-500/40',
-      tipText: 'text-pink-300',
-      highlightBg: 'bg-pink-500/30',
-      highlightText: 'text-pink-300',
-    },
-    gold: {
-      cardBg: 'bg-black/85',
-      cardBorder: 'border-amber-500/50',
-      titleColor: 'text-amber-400',
-      accentColor: 'text-amber-300',
-      tipBg: 'bg-amber-500/15',
-      tipBorder: 'border-amber-500/40',
-      tipText: 'text-amber-300',
-      highlightBg: 'bg-amber-500/30',
-      highlightText: 'text-amber-300',
-    },
-    amoled: {
-      cardBg: 'bg-black/95',
-      cardBorder: 'border-white/30',
-      titleColor: 'text-white',
-      accentColor: 'text-white/80',
-      tipBg: 'bg-white/10',
-      tipBorder: 'border-white/20',
-      tipText: 'text-white/80',
-      highlightBg: 'bg-white/20',
-      highlightText: 'text-white',
-    },
-  };
-  return styles[themeId] || styles.fire;
-};
+import { useThemeStyles } from '@/lib/themeStyles';
 
 interface UserResult {
   id: string;
@@ -160,7 +33,7 @@ const UserCPFSearch: React.FC = () => {
   const navigate = useNavigate();
   const { playClickSound } = useAudio();
   const { role, profile: currentProfile } = useAuth();
-  const { currentTheme } = useTheme();
+  const themeStyles = useThemeStyles();
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -170,7 +43,6 @@ const UserCPFSearch: React.FC = () => {
   const [showKeyDialog, setShowKeyDialog] = useState(false);
 
   const isMaster = role === 'master';
-  const themeStyles = useMemo(() => getSearchThemeStyles(currentTheme), [currentTheme]);
 
   // Debounce de 150ms para busca em tempo real
   useEffect(() => {
