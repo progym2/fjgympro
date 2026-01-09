@@ -26,7 +26,7 @@ import {
 
 // Removed AnimatedLogo for performance
 import PanelSwitcher from '@/components/PanelSwitcher';
-import ThemeToggle from '@/components/ThemeToggle';
+
 import PanelThemeSelector from '@/components/shared/PanelThemeSelector';
 import InstructorSelector from '@/components/instructor/InstructorSelector';
 import ProfileAvatar from '@/components/shared/ProfileAvatar';
@@ -231,7 +231,6 @@ const InstructorDashboard: React.FC = () => {
 
               <div className="flex items-center gap-1">
                 <PanelThemeSelector />
-                <ThemeToggle />
                 {isMaster && <InstructorSelector compact />}
                 {isMaster && <PanelSwitcher />}
                 {license && !isMaster && (

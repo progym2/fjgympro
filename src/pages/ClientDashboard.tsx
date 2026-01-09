@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import PanelSwitcher from '@/components/PanelSwitcher';
-import ThemeToggle from '@/components/ThemeToggle';
+
 import PanelThemeSelector from '@/components/shared/PanelThemeSelector';
 import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
@@ -267,7 +267,6 @@ const ClientDashboard: React.FC = () => {
 
               <div className="flex items-center gap-1">
                 <PanelThemeSelector />
-                <ThemeToggle />
                 {isMaster && <PanelSwitcher />}
                 {license && !isMaster && (
                   <span className={`hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full ${

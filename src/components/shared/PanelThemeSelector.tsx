@@ -1,6 +1,7 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Palette, Lock, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Palette, Lock, Check, Cloud, Sun, Moon } from 'lucide-react';
+import { useTheme as useNextTheme } from 'next-themes';
 import { useTheme, SPORT_THEMES, SportTheme } from '@/contexts/ThemeContext';
 import {
   Popover,
@@ -10,13 +11,18 @@ import {
 import { cn } from '@/lib/utils';
 
 const PanelThemeSelector: React.FC = () => {
-  const { currentTheme, setTheme, themes, isGlobalThemeActive, themeConfig } = useTheme();
+  const { currentTheme, setTheme, themes, isGlobalThemeActive, themeConfig, isSyncing } = useTheme();
+  const { theme: colorMode, setTheme: setColorMode } = useNextTheme();
   const [isOpen, setIsOpen] = React.useState(false);
 
   const handleThemeSelect = (theme: SportTheme) => {
     if (isGlobalThemeActive || theme === currentTheme) return;
     setTheme(theme);
     setIsOpen(false);
+  };
+
+  const toggleColorMode = () => {
+    setColorMode(colorMode === 'dark' ? 'light' : 'dark');
   };
 
   return (
@@ -39,6 +45,21 @@ const PanelThemeSelector: React.FC = () => {
             }}
           />
           <Palette className="w-3.5 h-3.5 text-muted-foreground" />
+          
+          {/* Sync indicator */}
+          <AnimatePresence>
+            {isSyncing && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                className="absolute -top-1 -right-1"
+              >
+                <Cloud className="w-3 h-3 text-blue-400 animate-pulse" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
           {isGlobalThemeActive && (
             <Lock className="w-3 h-3 text-yellow-500" />
           )}
@@ -46,7 +67,7 @@ const PanelThemeSelector: React.FC = () => {
       </PopoverTrigger>
       
       <PopoverContent 
-        className="w-[240px] p-3 bg-card/95 backdrop-blur-xl border-border/50 z-[100]" 
+        className="w-[260px] p-3 bg-card/95 backdrop-blur-xl border-border/50 z-[100]" 
         align="end"
         sideOffset={8}
       >
@@ -55,12 +76,29 @@ const PanelThemeSelector: React.FC = () => {
             <p className="text-xs font-medium text-foreground">
               Tema Esportivo
             </p>
-            {isGlobalThemeActive && (
-              <span className="text-[10px] text-yellow-500 flex items-center gap-1">
-                <Lock size={10} />
-                Bloqueado pelo admin
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {/* Sync status */}
+              <AnimatePresence>
+                {isSyncing && (
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-[10px] text-blue-400 flex items-center gap-1"
+                  >
+                    <Cloud size={10} className="animate-pulse" />
+                    Salvando...
+                  </motion.span>
+                )}
+              </AnimatePresence>
+              
+              {isGlobalThemeActive && (
+                <span className="text-[10px] text-yellow-500 flex items-center gap-1">
+                  <Lock size={10} />
+                  Bloqueado
+                </span>
+              )}
+            </div>
           </div>
           
           <div className="grid grid-cols-5 gap-2">
@@ -108,7 +146,34 @@ const PanelThemeSelector: React.FC = () => {
             })}
           </div>
           
-          {/* Current theme name */}
+          {/* Divider */}
+          <div className="h-px bg-border/50" />
+          
+          {/* Color mode toggle */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Modo de cor</span>
+            <button
+              onClick={toggleColorMode}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all",
+                "bg-muted/50 hover:bg-muted border border-border/50"
+              )}
+            >
+              {colorMode === 'dark' ? (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-blue-400" />
+                  <span className="text-xs text-foreground">Escuro</span>
+                </>
+              ) : (
+                <>
+                  <Sun className="w-3.5 h-3.5 text-yellow-500" />
+                  <span className="text-xs text-foreground">Claro</span>
+                </>
+              )}
+            </button>
+          </div>
+          
+          {/* Current theme name with sync indicator */}
           <div className="flex items-center justify-center gap-2 pt-2 border-t border-border/50">
             <div 
               className="w-3 h-3 rounded-full"
@@ -119,6 +184,9 @@ const PanelThemeSelector: React.FC = () => {
             <span className="text-xs text-muted-foreground">
               {themeConfig.name}
             </span>
+            {isSyncing && (
+              <Cloud className="w-3 h-3 text-blue-400 animate-pulse" />
+            )}
           </div>
         </div>
       </PopoverContent>
