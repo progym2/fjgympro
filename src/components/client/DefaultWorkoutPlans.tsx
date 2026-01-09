@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Dumbbell, Plus, Clock, Heart, Users, Sparkles, Check,
-  ChevronDown, ChevronUp, Zap, Target, Flame
+  ChevronDown, ChevronUp, Zap, Target, Flame, Play
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import ExerciseVideoModal from './ExerciseVideoModal';
 
 // Planos de treino padrão para iniciantes
 const DEFAULT_PLANS = [
@@ -114,6 +115,25 @@ const DefaultWorkoutPlans: React.FC<DefaultWorkoutPlansProps> = ({ onPlanCreated
   const [createdPlans, setCreatedPlans] = useState<number[]>([]);
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedPlan, setExpandedPlan] = useState<number | null>(null);
+  const [videoModal, setVideoModal] = useState<{
+    isOpen: boolean;
+    exerciseName: string;
+    muscleGroup: string;
+    sets: number;
+    reps: number;
+    rest: number;
+  } | null>(null);
+
+  const openVideoModal = (ex: { name: string; muscle_group: string; sets: number; reps: number; rest: number }) => {
+    setVideoModal({
+      isOpen: true,
+      exerciseName: ex.name,
+      muscleGroup: ex.muscle_group,
+      sets: ex.sets,
+      reps: ex.reps,
+      rest: ex.rest
+    });
+  };
 
   const getDayName = (weekday: number) => {
     const days: Record<number, string> = { 1: 'SEG', 2: 'TER', 3: 'QUA', 4: 'QUI', 5: 'SEX' };
@@ -372,16 +392,19 @@ const DefaultWorkoutPlans: React.FC<DefaultWorkoutPlansProps> = ({ onPlanCreated
                               exit={{ opacity: 0, height: 0 }}
                               className="mt-3 pt-3 border-t border-border/30"
                             >
-                              <div className="grid grid-cols-2 gap-2">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {plan.exercises.map((ex, i) => (
-                                  <div 
+                                  <button 
                                     key={i} 
-                                    className="flex items-center gap-2 p-2 rounded-lg bg-background/50 text-xs"
+                                    onClick={(e) => { e.stopPropagation(); openVideoModal(ex); }}
+                                    className="flex items-center gap-2 p-2 rounded-lg bg-background/50 hover:bg-primary/10 text-xs transition-colors group text-left w-full"
                                   >
-                                    <div className={`w-1.5 h-1.5 rounded-full ${style.text.replace('text', 'bg')}`} />
-                                    <span className="truncate text-foreground">{ex.name}</span>
-                                    <span className="text-foreground/70 ml-auto font-medium">{ex.sets}x{ex.reps}</span>
-                                  </div>
+                                    <div className="p-1 rounded bg-primary/20 group-hover:bg-primary/30 transition-colors">
+                                      <Play className="w-3 h-3 text-primary" />
+                                    </div>
+                                    <span className="truncate text-foreground group-hover:text-primary transition-colors flex-1">{ex.name}</span>
+                                    <span className="text-foreground/70 font-medium">{ex.sets}x{ex.reps}</span>
+                                  </button>
                                 ))}
                               </div>
                             </motion.div>
@@ -408,6 +431,19 @@ const DefaultWorkoutPlans: React.FC<DefaultWorkoutPlansProps> = ({ onPlanCreated
           </CardContent>
         </CollapsibleContent>
       </Collapsible>
+
+      {/* Video Modal */}
+      {videoModal && (
+        <ExerciseVideoModal
+          isOpen={videoModal.isOpen}
+          onClose={() => setVideoModal(null)}
+          exerciseName={videoModal.exerciseName}
+          muscleGroup={videoModal.muscleGroup}
+          sets={videoModal.sets}
+          reps={videoModal.reps}
+          restSeconds={videoModal.rest}
+        />
+      )}
     </Card>
   );
 };
