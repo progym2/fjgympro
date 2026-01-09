@@ -654,16 +654,16 @@ const CreateClientWorkout: React.FC<CreateClientWorkoutProps> = ({ onBack, onSuc
         {selectedMuscleGroup && (
           <motion.div
             key={selectedMuscleGroup}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.15 }}
-            className={`rounded-xl border-2 ${getMuscleGroupData(selectedMuscleGroup)?.borderColor} ${getMuscleGroupData(selectedMuscleGroup)?.bgColor} overflow-hidden`}
+            initial={{ opacity: 0, y: -10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className={`rounded-xl border-2 ${getMuscleGroupData(selectedMuscleGroup)?.borderColor} bg-card shadow-lg overflow-hidden`}
           >
-            <div className="p-3 border-b border-border/30 bg-card/90">
+            <div className="p-3 border-b border-border/40 bg-gradient-to-r from-card to-muted/30">
               <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg overflow-hidden">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg overflow-hidden ring-2 ring-primary/30 shadow-md">
                     <img 
                       src={getMuscleGroupData(selectedMuscleGroup)?.image} 
                       alt={selectedMuscleGroup} 
@@ -671,16 +671,16 @@ const CreateClientWorkout: React.FC<CreateClientWorkoutProps> = ({ onBack, onSuc
                     />
                   </div>
                   <div>
-                    <h3 className={`font-bold text-sm ${getMuscleGroupData(selectedMuscleGroup)?.textColor}`}>
-                      SELECIONE OS EXERCÍCIOS
+                    <h3 className={`font-bold text-base ${getMuscleGroupData(selectedMuscleGroup)?.textColor}`}>
+                      {selectedMuscleGroup}
                     </h3>
-                    <p className="text-[10px] text-foreground/60 font-medium">
-                      {loadingGroup ? 'Carregando...' : `${groupExercises.length} disponíveis`}
+                    <p className="text-xs text-foreground/70 font-medium">
+                      {loadingGroup ? 'Carregando...' : `${groupExercises.length} exercícios disponíveis`}
                     </p>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => setSelectedMuscleGroup(null)} className="h-7 w-7">
-                  <X size={14} />
+                <Button variant="ghost" size="icon" onClick={() => setSelectedMuscleGroup(null)} className="h-8 w-8 hover:bg-destructive/20">
+                  <X size={16} />
                 </Button>
               </div>
               
@@ -711,56 +711,65 @@ const CreateClientWorkout: React.FC<CreateClientWorkoutProps> = ({ onBack, onSuc
               )}
             </div>
 
-            <ScrollArea className="h-48 sm:h-56">
-              <div className="p-2 space-y-1">
+            <ScrollArea className="h-52 sm:h-64">
+              <div className="p-3 space-y-2">
                 {loadingGroup ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   </div>
                 ) : groupExercises.length === 0 ? (
-                  <p className="text-center py-8 text-muted-foreground text-sm">Nenhum exercício encontrado</p>
+                  <p className="text-center py-8 text-foreground/60 text-sm font-medium">Nenhum exercício encontrado</p>
                 ) : (
-                  groupExercises.map((exercise) => {
+                  groupExercises.map((exercise, index) => {
                     const isSelected = isExerciseSelected(exercise.id);
                     return (
                       <motion.button
                         key={exercise.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.03, duration: 0.2 }}
                         onClick={() => toggleExercise(exercise, false)}
-                        className={`w-full p-2 rounded-lg flex items-center justify-between gap-2 transition-all ${
+                        className={`w-full p-3 rounded-xl flex items-center justify-between gap-3 transition-all duration-200 ${
                           isSelected 
-                            ? 'bg-primary/20 border border-primary/50' 
-                            : 'bg-background/80 border border-transparent hover:border-primary/30'
+                            ? 'bg-primary/20 border-2 border-primary/60 shadow-md ring-1 ring-primary/30' 
+                            : 'bg-muted/50 border-2 border-border/50 hover:border-primary/40 hover:bg-muted/80 hover:shadow-sm'
                         }`}
                       >
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-3 min-w-0">
                           <motion.div
                             initial={false}
-                            animate={{ scale: isSelected ? 1 : 0.8, opacity: isSelected ? 1 : 0.3 }}
-                            className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                              isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                            animate={{ 
+                              scale: isSelected ? 1 : 0.9, 
+                              backgroundColor: isSelected ? 'hsl(var(--primary))' : 'hsl(var(--muted))'
+                            }}
+                            transition={{ duration: 0.15 }}
+                            className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm ${
+                              isSelected ? 'text-primary-foreground' : 'text-muted-foreground'
                             }`}
                           >
-                            <Check size={12} />
+                            <Check size={14} className={isSelected ? 'opacity-100' : 'opacity-40'} />
                           </motion.div>
                           <div className="text-left min-w-0">
-                            <p className="text-xs font-medium truncate">{exercise.name}</p>
+                            <p className={`text-sm font-semibold truncate ${isSelected ? 'text-foreground' : 'text-foreground/90'}`}>
+                              {exercise.name}
+                            </p>
                             {exercise.equipment && (
-                              <p className="text-[10px] text-muted-foreground truncate">{exercise.equipment}</p>
+                              <p className="text-xs text-foreground/60 truncate font-medium">{exercise.equipment}</p>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2">
                           {exercise.video_url && (
                             <Button
-                              variant="ghost"
+                              variant="secondary"
                               size="icon"
-                              className="h-6 w-6"
+                              className="h-7 w-7 bg-primary/20 hover:bg-primary/30"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setVideoDialog({ url: exercise.video_url!, title: exercise.name });
                               }}
                             >
-                              <Play size={10} className="text-primary" />
+                              <Play size={12} className="text-primary" />
                             </Button>
                           )}
                         </div>
