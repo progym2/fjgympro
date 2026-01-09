@@ -120,7 +120,7 @@ const VideoSplashScreen: React.FC<VideoSplashScreenProps> = memo(({ onComplete }
           ensureNormalSpeed();
           setVideoReady(true);
         }}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
+        className={`w-full h-full object-contain transition-opacity duration-300 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
       >
         {/* Cache-busting para evitar PWA/Service Worker servir vídeo antigo */}
         <source src={`/video/splash.mp4?v=${APP_VERSION}`} type="video/mp4" />
