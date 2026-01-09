@@ -157,13 +157,21 @@ const SimpleParticles: React.FC = memo(() => {
           style={{
             left: p.left,
             top: p.top,
-            transform: `rotate(${p.rotation}deg)`,
-            animation: `floatFitness${p.id % 4} ${p.duration}s ease-in-out infinite`,
-            animationDelay: `${p.delay}s`,
             opacity: 0.6,
           }}
         >
-          <FitnessParticle type={p.type} color={p.color} size={p.size} />
+          <div
+            style={{
+              transform: `rotate(${p.rotation}deg)`,
+              animationName: `floatFitness${p.id % 4}`,
+              animationDuration: `${p.duration}s`,
+              animationTimingFunction: 'ease-in-out',
+              animationIterationCount: 'infinite',
+              animationDelay: `${p.delay}s`,
+            }}
+          >
+            <FitnessParticle type={p.type} color={p.color} size={p.size} />
+          </div>
         </div>
       ))}
 
