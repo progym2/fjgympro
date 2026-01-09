@@ -73,36 +73,36 @@ const ComponentLoader = memo(() => (
 ));
 ComponentLoader.displayName = 'ComponentLoader';
 
-// Menu items - Modern gym-style icons with better organization
+// Menu items - Softer colors for better readability
 const MENU_ITEMS = [
   // Core training features
-  { icon: Dumbbell, label: 'Meus Treinos', path: 'workouts', color: 'text-primary' },
-  { icon: Timer, label: 'Timer de Treino', path: 'timer', color: 'text-rose-500' },
-  { icon: Trophy, label: 'Recordes Pessoais', path: 'records', color: 'text-yellow-500' },
-  { icon: Target, label: 'Meu Progresso', path: 'progress', color: 'text-teal-500' },
+  { icon: Dumbbell, label: 'Meus Treinos', path: 'workouts', color: 'text-primary/80' },
+  { icon: Timer, label: 'Timer de Treino', path: 'timer', color: 'text-rose-400' },
+  { icon: Trophy, label: 'Recordes Pessoais', path: 'records', color: 'text-yellow-400' },
+  { icon: Target, label: 'Meu Progresso', path: 'progress', color: 'text-teal-400' },
   
   // Body tracking
-  { icon: Scale, label: 'Peso e Evolução', path: 'weight', color: 'text-green-500' },
-  { icon: Droplets, label: 'Hidratação', path: 'hydration', color: 'text-cyan-500' },
-  { icon: Utensils, label: 'Plano Alimentar', path: 'nutrition', color: 'text-orange-500' },
-  { icon: Camera, label: 'Galeria Evolução', path: 'gallery', color: 'text-purple-500' },
+  { icon: Scale, label: 'Peso e Evolução', path: 'weight', color: 'text-green-400' },
+  { icon: Droplets, label: 'Hidratação', path: 'hydration', color: 'text-cyan-400' },
+  { icon: Utensils, label: 'Plano Alimentar', path: 'nutrition', color: 'text-orange-400' },
+  { icon: Camera, label: 'Galeria Evolução', path: 'gallery', color: 'text-purple-400' },
   
   // History & Stats
-  { icon: BarChart3, label: 'Evolução & Histórico', path: 'evolution', color: 'text-emerald-500' },
-  { icon: Flame, label: 'Histórico de Cargas', path: 'load-history', color: 'text-violet-500' },
-  { icon: Award, label: 'Metas Alcançadas', path: 'achievements', color: 'text-amber-500' },
-  { icon: Calendar, label: 'Agenda', path: 'schedule', color: 'text-purple-500' },
+  { icon: BarChart3, label: 'Evolução & Histórico', path: 'evolution', color: 'text-emerald-400' },
+  { icon: Flame, label: 'Histórico de Cargas', path: 'load-history', color: 'text-violet-400' },
+  { icon: Award, label: 'Metas Alcançadas', path: 'achievements', color: 'text-amber-400' },
+  { icon: Calendar, label: 'Agenda', path: 'schedule', color: 'text-purple-400' },
   
   // Profile & Connections
-  { icon: User, label: 'Meu Perfil', path: 'profile', color: 'text-blue-500' },
-  { icon: QrCode, label: 'Meu QR Code', path: 'qrcode', color: 'text-pink-500' },
-  { icon: UserPlus, label: 'Escanear Instrutor', path: 'scan-instructor', color: 'text-green-500' },
-  { icon: History, label: 'Histórico Vínculos', path: 'link-history', color: 'text-indigo-500' },
-  { icon: UserMinus, label: 'Desvincular', path: 'unlink', color: 'text-red-500' },
+  { icon: User, label: 'Meu Perfil', path: 'profile', color: 'text-blue-400' },
+  { icon: QrCode, label: 'Meu QR Code', path: 'qrcode', color: 'text-pink-400' },
+  { icon: UserPlus, label: 'Escanear Instrutor', path: 'scan-instructor', color: 'text-green-400' },
+  { icon: History, label: 'Histórico Vínculos', path: 'link-history', color: 'text-indigo-400' },
+  { icon: UserMinus, label: 'Desvincular', path: 'unlink', color: 'text-red-400' },
   
   // Offline & Sync
-  { icon: HardDrive, label: 'Download Offline', path: 'offline-download', color: 'text-emerald-500' },
-  { icon: HardDrive, label: 'Backup & Sync', path: 'sync', color: 'text-slate-500' },
+  { icon: HardDrive, label: 'Download Offline', path: 'offline-download', color: 'text-emerald-400' },
+  { icon: HardDrive, label: 'Backup & Sync', path: 'sync', color: 'text-slate-400' },
 ] as const;
 
 // Memoized menu grid
@@ -239,8 +239,8 @@ const ClientDashboard: React.FC = () => {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background/90" />
 
-      <div className="relative z-10 h-full flex flex-col pb-14 overflow-y-auto overflow-x-hidden overscroll-contain">
-        <div className="h-14 sm:h-16" />
+      <div className="relative z-10 h-full flex flex-col pb-14 overflow-y-auto overflow-x-hidden overscroll-contain pt-safe">
+        <div className="h-16 sm:h-18" />
         
         <ThemedHeader>
           <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
