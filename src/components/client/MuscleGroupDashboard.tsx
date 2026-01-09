@@ -5,16 +5,16 @@ import {
   Zap, X, ChevronRight, Loader2, Play, Flame, Target, Star
 } from 'lucide-react';
 
-// Import individual muscle group images
-import chestImage from '@/assets/muscles/chest.png';
-import backImage from '@/assets/muscles/back.png';
-import shouldersImage from '@/assets/muscles/shoulders.png';
-import bicepsImage from '@/assets/muscles/biceps.png';
-import tricepsImage from '@/assets/muscles/triceps.png';
-import legsImage from '@/assets/muscles/legs.png';
-import absImage from '@/assets/muscles/abs.png';
-import glutesImage from '@/assets/muscles/glutes.png';
-import cardioImage from '@/assets/muscles/cardio.png';
+// Import professional muscle group images
+import chestImage from '@/assets/muscles/chest-pro.png';
+import backImage from '@/assets/muscles/back-pro.png';
+import shouldersImage from '@/assets/muscles/shoulders-pro.png';
+import bicepsImage from '@/assets/muscles/biceps-pro.png';
+import tricepsImage from '@/assets/muscles/triceps-pro.png';
+import legsImage from '@/assets/muscles/legs-pro.png';
+import absImage from '@/assets/muscles/abs-pro.png';
+import glutesImage from '@/assets/muscles/glutes-pro.png';
+import cardioImage from '@/assets/muscles/cardio-pro.png';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';

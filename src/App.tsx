@@ -29,6 +29,7 @@ const InstructorDashboard = lazy(() => import("./pages/InstructorDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const LicenseExpired = lazy(() => import("./pages/LicenseExpired"));
 const StudentLookup = lazy(() => import("./pages/StudentLookup"));
+const AppSettings = lazy(() => import("./pages/AppSettings"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -99,6 +100,7 @@ const AppRoutes = () => {
           <Route path="/instructor/*" element={<InstructorDashboard />} />
           <Route path="/admin/*" element={<AdminDashboard />} />
           <Route path="/license-expired" element={<LicenseExpired />} />
+          <Route path="/settings" element={<AppSettings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </PageTransition>
