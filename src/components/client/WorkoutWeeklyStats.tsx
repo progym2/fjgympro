@@ -183,7 +183,7 @@ const WorkoutWeeklyStats: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card/60 backdrop-blur-md rounded-xl border border-border/50 overflow-hidden"
+      className="bg-card/90 backdrop-blur-sm rounded-xl border border-border/60 overflow-hidden shadow-sm"
     >
       {/* Stats Header - Always visible */}
       <div 
@@ -212,29 +212,29 @@ const WorkoutWeeklyStats: React.FC = () => {
 
         {/* Quick Stats Row */}
         <div className="grid grid-cols-3 gap-2">
-          <div className="text-center p-1.5 rounded-lg bg-primary/10">
+          <div className="text-center p-2 rounded-lg bg-primary/20 border border-primary/30">
             <div className="text-lg font-bold text-primary">{stats.totalWorkouts}</div>
-            <div className="text-[9px] text-muted-foreground">Treinos</div>
+            <div className="text-[10px] text-foreground/70 font-medium">Treinos</div>
           </div>
-          <div className="text-center p-1.5 rounded-lg bg-green-500/10">
-            <div className="text-lg font-bold text-green-400">
+          <div className="text-center p-2 rounded-lg bg-green-500/20 border border-green-500/30">
+            <div className="text-lg font-bold text-green-500">
               {stats.totalMinutes >= 60 
                 ? `${Math.floor(stats.totalMinutes / 60)}h` 
                 : `${stats.totalMinutes}m`
               }
             </div>
-            <div className="text-[9px] text-muted-foreground">Tempo</div>
+            <div className="text-[10px] text-foreground/70 font-medium">Tempo</div>
           </div>
-          <div className="text-center p-1.5 rounded-lg bg-amber-500/10">
-            <div className="text-lg font-bold text-amber-400">{Math.round(goalProgress)}%</div>
-            <div className="text-[9px] text-muted-foreground">Meta</div>
+          <div className="text-center p-2 rounded-lg bg-amber-500/20 border border-amber-500/30">
+            <div className="text-lg font-bold text-amber-500">{Math.round(goalProgress)}%</div>
+            <div className="text-[10px] text-foreground/70 font-medium">Meta</div>
           </div>
         </div>
 
         {/* Goal Progress */}
-        <div className="mt-2">
-          <Progress value={goalProgress} className="h-1.5" />
-          <p className="text-[9px] text-muted-foreground mt-1 text-center">
+        <div className="mt-3">
+          <Progress value={goalProgress} className="h-2" />
+          <p className="text-[10px] text-foreground/80 mt-1.5 text-center font-medium">
             {stats.totalWorkouts}/{weeklyGoal} treinos na meta semanal
           </p>
         </div>
@@ -246,7 +246,7 @@ const WorkoutWeeklyStats: React.FC = () => {
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
-          className="border-t border-border/50"
+          className="border-t border-border/60 bg-card/50"
         >
           <div className="p-3 space-y-3">
             {/* Weekly Chart */}
@@ -279,11 +279,11 @@ const WorkoutWeeklyStats: React.FC = () => {
                         } ${isToday ? 'ring-1 ring-primary/50' : ''}`}
                         title={`${count} treino${count !== 1 ? 's' : ''}`}
                       />
-                      <span className={`text-[8px] ${isToday ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
+                      <span className={`text-[9px] font-medium ${isToday ? 'text-primary font-bold' : 'text-foreground/70'}`}>
                         {day}
                       </span>
                       {count > 0 && (
-                        <span className="text-[8px] text-primary font-bold -mt-0.5">{count}</span>
+                        <span className="text-[9px] text-primary font-bold -mt-0.5">{count}</span>
                       )}
                     </div>
                   );
@@ -312,17 +312,17 @@ const WorkoutWeeklyStats: React.FC = () => {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="flex items-center justify-between p-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                      className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors border border-border/40"
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
                           <Trophy size={8} className="text-green-400" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[10px] font-medium truncate">
+                          <p className="text-[11px] font-semibold text-foreground truncate">
                             {log.workout_plan?.name || 'Treino'}
                           </p>
-                          <p className="text-[9px] text-muted-foreground">
+                          <p className="text-[10px] text-foreground/60 font-medium">
                             {format(new Date(log.completed_at!), "EEE, dd/MM", { locale: ptBR })}
                           </p>
                         </div>
@@ -340,9 +340,9 @@ const WorkoutWeeklyStats: React.FC = () => {
             {/* Week Summary */}
             {stats.workoutsThisWeek.length > 0 && (
               <div className="pt-2 border-t border-border/30">
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="text-muted-foreground">Média por treino</span>
-                  <span className="text-primary font-medium">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-foreground/70 font-medium">Média por treino</span>
+                  <span className="text-primary font-semibold">
                     {stats.totalWorkouts > 0 
                       ? `${Math.round(stats.totalMinutes / stats.totalWorkouts)}min`
                       : '-'
