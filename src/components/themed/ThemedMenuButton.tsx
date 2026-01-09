@@ -132,32 +132,32 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
     <motion.button
       onClick={onClick}
       disabled={disabled}
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.97 }}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
       className={cn(
-        'relative flex flex-col items-center gap-2.5 p-3 sm:p-4',
+        'relative flex flex-col items-center gap-1.5 p-2 sm:p-3',
         'bg-transparent',
         'transition-all duration-200',
         disabled && 'opacity-50 pointer-events-none',
-        'group'
+        'group w-full'
       )}
     >
-      {/* Icon container - tamanho aumentado com glow pulsante */}
+      {/* Icon container - tamanho compacto para mobile */}
       <motion.div 
         className={cn(
-          'relative p-5 sm:p-6 md:p-7 border-2 transition-all duration-300',
+          'relative p-3 sm:p-4 border-2 transition-all duration-300',
           themeStyles.iconBg,
           themeStyles.iconBorder,
           themeStyles.shape,
           'group-hover:animate-pulse-glow'
         )}
         style={{
-          boxShadow: `0 6px 20px ${themeStyles.glowColor}`,
+          boxShadow: `0 4px 12px ${themeStyles.glowColor}`,
         }}
       >
         <Icon 
           className={cn(
-            'w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16',
+            'w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10',
             color || themeStyles.iconColor
           )} 
           strokeWidth={1.8} 
@@ -165,15 +165,15 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
 
         {/* Badge */}
         {badge && (
-          <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center shadow-lg">
+          <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center shadow-lg">
             {badge}
           </span>
         )}
       </motion.div>
 
-      {/* Label - maior e mais legível */}
+      {/* Label - compacto mas legível */}
       <span className={cn(
-        'font-bebas text-sm sm:text-base md:text-lg tracking-wider text-center leading-tight',
+        'font-bebas text-[10px] sm:text-xs md:text-sm tracking-wider text-center leading-tight line-clamp-2',
         themeStyles.labelColor,
         fontWeightClass
       )}>

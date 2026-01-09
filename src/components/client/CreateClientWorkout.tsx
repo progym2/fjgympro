@@ -471,24 +471,24 @@ const CreateClientWorkout: React.FC<CreateClientWorkoutProps> = ({ onBack, onSuc
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2 sm:space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Dumbbell className="w-5 h-5 text-primary" />
-          <h2 className="text-xl font-bebas text-primary tracking-wider">CRIAR MEU TREINO</h2>
+        <div className="flex items-center gap-1.5">
+          <Dumbbell className="w-4 h-4 text-primary" />
+          <h2 className="text-base sm:text-lg font-bebas text-primary tracking-wider">CRIAR MEU TREINO</h2>
         </div>
-        <Button variant="ghost" size="sm" onClick={handleBack}>
-          <ArrowLeft size={16} className="mr-1" /> Voltar
+        <Button variant="ghost" size="sm" onClick={handleBack} className="h-7 text-xs">
+          <ArrowLeft size={14} className="mr-1" /> Voltar
         </Button>
       </div>
 
       {/* Templates Section */}
-      <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 backdrop-blur-md rounded-xl p-4 border border-primary/30">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <h3 className="font-bebas text-sm text-primary">TEMPLATES PRONTOS</h3>
+      <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 backdrop-blur-md rounded-lg p-2.5 sm:p-3 border border-primary/30">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <h3 className="font-bebas text-xs sm:text-sm text-primary">TEMPLATES PRONTOS</h3>
           </div>
           <div className="flex items-center gap-2">
             {selectedExercises.length > 0 && (
