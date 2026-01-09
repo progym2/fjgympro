@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   TrendingUp, Calendar, Flame, Beef, Wheat, Droplets,
-  ChevronLeft, ChevronRight, Target, Trophy
+  ChevronLeft, ChevronRight, Target, Trophy, FileDown
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +27,7 @@ import {
 } from 'recharts';
 import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { exportNutritionChartsToPDF } from '@/lib/nutritionPdfExport';
 
 interface MealPlan {
   id: string;
@@ -176,6 +178,32 @@ const NutritionCharts: React.FC = () => {
     ? `${format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'dd MMM', { locale: ptBR })} - ${format(endOfWeek(currentDate, { weekStartsOn: 1 }), 'dd MMM', { locale: ptBR })}`
     : format(currentDate, 'MMMM yyyy', { locale: ptBR });
 
+  const handleExportPDF = () => {
+    if (dailyData.length === 0) {
+      toast.error('Nenhum dado disponível para exportar');
+      return;
+    }
+
+    exportNutritionChartsToPDF({
+      periodLabel,
+      viewMode,
+      dailyData: dailyData.map(d => ({
+        date: d.date,
+        dayName: d.dayName,
+        calories: d.calories,
+        protein: d.protein,
+        carbs: d.carbs,
+        fat: d.fat,
+        hydration: d.hydration,
+      })),
+      goals,
+      averages,
+      userName: profile?.full_name || undefined,
+    });
+
+    toast.success('Relatório PDF exportado com sucesso!');
+  };
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -203,7 +231,7 @@ const NutritionCharts: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Period Navigation */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
           <Button 
             variant={viewMode === 'week' ? 'default' : 'outline'} 
@@ -230,6 +258,17 @@ const NutritionCharts: React.FC = () => {
             <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
+
+        {/* Export PDF Button */}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="gap-2"
+          onClick={handleExportPDF}
+        >
+          <FileDown className="w-4 h-4" />
+          <span className="hidden sm:inline">Exportar</span> PDF
+        </Button>
       </div>
 
       {/* Summary Cards */}

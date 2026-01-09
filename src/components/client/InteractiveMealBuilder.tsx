@@ -5,7 +5,7 @@ import {
   Apple, Beef, Wheat, Droplets, Coffee, Moon, Sun, 
   Flame, Target, ChevronRight, Check, Sparkles, History,
   Copy, Clock, Zap, TrendingDown, TrendingUp, Scale, 
-  Lightbulb, LayoutTemplate
+  Lightbulb, LayoutTemplate, FileDown, Share2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,6 +38,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { exportMealPlanToPDF } from '@/lib/nutritionPdfExport';
 
 interface FoodItem {
   id: string;
@@ -522,6 +523,36 @@ const InteractiveMealBuilder: React.FC = () => {
     }
   };
 
+  const handleExportPDF = () => {
+    if (meals.every(m => m.foods.length === 0)) {
+      toast.error('Adicione alimentos ao cardápio antes de exportar');
+      return;
+    }
+
+    const currentTotals = getTotals();
+    
+    exportMealPlanToPDF({
+      planName: planName || 'Meu Cardápio',
+      meals: meals.map(m => ({
+        name: m.name,
+        time: m.time,
+        foods: m.foods.map(f => ({
+          name: f.name,
+          calories: f.calories,
+          protein: f.protein,
+          carbs: f.carbs,
+          fat: f.fat,
+          portion: f.portion,
+        })),
+      })),
+      goals: dailyGoals,
+      totals: currentTotals,
+      userName: profile?.full_name || undefined,
+    });
+
+    toast.success('PDF exportado com sucesso!');
+  };
+
   const filteredFoods = selectedCategory === 'todos' 
     ? FOOD_DATABASE 
     : FOOD_DATABASE.filter(f => f.category === selectedCategory);
@@ -593,6 +624,17 @@ const InteractiveMealBuilder: React.FC = () => {
         >
           <Lightbulb className="w-4 h-4" />
           Sugestões Inteligentes
+        </Button>
+
+        {/* Export PDF Button */}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="gap-2 ml-auto"
+          onClick={handleExportPDF}
+        >
+          <FileDown className="w-4 h-4" />
+          <span className="hidden sm:inline">Exportar</span> PDF
         </Button>
       </div>
 
