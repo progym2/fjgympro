@@ -739,88 +739,127 @@ const MasterPanel: React.FC = () => {
         </Button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Enhanced with modern glass design */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-primary/20 to-purple-500/20 border-primary/30">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/20">
-                <Key size={20} className="text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-primary">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">Total de Licenças</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-green-500/30">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/20">
-                <CheckCircle size={20} className="text-green-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-500">{stats.active}</p>
-                <p className="text-xs text-muted-foreground">Licenças Ativas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border-blue-500/30">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/20">
-                <UserPlus size={20} className="text-blue-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-blue-500">{availablePreGen}</p>
-                <p className="text-xs text-muted-foreground">Senhas Disponíveis</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border-yellow-500/30">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-yellow-500/20">
-                <Clock size={20} className="text-yellow-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-yellow-500">{totalPreGen}</p>
-                <p className="text-xs text-muted-foreground">Total Pré-Geradas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card de Licenças Expiradas - Clicável para resetar */}
-        {stats.expired > 0 && (
-          <Card 
-            className="bg-gradient-to-br from-red-500/20 to-orange-500/20 border-red-500/30 cursor-pointer hover:border-red-500/60 transition-colors col-span-2 md:col-span-4"
-            onClick={() => setResetExpiredDialogOpen(true)}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-red-500/20">
-                    <AlertTriangle size={20} className="text-red-500" />
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold text-red-500">{stats.expired} licença(s) expirada(s)</p>
-                    <p className="text-xs text-muted-foreground">Clique para resetar todas de uma vez</p>
-                  </div>
+        <motion.div whileHover={{ scale: 1.02, y: -2 }} transition={{ type: "spring", stiffness: 300 }}>
+          <Card className="relative overflow-hidden bg-gradient-to-br from-primary/20 via-purple-500/10 to-primary/5 border-primary/40 backdrop-blur-sm shadow-lg shadow-primary/20">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-50" />
+            <div className="absolute -right-4 -top-4 w-20 h-20 bg-primary/10 rounded-full blur-2xl" />
+            <CardContent className="relative p-4">
+              <div className="flex items-center gap-3">
+                <motion.div 
+                  className="p-3 rounded-xl bg-gradient-to-br from-primary/30 to-purple-500/30 shadow-lg shadow-primary/30"
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Key size={22} className="text-primary drop-shadow-lg" />
+                </motion.div>
+                <div>
+                  <p className="text-3xl font-bebas text-primary drop-shadow">{stats.total}</p>
+                  <p className="text-xs text-muted-foreground font-medium">Total de Licenças</p>
                 </div>
-                <Button variant="destructive" size="sm" className="gap-2">
-                  <RefreshCw size={16} />
-                  Resetar Todas
-                </Button>
               </div>
             </CardContent>
           </Card>
+        </motion.div>
+
+        <motion.div whileHover={{ scale: 1.02, y: -2 }} transition={{ type: "spring", stiffness: 300 }}>
+          <Card className="relative overflow-hidden bg-gradient-to-br from-green-500/20 via-emerald-500/10 to-green-500/5 border-green-500/40 backdrop-blur-sm shadow-lg shadow-green-500/20">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent opacity-50" />
+            <div className="absolute -right-4 -top-4 w-20 h-20 bg-green-500/10 rounded-full blur-2xl" />
+            <CardContent className="relative p-4">
+              <div className="flex items-center gap-3">
+                <motion.div 
+                  className="p-3 rounded-xl bg-gradient-to-br from-green-500/30 to-emerald-500/30 shadow-lg shadow-green-500/30"
+                  animate={{ rotate: [0, 10, -10, 0] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                >
+                  <CheckCircle size={22} className="text-green-400 drop-shadow-lg" />
+                </motion.div>
+                <div>
+                  <p className="text-3xl font-bebas text-green-400 drop-shadow">{stats.active}</p>
+                  <p className="text-xs text-muted-foreground font-medium">Licenças Ativas</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div whileHover={{ scale: 1.02, y: -2 }} transition={{ type: "spring", stiffness: 300 }}>
+          <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-blue-500/5 border-blue-500/40 backdrop-blur-sm shadow-lg shadow-blue-500/20">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-50" />
+            <div className="absolute -right-4 -top-4 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl" />
+            <CardContent className="relative p-4">
+              <div className="flex items-center gap-3">
+                <motion.div 
+                  className="p-3 rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/30 shadow-lg shadow-blue-500/30"
+                  animate={{ y: [0, -3, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <UserPlus size={22} className="text-blue-400 drop-shadow-lg" />
+                </motion.div>
+                <div>
+                  <p className="text-3xl font-bebas text-blue-400 drop-shadow">{availablePreGen}</p>
+                  <p className="text-xs text-muted-foreground font-medium">Senhas Disponíveis</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div whileHover={{ scale: 1.02, y: -2 }} transition={{ type: "spring", stiffness: 300 }}>
+          <Card className="relative overflow-hidden bg-gradient-to-br from-yellow-500/20 via-amber-500/10 to-yellow-500/5 border-yellow-500/40 backdrop-blur-sm shadow-lg shadow-yellow-500/20">
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-transparent opacity-50" />
+            <div className="absolute -right-4 -top-4 w-20 h-20 bg-yellow-500/10 rounded-full blur-2xl" />
+            <CardContent className="relative p-4">
+              <div className="flex items-center gap-3">
+                <motion.div 
+                  className="p-3 rounded-xl bg-gradient-to-br from-yellow-500/30 to-amber-500/30 shadow-lg shadow-yellow-500/30"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  <Clock size={22} className="text-yellow-400 drop-shadow-lg" />
+                </motion.div>
+                <div>
+                  <p className="text-3xl font-bebas text-yellow-400 drop-shadow">{totalPreGen}</p>
+                  <p className="text-xs text-muted-foreground font-medium">Total Pré-Geradas</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Card de Licenças Expiradas - Clicável para resetar */}
+        {stats.expired > 0 && (
+          <motion.div whileHover={{ scale: 1.01 }} className="col-span-2 md:col-span-4">
+            <Card 
+              className="relative overflow-hidden bg-gradient-to-br from-red-500/20 via-orange-500/10 to-red-500/5 border-red-500/40 cursor-pointer hover:border-red-500/60 transition-colors shadow-lg shadow-red-500/20"
+              onClick={() => setResetExpiredDialogOpen(true)}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent opacity-50" />
+              <CardContent className="relative p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <motion.div 
+                      className="p-3 rounded-xl bg-gradient-to-br from-red-500/30 to-orange-500/30 shadow-lg shadow-red-500/30"
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                    >
+                      <AlertTriangle size={22} className="text-red-400 drop-shadow-lg" />
+                    </motion.div>
+                    <div>
+                      <p className="text-xl font-bebas text-red-400 drop-shadow">{stats.expired} licença(s) expirada(s)</p>
+                      <p className="text-xs text-muted-foreground font-medium">Clique para resetar todas</p>
+                    </div>
+                  </div>
+                  <Button variant="destructive" size="sm" className="gap-2">
+                    <RefreshCw size={16} />
+                    Resetar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
       </div>
 

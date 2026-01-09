@@ -757,7 +757,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
           }}
         >
           <div
-            className="relative w-full max-w-md bg-card rounded-2xl border border-primary/30 shadow-2xl shadow-primary/20 overflow-hidden"
+            className="relative w-full max-w-sm bg-card rounded-2xl border border-primary/30 shadow-2xl shadow-primary/20 overflow-hidden max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Animated border glow */}
@@ -779,7 +779,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
               <img 
                 src={bgPanels} 
                 alt="" 
-                className="w-full h-full object-cover opacity-20"
+                className="w-full h-full object-cover opacity-15"
               />
               <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/90 to-background" />
             </div>
@@ -800,42 +800,35 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
               <kbd className="hidden sm:inline ml-1 px-1.5 py-0.5 rounded bg-primary/20 text-[10px] font-mono text-primary/80">ESC</kbd>
             </button>
 
-            {/* Header with professional design and staggered reveal */}
-            <div className="relative z-10 p-8 pt-12 text-center bg-gradient-to-b from-primary/10 via-transparent to-transparent">
-              {/* Gym Icon Badge - instant */}
-              <div className="mx-auto mb-4 w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 flex items-center justify-center backdrop-blur-sm shadow-lg shadow-primary/10">
+            {/* Header with professional design - compact */}
+            <div className="relative z-10 p-5 pt-10 text-center bg-gradient-to-b from-primary/10 via-transparent to-transparent">
+              {/* Gym Icon Badge - compact */}
+              <div className="mx-auto mb-3 w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 flex items-center justify-center backdrop-blur-sm shadow-lg shadow-primary/10">
                 <img
                   src={logomarca}
                   alt="FrancGymPro"
-                  className="w-16 h-16 object-contain"
+                  className="w-11 h-11 object-contain"
                 />
               </div>
               
-              {/* Title - instant */}
-              <h1 className="text-2xl font-bebas text-foreground tracking-wider">
+              {/* Title - compact */}
+              <h1 className="text-xl font-bebas text-foreground tracking-wider">
                 PAINEL DO{' '}
                 <span className="text-primary">{panelLabels[panelType]}</span>
               </h1>
               
-              <p className="text-sm text-muted-foreground mt-1">
-                Digite suas credenciais para acessar
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Digite suas credenciais
               </p>
 
               {/* Decorative line */}
-              <div className="mt-4 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-
-              {/* Decorative dots */}
-              <div className="flex justify-center gap-1.5 mt-3">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary/40" />
-                ))}
-              </div>
+              <div className="mt-3 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             </div>
 
-            {/* Form - instant display */}
+            {/* Form - compact display */}
             <form 
               onSubmit={handleSubmit} 
-              className={`relative z-10 p-8 pt-4 space-y-5 ${shakeForm ? 'animate-shake' : ''}`}
+              className={`relative z-10 p-5 pt-2 space-y-3 ${shakeForm ? 'animate-shake' : ''}`}
             >
               {/* Error Message - Clean and intuitive */}
               <AnimatePresence>
