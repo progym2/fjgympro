@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { TrendingUp, Dumbbell, Scale, Droplets, Target } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { TrendingUp, Dumbbell, Scale, Droplets, Target, ChevronDown, ArrowLeft, BarChart3, Calendar, Flame, Award } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ClientPageHeader from './ClientPageHeader';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 
 const Progress: React.FC = () => {
   const navigate = useNavigate();
@@ -25,6 +28,14 @@ const Progress: React.FC = () => {
   });
   const [weightData, setWeightData] = useState<any[]>([]);
   const [workoutData, setWorkoutData] = useState<any[]>([]);
+
+  // Section collapse states
+  const [statsExpanded, setStatsExpanded] = useState(true);
+  const [chartsExpanded, setChartsExpanded] = useState(true);
+  const [motivationExpanded, setMotivationExpanded] = useState(true);
+
+  // ESC to go back
+  useEscapeBack({ to: '/client' });
 
   useEffect(() => {
     if (profile) {
@@ -137,158 +148,356 @@ const Progress: React.FC = () => {
       animate={{ opacity: 1 }}
       className="h-full flex flex-col overflow-hidden"
     >
+      {/* Back button */}
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b border-border/30">
+        <div className="flex items-center gap-3 p-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/client')}
+            className="h-8 px-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Voltar
+          </Button>
+        </div>
+      </div>
+
       <ClientPageHeader 
         title="MEU PROGRESSO" 
         icon={<TrendingUp className="w-5 h-5" />} 
         iconColor="text-yellow-500" 
       />
 
-      <div className="flex-1 overflow-auto space-y-6">
+      <div className="flex-1 overflow-auto space-y-4 p-4">
         {loading ? (
-          <p className="text-muted-foreground">Carregando...</p>
+          <div className="flex items-center justify-center py-12">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            >
+              <TrendingUp className="w-8 h-8 text-primary" />
+            </motion.div>
+          </div>
         ) : (
           <>
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <Card className="bg-card/80 backdrop-blur-md border-border/50">
-              <CardContent className="p-4 text-center">
-                <Dumbbell className="w-8 h-8 mx-auto mb-2 text-primary" />
-                <p className="text-2xl font-bold">{stats.totalWorkouts}</p>
-                <p className="text-xs text-muted-foreground">Total Treinos</p>
-              </CardContent>
+            {/* Stats Section - Collapsible */}
+            <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-card via-card to-primary/5">
+              <Collapsible open={statsExpanded} onOpenChange={setStatsExpanded}>
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer hover:bg-muted/20 transition-colors p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-yellow-500/30 to-yellow-500/10 border border-yellow-500/20">
+                          <BarChart3 className="w-5 h-5 text-yellow-500" />
+                        </div>
+                        <div>
+                          <h3 className="font-bebas text-xl tracking-wide text-foreground">ESTATÍSTICAS</h3>
+                          <p className="text-xs text-muted-foreground">
+                            Resumo do seu progresso
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
+                          {stats.totalWorkouts} treinos
+                        </Badge>
+                        <motion.div
+                          animate={{ rotate: statsExpanded ? 180 : 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                        </motion.div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </CollapsibleTrigger>
+
+                <CollapsibleContent>
+                  <CardContent className="pt-0 px-4 pb-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.05 }}
+                      >
+                        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 hover:shadow-lg transition-shadow">
+                          <CardContent className="p-4 text-center">
+                            <Dumbbell className="w-7 h-7 mx-auto mb-2 text-primary" />
+                            <p className="text-2xl font-bold text-foreground">{stats.totalWorkouts}</p>
+                            <p className="text-xs text-muted-foreground">Total Treinos</p>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                      >
+                        <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20 hover:shadow-lg transition-shadow">
+                          <CardContent className="p-4 text-center">
+                            <Target className="w-7 h-7 mx-auto mb-2 text-green-500" />
+                            <p className="text-2xl font-bold text-foreground">{stats.weekWorkouts}</p>
+                            <p className="text-xs text-muted-foreground">Esta Semana</p>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.15 }}
+                      >
+                        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 border-amber-500/20 hover:shadow-lg transition-shadow">
+                          <CardContent className="p-4 text-center">
+                            <Calendar className="w-7 h-7 mx-auto mb-2 text-amber-500" />
+                            <p className="text-2xl font-bold text-foreground">{stats.monthWorkouts}</p>
+                            <p className="text-xs text-muted-foreground">Este Mês</p>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <Card className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20 hover:shadow-lg transition-shadow">
+                          <CardContent className="p-4 text-center">
+                            <Flame className="w-7 h-7 mx-auto mb-2 text-orange-500" />
+                            <p className="text-2xl font-bold text-foreground">{stats.streak}</p>
+                            <p className="text-xs text-muted-foreground">Dias Seguidos</p>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.25 }}
+                      >
+                        <Card className={`bg-gradient-to-br ${stats.weightChange < 0 ? 'from-green-500/10 to-green-500/5 border-green-500/20' : stats.weightChange > 0 ? 'from-rose-500/10 to-rose-500/5 border-rose-500/20' : 'from-muted/10 to-muted/5 border-border/20'} hover:shadow-lg transition-shadow`}>
+                          <CardContent className="p-4 text-center">
+                            <Scale className={`w-7 h-7 mx-auto mb-2 ${stats.weightChange < 0 ? 'text-green-500' : stats.weightChange > 0 ? 'text-rose-500' : 'text-muted-foreground'}`} />
+                            <p className="text-2xl font-bold text-foreground">
+                              {stats.weightChange > 0 ? '+' : ''}{stats.weightChange.toFixed(1)}kg
+                            </p>
+                            <p className="text-xs text-muted-foreground">Variação Peso</p>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                      >
+                        <Card className="bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 border-cyan-500/20 hover:shadow-lg transition-shadow">
+                          <CardContent className="p-4 text-center">
+                            <Droplets className="w-7 h-7 mx-auto mb-2 text-cyan-500" />
+                            <p className="text-2xl font-bold text-foreground">{Math.round(stats.avgHydration)}ml</p>
+                            <p className="text-xs text-muted-foreground">Média/Dia Água</p>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
             </Card>
 
-            <Card className="bg-card/80 backdrop-blur-md border-border/50">
-              <CardContent className="p-4 text-center">
-                <Target className="w-8 h-8 mx-auto mb-2 text-green-500" />
-                <p className="text-2xl font-bold">{stats.weekWorkouts}</p>
-                <p className="text-xs text-muted-foreground">Esta Semana</p>
-              </CardContent>
-            </Card>
+            {/* Charts Section - Collapsible */}
+            {(weightData.length > 0 || workoutData.length > 0) && (
+              <Card className="overflow-hidden border-blue-500/20 bg-gradient-to-br from-card via-card to-blue-500/5">
+                <Collapsible open={chartsExpanded} onOpenChange={setChartsExpanded}>
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="cursor-pointer hover:bg-muted/20 transition-colors p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/30 to-blue-500/10 border border-blue-500/20">
+                            <TrendingUp className="w-5 h-5 text-blue-500" />
+                          </div>
+                          <div>
+                            <h3 className="font-bebas text-xl tracking-wide text-foreground">GRÁFICOS</h3>
+                            <p className="text-xs text-muted-foreground">
+                              Visualize sua evolução
+                            </p>
+                          </div>
+                        </div>
+                        <motion.div
+                          animate={{ rotate: chartsExpanded ? 180 : 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                        </motion.div>
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
 
-            <Card className="bg-card/80 backdrop-blur-md border-border/50">
-              <CardContent className="p-4 text-center">
-                <TrendingUp className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
-                <p className="text-2xl font-bold">{stats.monthWorkouts}</p>
-                <p className="text-xs text-muted-foreground">Este Mês</p>
-              </CardContent>
-            </Card>
+                  <CollapsibleContent>
+                    <CardContent className="pt-0 px-4 pb-4 space-y-4">
+                      {/* Weight Chart */}
+                      {weightData.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                        >
+                          <Card className="bg-gradient-to-br from-green-500/5 to-transparent border-green-500/20">
+                            <CardHeader className="pb-2">
+                              <CardTitle className="font-bebas text-base flex items-center gap-2 text-foreground">
+                                <Scale className="w-4 h-4 text-green-500" />
+                                EVOLUÇÃO DO PESO
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                              <div className="h-44">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <AreaChart data={weightData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" />
+                                    <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} domain={['auto', 'auto']} />
+                                    <Tooltip 
+                                      contentStyle={{ 
+                                        backgroundColor: 'hsl(var(--card))', 
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '8px'
+                                      }}
+                                    />
+                                    <Area type="monotone" dataKey="peso" stroke="#22c55e" fill="rgba(34, 197, 94, 0.2)" />
+                                  </AreaChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      )}
 
-            <Card className="bg-card/80 backdrop-blur-md border-border/50">
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl mb-2">🔥</div>
-                <p className="text-2xl font-bold">{stats.streak}</p>
-                <p className="text-xs text-muted-foreground">Dias Seguidos</p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card/80 backdrop-blur-md border-border/50">
-              <CardContent className="p-4 text-center">
-                <Scale className={`w-8 h-8 mx-auto mb-2 ${stats.weightChange < 0 ? 'text-green-500' : stats.weightChange > 0 ? 'text-red-500' : 'text-muted-foreground'}`} />
-                <p className="text-2xl font-bold">
-                  {stats.weightChange > 0 ? '+' : ''}{stats.weightChange.toFixed(1)}kg
-                </p>
-                <p className="text-xs text-muted-foreground">Variação Peso</p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card/80 backdrop-blur-md border-border/50">
-              <CardContent className="p-4 text-center">
-                <Droplets className="w-8 h-8 mx-auto mb-2 text-cyan-500" />
-                <p className="text-2xl font-bold">{Math.round(stats.avgHydration)}ml</p>
-                <p className="text-xs text-muted-foreground">Média/Dia Água</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Charts */}
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Weight Chart */}
-            {weightData.length > 0 && (
-              <Card className="bg-card/80 backdrop-blur-md border-border/50">
-                <CardHeader>
-                  <CardTitle className="font-bebas text-lg flex items-center gap-2">
-                    <Scale className="w-5 h-5 text-green-500" />
-                    EVOLUÇÃO DO PESO
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-48">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={weightData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                        <XAxis dataKey="date" stroke="#888" fontSize={10} />
-                        <YAxis stroke="#888" fontSize={10} domain={['auto', 'auto']} />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
-                        />
-                        <Area type="monotone" dataKey="peso" stroke="#22c55e" fill="#22c55e20" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
+                      {/* Workout Chart */}
+                      {workoutData.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.1 }}
+                        >
+                          <Card className="bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
+                            <CardHeader className="pb-2">
+                              <CardTitle className="font-bebas text-base flex items-center gap-2 text-foreground">
+                                <Dumbbell className="w-4 h-4 text-primary" />
+                                TREINOS POR DIA
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                              <div className="h-44">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <LineChart data={workoutData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" />
+                                    <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                                    <Tooltip 
+                                      contentStyle={{ 
+                                        backgroundColor: 'hsl(var(--card))', 
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '8px'
+                                      }}
+                                    />
+                                    <Line type="monotone" dataKey="treinos" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: 'hsl(var(--primary))' }} />
+                                  </LineChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      )}
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
               </Card>
             )}
 
-            {/* Workout Chart */}
-            {workoutData.length > 0 && (
-              <Card className="bg-card/80 backdrop-blur-md border-border/50">
-                <CardHeader>
-                  <CardTitle className="font-bebas text-lg flex items-center gap-2">
-                    <Dumbbell className="w-5 h-5 text-primary" />
-                    TREINOS POR DIA
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-48">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={workoutData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                        <XAxis dataKey="date" stroke="#888" fontSize={10} />
-                        <YAxis stroke="#888" fontSize={10} />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
-                        />
-                        <Line type="monotone" dataKey="treinos" stroke="#ef4444" strokeWidth={2} dot={{ fill: '#ef4444' }} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+            {/* Motivational Message - Collapsible */}
+            <Card className="overflow-hidden border-amber-500/20 bg-gradient-to-br from-card via-card to-amber-500/5">
+              <Collapsible open={motivationExpanded} onOpenChange={setMotivationExpanded}>
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer hover:bg-muted/20 transition-colors p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/30 to-amber-500/10 border border-amber-500/20">
+                          <Award className="w-5 h-5 text-amber-500" />
+                        </div>
+                        <div>
+                          <h3 className="font-bebas text-xl tracking-wide text-foreground">MOTIVAÇÃO</h3>
+                          <p className="text-xs text-muted-foreground">
+                            Sua mensagem de incentivo
+                          </p>
+                        </div>
+                      </div>
+                      <motion.div
+                        animate={{ rotate: motivationExpanded ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                      </motion.div>
+                    </div>
+                  </CardHeader>
+                </CollapsibleTrigger>
 
-          {/* Motivational Message */}
-          <Card className="bg-gradient-to-br from-primary/20 to-yellow-500/20 border-primary/30">
-            <CardContent className="p-6 text-center">
-              {stats.streak >= 7 ? (
-                <>
-                  <div className="text-4xl mb-2">🏆</div>
-                  <p className="text-lg font-bebas tracking-wider text-primary">
-                    INCRÍVEL! {stats.streak} DIAS SEGUIDOS!
-                  </p>
-                  <p className="text-muted-foreground">Continue assim, você está arrasando!</p>
-                </>
-              ) : stats.streak >= 3 ? (
-                <>
-                  <div className="text-4xl mb-2">💪</div>
-                  <p className="text-lg font-bebas tracking-wider text-primary">
-                    ÓTIMO TRABALHO!
-                  </p>
-                  <p className="text-muted-foreground">Você está no caminho certo!</p>
-                </>
-              ) : (
-                <>
-                  <div className="text-4xl mb-2">🎯</div>
-                  <p className="text-lg font-bebas tracking-wider text-primary">
-                    VAMOS COMEÇAR!
-                  </p>
-                  <p className="text-muted-foreground">Cada treino conta. Comece sua sequência hoje!</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </>
+                <CollapsibleContent>
+                  <CardContent className="pt-0 px-4 pb-4">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="bg-gradient-to-br from-primary/20 to-amber-500/20 rounded-xl p-6 text-center border border-primary/20"
+                    >
+                      {stats.streak >= 7 ? (
+                        <>
+                          <motion.div 
+                            className="text-5xl mb-3"
+                            animate={{ scale: [1, 1.1, 1] }}
+                            transition={{ repeat: Infinity, duration: 2 }}
+                          >
+                            🏆
+                          </motion.div>
+                          <p className="text-lg font-bebas tracking-wider text-primary">
+                            INCRÍVEL! {stats.streak} DIAS SEGUIDOS!
+                          </p>
+                          <p className="text-muted-foreground mt-1">Continue assim, você está arrasando!</p>
+                        </>
+                      ) : stats.streak >= 3 ? (
+                        <>
+                          <motion.div 
+                            className="text-5xl mb-3"
+                            animate={{ rotate: [0, 10, -10, 0] }}
+                            transition={{ repeat: Infinity, duration: 1.5 }}
+                          >
+                            💪
+                          </motion.div>
+                          <p className="text-lg font-bebas tracking-wider text-primary">
+                            ÓTIMO TRABALHO!
+                          </p>
+                          <p className="text-muted-foreground mt-1">Você está no caminho certo!</p>
+                        </>
+                      ) : (
+                        <>
+                          <motion.div 
+                            className="text-5xl mb-3"
+                            animate={{ y: [0, -5, 0] }}
+                            transition={{ repeat: Infinity, duration: 1 }}
+                          >
+                            🎯
+                          </motion.div>
+                          <p className="text-lg font-bebas tracking-wider text-primary">
+                            VAMOS COMEÇAR!
+                          </p>
+                          <p className="text-muted-foreground mt-1">Cada treino conta. Comece sua sequência hoje!</p>
+                        </>
+                      )}
+                    </motion.div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
+            </Card>
+          </>
         )}
       </div>
     </motion.div>
