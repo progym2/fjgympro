@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
 import { toast } from '@/hooks/use-toast';
 import logomarca from '@/assets/logomarca.png';
-import heroGym from '@/assets/hero-gym.jpg';
+import bgPanels from '@/assets/bg-panels-optimized.webp';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import SportThemeSelector from '@/components/SportThemeSelector';
@@ -777,7 +777,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onSuccess, p
             {/* Background Image - instant */}
             <div className="absolute inset-0 z-0">
               <img 
-                src={heroGym} 
+                src={bgPanels} 
                 alt="" 
                 className="w-full h-full object-cover opacity-20"
               />
