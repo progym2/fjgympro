@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import InteractiveMealBuilder from './InteractiveMealBuilder';
 import ClientPageHeader from './ClientPageHeader';
+import { useEscapeBack } from '@/hooks/useEscapeBack';
 
 interface MealPlan {
   id: string;
@@ -44,6 +45,9 @@ const NutritionPlan: React.FC = () => {
     carbs_grams: '',
     fat_grams: ''
   });
+
+  // ESC to go back
+  useEscapeBack({ to: '/client', disableWhen: [showForm] });
 
   useEffect(() => {
     if (profile) {
