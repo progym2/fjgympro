@@ -25,9 +25,9 @@ export const ThemedHeader: React.FC<ThemedHeaderProps> = ({ children, className 
   return (
     <motion.header
       className={cn(
-        'fixed top-0 left-0 right-0 z-40',
-        'bg-card/95 backdrop-blur-md border-b border-primary/30',
-        'shadow-lg shadow-primary/5',
+        'fixed top-0 left-0 right-0 z-40 pt-safe',
+        'bg-card/95 backdrop-blur-md border-b border-border/50',
+        'shadow-md',
         getHeaderStyle(),
         className
       )}

@@ -153,27 +153,27 @@ const InstructorDashboard: React.FC = () => {
     setLogoutDialogOpen(true);
   };
 
-  // Memoize menu items
+  // Memoize menu items - Softer colors
   const menuItems = useMemo(() => [
-    { icon: UserCog, label: 'Meu Perfil', path: 'profile', color: 'text-sky-500' },
-    { icon: Users, label: 'Meus Alunos', path: 'students', color: 'text-blue-500' },
-    { icon: UserPlus, label: 'Vincular Aluno', path: 'link-student', color: 'text-green-500' },
-    { icon: UserMinus, label: 'Desvincular Aluno', path: 'unlink-student', color: 'text-red-500' },
-    { icon: History, label: 'Histórico de Vínculos', path: 'link-history', color: 'text-slate-500' },
-    { icon: Library, label: 'Biblioteca de Exercícios', path: 'exercises', color: 'text-teal-500' },
-    { icon: Dumbbell, label: 'Criar Treinos', path: 'create-workout', color: 'text-primary' },
-    { icon: ClipboardList, label: 'Planos de Treino', path: 'workout-plans', color: 'text-purple-500' },
-    { icon: CalendarDays, label: 'Calendário Alunos', path: 'student-calendar', color: 'text-violet-500' },
-    { icon: Utensils, label: 'Planos Alimentares', path: 'meal-plans', color: 'text-orange-500' },
-    { icon: Calendar, label: 'Agenda', path: 'schedule', color: 'text-cyan-500' },
-    { icon: TrendingUp, label: 'Progresso Alunos', path: 'progress', color: 'text-yellow-500' },
-    { icon: Camera, label: 'Galeria Evolução', path: 'student-gallery', color: 'text-purple-500' },
-    { icon: CreditCard, label: 'Financeiro', path: 'finance', color: 'text-emerald-500' },
-    { icon: FileText, label: 'Relatórios', path: 'reports', color: 'text-indigo-500' },
-    { icon: Bell, label: 'Notificações', path: 'notifications', color: 'text-pink-500' },
-    { icon: QrCode, label: 'Meu QR Code', path: 'my-qrcode', color: 'text-lime-500' },
-    { icon: QrCode, label: 'Leitor QR Code', path: 'qr-scanner', color: 'text-amber-500' },
-    { icon: HardDrive, label: 'Backup & Sync', path: 'backup', color: 'text-slate-500' },
+    { icon: UserCog, label: 'Meu Perfil', path: 'profile', color: 'text-sky-400' },
+    { icon: Users, label: 'Meus Alunos', path: 'students', color: 'text-blue-400' },
+    { icon: UserPlus, label: 'Vincular Aluno', path: 'link-student', color: 'text-green-400' },
+    { icon: UserMinus, label: 'Desvincular Aluno', path: 'unlink-student', color: 'text-red-400' },
+    { icon: History, label: 'Histórico de Vínculos', path: 'link-history', color: 'text-slate-400' },
+    { icon: Library, label: 'Biblioteca de Exercícios', path: 'exercises', color: 'text-teal-400' },
+    { icon: Dumbbell, label: 'Criar Treinos', path: 'create-workout', color: 'text-primary/80' },
+    { icon: ClipboardList, label: 'Planos de Treino', path: 'workout-plans', color: 'text-purple-400' },
+    { icon: CalendarDays, label: 'Calendário Alunos', path: 'student-calendar', color: 'text-violet-400' },
+    { icon: Utensils, label: 'Planos Alimentares', path: 'meal-plans', color: 'text-orange-400' },
+    { icon: Calendar, label: 'Agenda', path: 'schedule', color: 'text-cyan-400' },
+    { icon: TrendingUp, label: 'Progresso Alunos', path: 'progress', color: 'text-yellow-400' },
+    { icon: Camera, label: 'Galeria Evolução', path: 'student-gallery', color: 'text-purple-400' },
+    { icon: CreditCard, label: 'Financeiro', path: 'finance', color: 'text-emerald-400' },
+    { icon: FileText, label: 'Relatórios', path: 'reports', color: 'text-indigo-400' },
+    { icon: Bell, label: 'Notificações', path: 'notifications', color: 'text-pink-400' },
+    { icon: QrCode, label: 'Meu QR Code', path: 'my-qrcode', color: 'text-lime-400' },
+    { icon: QrCode, label: 'Leitor QR Code', path: 'qr-scanner', color: 'text-amber-400' },
+    { icon: HardDrive, label: 'Backup & Sync', path: 'backup', color: 'text-slate-400' },
   ], []);
 
   // Show fitness loading screen during initial load
@@ -196,7 +196,8 @@ const InstructorDashboard: React.FC = () => {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background/90" />
 
-      <div className="relative z-10 h-full flex flex-col pb-14 pt-14 sm:pt-16 overflow-y-auto overflow-x-hidden overscroll-contain">
+      <div className="relative z-10 h-full flex flex-col pb-14 pt-safe overflow-y-auto overflow-x-hidden overscroll-contain">
+        <div className="h-16 sm:h-18" />
         <ThemedHeader>
           <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
             <div className="flex items-center justify-between gap-2">

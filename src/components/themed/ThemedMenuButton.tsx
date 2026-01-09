@@ -56,29 +56,29 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
       ? 'font-bold' 
       : 'font-medium';
 
-  // Modern gym-style icon backgrounds
+  // Modern gym-style icon backgrounds - softer colors
   const iconBackground = useMemo(() => {
     switch (themeConfig.id) {
       case 'fire':
-        return 'bg-gradient-to-br from-orange-500/20 to-red-600/10 border border-orange-500/20';
+        return 'bg-gradient-to-br from-orange-500/10 to-red-600/5 border border-orange-500/10';
       case 'ocean':
-        return 'bg-gradient-to-br from-cyan-500/20 to-blue-600/10 border border-cyan-500/20';
+        return 'bg-gradient-to-br from-cyan-500/10 to-blue-600/5 border border-cyan-500/10';
       case 'forest':
-        return 'bg-gradient-to-br from-green-500/20 to-emerald-600/10 border border-green-500/20';
+        return 'bg-gradient-to-br from-green-500/10 to-emerald-600/5 border border-green-500/10';
       case 'lightning':
-        return 'bg-gradient-to-br from-yellow-400/20 to-amber-500/10 border border-yellow-400/20';
+        return 'bg-gradient-to-br from-yellow-400/10 to-amber-500/5 border border-yellow-400/10';
       case 'galaxy':
-        return 'bg-gradient-to-br from-purple-500/20 to-violet-600/10 border border-purple-500/20';
+        return 'bg-gradient-to-br from-purple-500/10 to-violet-600/5 border border-purple-500/10';
       case 'iron':
-        return 'bg-gradient-to-br from-slate-400/20 to-zinc-600/10 border border-slate-400/20';
+        return 'bg-gradient-to-br from-slate-400/10 to-zinc-600/5 border border-slate-400/10';
       case 'blood':
-        return 'bg-gradient-to-br from-red-600/20 to-rose-800/10 border border-red-600/20';
+        return 'bg-gradient-to-br from-red-600/10 to-rose-800/5 border border-red-600/10';
       case 'neon':
-        return 'bg-gradient-to-br from-pink-500/20 to-fuchsia-600/10 border border-pink-500/20';
+        return 'bg-gradient-to-br from-pink-500/10 to-fuchsia-600/5 border border-pink-500/10';
       case 'gold':
-        return 'bg-gradient-to-br from-yellow-500/20 to-orange-500/10 border border-yellow-500/20';
+        return 'bg-gradient-to-br from-yellow-500/10 to-orange-500/5 border border-yellow-500/10';
       default:
-        return 'bg-primary/10 border border-primary/20';
+        return 'bg-primary/5 border border-primary/10';
     }
   }, [themeConfig.id]);
 
@@ -99,13 +99,13 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
     >
       {/* Icon container with themed background */}
       <div className={cn(
-        'relative p-2.5 sm:p-3 rounded-lg sm:rounded-xl transition-colors',
+        'relative p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-colors',
         iconBackground
       )}>
         <Icon className={cn(
-          color,
-          'w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10'
-        )} strokeWidth={2.5} />
+          'w-7 h-7 sm:w-9 sm:h-9 md:w-11 md:h-11 opacity-80',
+          color
+        )} strokeWidth={2} />
 
         {/* Badge */}
         {badge && (

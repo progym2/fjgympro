@@ -11,9 +11,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAudio } from '@/contexts/AudioContext';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
 
-// Imagens de background para cada tema
-import bgLight from '@/assets/bg-light.png';
-import bgDark from '@/assets/bg-dark.png';
+// Background image
+import bgHome from '@/assets/bg-home-optimized.webp';
 
 // Lazy load heavy components
 const LoginDialog = lazy(() => import('@/components/LoginDialog'));
@@ -29,30 +28,11 @@ const Home: React.FC = memo(() => {
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false);
   const [selectedPanel, setSelectedPanel] = useState<'client' | 'instructor' | 'admin'>('client');
   const [isExiting, setIsExiting] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
   const navigate = useNavigate();
   const { licenseExpired } = useAuth();
   const { playClickSound, setOnHomeScreen, setSplashComplete, stopMusicImmediately, tryAutoPlay, isSfxEnabled, toggleSfx } = useAudio();
   
-  // Detectar tema atual
-  useEffect(() => {
-    const checkDarkMode = () => {
-      setIsDarkMode(document.documentElement.classList.contains('dark'));
-    };
-    
-    checkDarkMode();
-    
-    // Observer para mudanças de classe no html
-    const observer = new MutationObserver(checkDarkMode);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    
-    return () => observer.disconnect();
-  }, []);
-
-  // Imagem de fundo baseada no tema
-  const currentBg = isDarkMode ? bgDark : bgLight;
-  const { isLoaded: bgLoaded } = useProgressiveImage(currentBg);
+  const { isLoaded: bgLoaded } = useProgressiveImage(bgHome);
 
   // Marcar que está na tela inicial
   useEffect(() => {
@@ -134,23 +114,19 @@ const Home: React.FC = memo(() => {
       onClick={tryAutoPlay}
       onTouchStart={tryAutoPlay}
     >
-      {/* Progressive background image - muda com o tema */}
+      {/* Progressive background image */}
       <div 
-        className="absolute inset-0 transition-all duration-700 ease-in-out"
+        className="absolute inset-0 transition-all duration-500"
         style={{
-          backgroundImage: `url(${currentBg})`,
+          backgroundImage: `url(${bgHome})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center top',
           filter: bgLoaded ? 'none' : 'blur(10px)',
           transform: bgLoaded ? 'scale(1)' : 'scale(1.05)',
         }}
       />
-      {/* Overlay - diferente para cada tema */}
-      <div className={`absolute inset-0 transition-all duration-500 ${
-        isDarkMode 
-          ? 'bg-gradient-to-b from-black/30 via-black/40 to-black/60' 
-          : 'bg-gradient-to-b from-white/10 via-white/20 to-white/40'
-      }`} />
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/60" />
 
       {/* Simple particles - lightweight - lazy loaded */}
       <Suspense fallback={null}>
@@ -243,7 +219,7 @@ const Home: React.FC = memo(() => {
 
       {/* Fixed buttons - Theme Toggle e Sport Theme */}
       <Suspense fallback={null}>
-        <div className="fixed top-3 left-3 z-50 flex items-center gap-2">
+        <div className="fixed top-3 left-3 z-50 flex items-center gap-2 pt-safe">
           <ThemeToggle />
           <SportThemeSelector compact />
         </div>
@@ -251,11 +227,7 @@ const Home: React.FC = memo(() => {
 
       <button
         onClick={handleAboutOpen}
-        className={`fixed top-3 right-3 z-50 p-2.5 rounded-xl backdrop-blur-sm transition-all ${
-          isDarkMode 
-            ? 'bg-black/40 text-white/70 hover:text-white hover:bg-black/60' 
-            : 'bg-white/40 text-gray-700 hover:text-gray-900 hover:bg-white/60'
-        }`}
+        className="fixed top-3 right-3 z-50 p-2.5 rounded-xl backdrop-blur-sm transition-all pt-safe bg-black/40 text-white/70 hover:text-white hover:bg-black/60"
         aria-label="Sobre"
       >
         <Info size={18} />
@@ -264,9 +236,7 @@ const Home: React.FC = memo(() => {
       <button
         onClick={handleToggleSfx}
         className={`fixed bottom-24 left-3 z-50 p-2.5 rounded-xl backdrop-blur-sm transition-all ${
-          isDarkMode 
-            ? (isSfxEnabled ? 'bg-black/40 text-emerald-400 hover:bg-emerald-500/20' : 'bg-black/40 text-white/50 hover:bg-white/10')
-            : (isSfxEnabled ? 'bg-white/40 text-emerald-600 hover:bg-emerald-500/20' : 'bg-white/40 text-gray-500 hover:bg-gray-500/10')
+          isSfxEnabled ? 'bg-black/40 text-emerald-400 hover:bg-emerald-500/20' : 'bg-black/40 text-white/50 hover:bg-white/10'
         }`}
         aria-label={isSfxEnabled ? 'Desativar sons' : 'Ativar sons'}
         title={isSfxEnabled ? 'Sons ativos' : 'Sons desativados'}
@@ -276,11 +246,7 @@ const Home: React.FC = memo(() => {
 
       <button
         onClick={handleReplayIntro}
-        className={`fixed bottom-16 left-3 z-50 p-2.5 rounded-xl backdrop-blur-sm transition-all ${
-          isDarkMode 
-            ? 'bg-black/40 text-white/70 hover:text-white hover:bg-black/60' 
-            : 'bg-white/40 text-gray-700 hover:text-gray-900 hover:bg-white/60'
-        }`}
+        className="fixed bottom-16 left-3 z-50 p-2.5 rounded-xl backdrop-blur-sm transition-all bg-black/40 text-white/70 hover:text-white hover:bg-black/60"
         aria-label="Ver intro novamente"
         title="Ver intro novamente"
       >

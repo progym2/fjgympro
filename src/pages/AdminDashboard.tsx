@@ -121,31 +121,31 @@ const AdminDashboard: React.FC = () => {
     setLogoutDialogOpen(true);
   };
 
-  // Memoize menu items to prevent recreation on every render
+  // Memoize menu items - Softer colors
   const menuItems = useMemo(() => [
-    { icon: UserPlus, label: 'Cadastrar Cliente', path: 'register-client', color: 'text-blue-500' },
-    { icon: Dumbbell, label: 'Cadastrar Instrutor', path: 'register-instructor', color: 'text-green-500' },
-    { icon: Users, label: 'Consultar Cadastros', path: 'list-users', color: 'text-purple-500' },
-    { icon: DollarSign, label: 'Receber Mensalidade', path: 'receive-payment', color: 'text-emerald-500' },
-    { icon: FileText, label: 'Gerar Carnês', path: 'payment-plans', color: 'text-cyan-500' },
-    { icon: BarChart3, label: 'Dashboard Financeiro', path: 'dashboard', color: 'text-indigo-500' },
-    { icon: CreditCard, label: 'Financeiro', path: 'finance', color: 'text-teal-500' },
-    { icon: AlertTriangle, label: 'Inadimplentes', path: 'defaulters', color: 'text-red-500' },
-    { icon: Bell, label: 'Enviar Alertas', path: 'alerts', color: 'text-pink-500' },
-    { icon: QrCode, label: 'Leitor QR Code', path: 'qr-scanner', color: 'text-amber-500' },
-    { icon: HardDrive, label: 'Backup & Sync', path: 'backup', color: 'text-slate-500' },
-    { icon: Settings, label: 'Configurações', path: 'settings', color: 'text-gray-500' },
+    { icon: UserPlus, label: 'Cadastrar Cliente', path: 'register-client', color: 'text-blue-400' },
+    { icon: Dumbbell, label: 'Cadastrar Instrutor', path: 'register-instructor', color: 'text-green-400' },
+    { icon: Users, label: 'Consultar Cadastros', path: 'list-users', color: 'text-purple-400' },
+    { icon: DollarSign, label: 'Receber Mensalidade', path: 'receive-payment', color: 'text-emerald-400' },
+    { icon: FileText, label: 'Gerar Carnês', path: 'payment-plans', color: 'text-cyan-400' },
+    { icon: BarChart3, label: 'Dashboard Financeiro', path: 'dashboard', color: 'text-indigo-400' },
+    { icon: CreditCard, label: 'Financeiro', path: 'finance', color: 'text-teal-400' },
+    { icon: AlertTriangle, label: 'Inadimplentes', path: 'defaulters', color: 'text-red-400' },
+    { icon: Bell, label: 'Enviar Alertas', path: 'alerts', color: 'text-pink-400' },
+    { icon: QrCode, label: 'Leitor QR Code', path: 'qr-scanner', color: 'text-amber-400' },
+    { icon: HardDrive, label: 'Backup & Sync', path: 'backup', color: 'text-slate-400' },
+    { icon: Settings, label: 'Configurações', path: 'settings', color: 'text-gray-400' },
   ], []);
 
   const masterItems = useMemo(() => [
-    { icon: Trash2, label: 'Lixeira', path: 'trash', color: 'text-red-500' },
-    { icon: Activity, label: 'Logs de Acesso', path: 'access-logs', color: 'text-cyan-500' },
-    { icon: Dumbbell, label: 'Ver Instrutores', path: 'view-instructors', color: 'text-green-500' },
-    { icon: DollarSign, label: 'Financeiro Instrutores', path: 'instructor-finance', color: 'text-emerald-500' },
-    { icon: Key, label: 'Senhas Trial', path: 'trial-passwords', color: 'text-cyan-500' },
-    { icon: Key, label: 'Contas Pré-Geradas', path: 'pre-generated', color: 'text-yellow-500' },
-    { icon: FlaskConical, label: 'Contas de Teste', path: 'test-accounts', color: 'text-orange-500' },
-    { icon: Shield, label: 'Painel Master', path: 'master', color: 'text-primary' },
+    { icon: Trash2, label: 'Lixeira', path: 'trash', color: 'text-red-400' },
+    { icon: Activity, label: 'Logs de Acesso', path: 'access-logs', color: 'text-cyan-400' },
+    { icon: Dumbbell, label: 'Ver Instrutores', path: 'view-instructors', color: 'text-green-400' },
+    { icon: DollarSign, label: 'Financeiro Instrutores', path: 'instructor-finance', color: 'text-emerald-400' },
+    { icon: Key, label: 'Senhas Trial', path: 'trial-passwords', color: 'text-cyan-400' },
+    { icon: Key, label: 'Contas Pré-Geradas', path: 'pre-generated', color: 'text-yellow-400' },
+    { icon: FlaskConical, label: 'Contas de Teste', path: 'test-accounts', color: 'text-orange-400' },
+    { icon: Shield, label: 'Painel Master', path: 'master', color: 'text-primary/80' },
   ], []);
 
   const allMenuItems = useMemo(() => 
@@ -172,7 +172,8 @@ const AdminDashboard: React.FC = () => {
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background/90" />
-      <div className="relative z-10 h-full flex flex-col pb-14 overflow-y-auto overflow-x-hidden overscroll-contain">
+      <div className="relative z-10 h-full flex flex-col pb-14 overflow-y-auto overflow-x-hidden overscroll-contain pt-safe">
+        <div className="h-16 sm:h-18" />
         <ThemedHeader className="sticky top-0">
           <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
             <div className="flex items-center justify-between gap-2">
