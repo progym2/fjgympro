@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Utensils, Plus, Trash2, Edit, Sparkles, List } from 'lucide-react';
+import { Utensils, Plus, Trash2, Edit, Sparkles, List, BarChart3, Droplets } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -12,6 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import InteractiveMealBuilder from './InteractiveMealBuilder';
+import NutritionCharts from './NutritionCharts';
+import NutritionHydrationWidget from './NutritionHydrationWidget';
 import ClientPageHeader from './ClientPageHeader';
 import { useEscapeBack } from '@/hooks/useEscapeBack';
 
@@ -173,19 +175,35 @@ const NutritionPlan: React.FC = () => {
 
       <div className="flex-1 overflow-auto">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="builder" className="flex items-center gap-2">
-              <Sparkles size={16} />
-              Montar Cardápio
+          <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsTrigger value="builder" className="flex items-center gap-1 text-xs sm:text-sm">
+              <Sparkles size={14} />
+              <span className="hidden sm:inline">Montar</span> Cardápio
             </TabsTrigger>
-            <TabsTrigger value="plans" className="flex items-center gap-2">
-              <List size={16} />
-              Meus Planos ({plans.length})
+            <TabsTrigger value="hydration" className="flex items-center gap-1 text-xs sm:text-sm">
+              <Droplets size={14} />
+              Hidratação
+            </TabsTrigger>
+            <TabsTrigger value="charts" className="flex items-center gap-1 text-xs sm:text-sm">
+              <BarChart3 size={14} />
+              Gráficos
+            </TabsTrigger>
+            <TabsTrigger value="plans" className="flex items-center gap-1 text-xs sm:text-sm">
+              <List size={14} />
+              Planos ({plans.length})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="builder">
             <InteractiveMealBuilder />
+          </TabsContent>
+
+          <TabsContent value="hydration" className="space-y-4">
+            <NutritionHydrationWidget />
+          </TabsContent>
+
+          <TabsContent value="charts" className="space-y-4">
+            <NutritionCharts />
           </TabsContent>
 
           <TabsContent value="plans" className="space-y-4">
