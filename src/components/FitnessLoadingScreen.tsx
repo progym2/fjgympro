@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme, SportTheme } from '@/contexts/ThemeContext';
 import { Dumbbell, Heart, Flame, Zap, Activity, Target, Trophy, Sparkles } from 'lucide-react';
@@ -282,58 +282,59 @@ const getThemeConfig = (theme: SportTheme) => {
   return configs[theme] || configs.fire;
 };
 
-const FitnessLoadingScreen: React.FC<FitnessLoadingScreenProps> = memo(({ 
+const FitnessLoadingScreen = memo(forwardRef<HTMLDivElement, FitnessLoadingScreenProps>(({ 
   message = 'Carregando...' 
-}) => {
+}, ref) => {
   const { currentTheme } = useTheme();
   const config = useMemo(() => getThemeConfig(currentTheme), [currentTheme]);
 
-  // Simplified animation for faster loading
+  // Simplified animation for ultra-fast loading
   const ThemeIcon = config.icon;
 
   return (
     <motion.div
+      ref={ref}
       className={`fixed inset-0 z-[200] flex flex-col items-center justify-center bg-gradient-to-br ${config.bgGradient}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.05 }}
+      transition={{ duration: 0.02 }}
     >
-      {/* Main animation container - simplified */}
+      {/* Main animation container - ultra simplified */}
       <motion.div
         className="relative z-10 flex flex-col items-center gap-4"
-        initial={{ scale: 0.98, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.1 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.05 }}
       >
-        {/* Theme icon with pulse */}
+        {/* Theme icon with fast pulse */}
         <motion.div
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ duration: 0.6, repeat: Infinity }}
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 0.4, repeat: Infinity }}
         >
           <ThemeIcon 
-            className="w-12 h-12"
+            className="w-10 h-10"
             style={{ color: config.color }}
           />
         </motion.div>
 
         {/* Loading text */}
         <span 
-          className="font-bebas text-lg tracking-[0.2em] uppercase"
+          className="font-bebas text-base tracking-[0.2em] uppercase"
           style={{ color: config.color }}
         >
           {message}
         </span>
         
-        {/* Simple progress bar - faster */}
-        <div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden">
+        {/* Ultra-fast progress bar */}
+        <div className="w-28 h-0.5 bg-white/10 rounded-full overflow-hidden">
           <motion.div
             className="h-full rounded-full"
             style={{ backgroundColor: config.color }}
             initial={{ width: '0%' }}
             animate={{ width: '100%' }}
             transition={{ 
-              duration: 0.5, 
+              duration: 0.3, 
               repeat: Infinity,
               ease: 'linear'
             }}
@@ -342,7 +343,7 @@ const FitnessLoadingScreen: React.FC<FitnessLoadingScreenProps> = memo(({
       </motion.div>
     </motion.div>
   );
-});
+}));
 
 FitnessLoadingScreen.displayName = 'FitnessLoadingScreen';
 

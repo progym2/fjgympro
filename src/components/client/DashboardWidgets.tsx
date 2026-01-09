@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect, memo, forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Dumbbell, Droplets, Target, TrendingUp, 
@@ -31,7 +31,7 @@ interface WidgetData {
   };
 }
 
-const DashboardWidgets: React.FC = () => {
+const DashboardWidgets = forwardRef<HTMLDivElement>((_, ref) => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const themeStyles = useThemeStyles();
@@ -392,6 +392,8 @@ const DashboardWidgets: React.FC = () => {
       </motion.div>
     </motion.div>
   );
-};
+});
+
+DashboardWidgets.displayName = 'DashboardWidgets';
 
 export default memo(DashboardWidgets);

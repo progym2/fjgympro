@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -100,7 +100,7 @@ const muscleColors: Record<string, string> = {
   'Cardio': 'bg-cyan-500/20 text-cyan-400',
 };
 
-const SimpleWorkouts: React.FC = () => {
+const SimpleWorkouts = forwardRef<HTMLDivElement>((_, ref) => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { sendWorkoutAvailableNotification } = usePushNotifications();
@@ -1157,6 +1157,8 @@ const SimpleWorkouts: React.FC = () => {
       />
     </motion.div>
   );
-};
+});
+
+SimpleWorkouts.displayName = 'SimpleWorkouts';
 
 export default SimpleWorkouts;

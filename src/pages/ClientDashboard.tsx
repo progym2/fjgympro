@@ -213,10 +213,10 @@ const ClientDashboard: React.FC = () => {
   const showHydrationWidget = isOnHome && !location.pathname.includes('/hydration') && hydrationVisible;
   const isMaster = role === 'master';
 
-  // Faster initial loading - reduced timeout
+  // Ultra-fast initial loading - reduced timeout
   useEffect(() => {
     if (!authLoading && profile) {
-      const timer = setTimeout(() => setInitialLoading(false), 300);
+      const timer = setTimeout(() => setInitialLoading(false), 100);
       return () => clearTimeout(timer);
     }
   }, [authLoading, profile]);

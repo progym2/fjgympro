@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -12,12 +12,12 @@ interface ClientPageHeaderProps {
   backTo?: string;
 }
 
-const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({ 
+const ClientPageHeader = forwardRef<HTMLDivElement, ClientPageHeaderProps>(({ 
   title, 
   icon, 
   iconColor,
   backTo = '/client'
-}) => {
+}, ref) => {
   const navigate = useNavigate();
   const themeStyles = useThemeStyles();
 
@@ -38,7 +38,9 @@ const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
   const finalIconColor = iconColor || themeStyles.titleColor;
 
   return (
-    <div className={cn(
+    <div 
+      ref={ref}
+      className={cn(
       "sticky top-0 z-10 backdrop-blur-sm -mx-1 sm:-mx-3 px-1 sm:px-3 py-1.5 sm:py-2 mb-2",
       themeStyles.cardBg,
       "border-b",
@@ -71,6 +73,8 @@ const ClientPageHeader: React.FC<ClientPageHeaderProps> = ({
       </div>
     </div>
   );
-};
+});
+
+ClientPageHeader.displayName = 'ClientPageHeader';
 
 export default ClientPageHeader;
