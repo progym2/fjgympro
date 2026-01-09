@@ -106,7 +106,7 @@ const AppRoutes = () => {
 };
 
 const App = () => {
-  const [splashComplete, setSplashComplete] = useState(false);
+  const [splashComplete, setSplashComplete] = useState(() => localStorage.getItem('splashShown') === 'true');
 
   return (
     <QueryClientProvider client={queryClient}>
