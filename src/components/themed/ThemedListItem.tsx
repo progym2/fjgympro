@@ -2,7 +2,6 @@ import React, { memo, useMemo, forwardRef } from 'react';
 import { useTheme, SportTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import { LucideIcon, ChevronRight } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 interface ThemedListItemProps {
   icon: LucideIcon;
@@ -121,17 +120,16 @@ export const ThemedListItem = memo(forwardRef<HTMLButtonElement, ThemedListItemP
   const themeStyles = useMemo(() => getThemeStyles(currentTheme), [currentTheme]);
 
   return (
-    <motion.button
+    <button
       ref={ref}
       onClick={onClick}
       disabled={disabled}
-      whileHover={{ x: 4 }}
-      whileTap={{ scale: 0.98 }}
       className={cn(
-        'w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200',
+        'w-full flex items-center gap-3 p-3 rounded-xl border',
         'bg-card/50 backdrop-blur-sm',
         themeStyles.borderColor,
         themeStyles.hoverBg,
+        'active:scale-[0.98]',
         disabled && 'opacity-50 pointer-events-none',
         'group'
       )}
@@ -177,11 +175,11 @@ export const ThemedListItem = memo(forwardRef<HTMLButtonElement, ThemedListItemP
       <ChevronRight 
         size={16} 
         className={cn(
-          'flex-shrink-0 opacity-50 group-hover:opacity-100 transition-opacity',
+          'flex-shrink-0 opacity-50 group-hover:opacity-100',
           themeStyles.iconColor
         )} 
       />
-    </motion.button>
+    </button>
   );
 }));
 

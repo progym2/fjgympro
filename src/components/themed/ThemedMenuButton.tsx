@@ -2,7 +2,6 @@ import React, { memo, useMemo } from 'react';
 import { useTheme, SportTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Tamanhos baseados na configuração de menu
@@ -150,29 +149,26 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
       : 'font-medium';
 
   const buttonContent = (
-    <motion.button
+    <button
       onClick={onClick}
       disabled={disabled}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
       className={cn(
         'relative flex flex-col items-center justify-center',
         sizeStyles.container,
         'bg-transparent',
-        'transition-all duration-200',
+        'active:scale-95',
         disabled && 'opacity-50 pointer-events-none',
         'group w-full'
       )}
     >
       {/* Icon container */}
-      <motion.div 
+      <div 
         className={cn(
-          'relative border-2 transition-all duration-300',
+          'relative border-2',
           sizeStyles.iconWrapper,
           themeStyles.iconBg,
           themeStyles.iconBorder,
-          themeStyles.shape,
-          'group-hover:animate-pulse-glow'
+          themeStyles.shape
         )}
         style={{
           boxShadow: `${sizeStyles.shadow} ${themeStyles.glowColor}`,
@@ -195,7 +191,7 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
             {badge}
           </span>
         )}
-      </motion.div>
+      </div>
 
       {/* Label */}
       <span className={cn(
@@ -207,7 +203,7 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
       )}>
         {label}
       </span>
-    </motion.button>
+    </button>
   );
 
   if (tooltip) {
