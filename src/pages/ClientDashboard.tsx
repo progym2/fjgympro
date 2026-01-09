@@ -27,7 +27,10 @@ import {
 import PanelSwitcher from '@/components/PanelSwitcher';
 
 import PanelThemeSelector from '@/components/shared/PanelThemeSelector';
+import MenuSizeToggle from '@/components/shared/MenuSizeToggle';
 import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
+import { useTheme } from '@/contexts/ThemeContext';
+import { cn } from '@/lib/utils';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
 import FitnessLoadingScreen from '@/components/FitnessLoadingScreen';
 
@@ -107,20 +110,33 @@ const MENU_ITEMS = [
   { icon: HardDrive, label: 'Backup & Sync', path: 'sync', color: 'text-slate-400' },
 ] as const;
 
-// Memoized menu grid - layout otimizado para caber na tela
-const MenuGrid = memo(({ onNavigate }: { onNavigate: (path: string) => void }) => (
-  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 pb-6">
-    {MENU_ITEMS.map((item) => (
-      <ThemedMenuButton
-        key={item.path}
-        icon={item.icon}
-        label={item.label}
-        color={item.color}
-        onClick={() => onNavigate(item.path)}
-      />
-    ))}
-  </div>
-));
+// Memoized menu grid - layout otimizado baseado no menuSize
+const MenuGrid = memo(({ onNavigate }: { onNavigate: (path: string) => void }) => {
+  const { menuSize } = useTheme();
+  
+  // Grid com menos colunas no modo "large" para ícones maiores
+  const gridCols = menuSize === 'large'
+    ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6'
+    : 'grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7';
+  
+  const gridGap = menuSize === 'large'
+    ? 'gap-2 sm:gap-3'
+    : 'gap-1.5 sm:gap-2';
+  
+  return (
+    <div className={cn(gridCols, gridGap, 'grid pb-6')}>
+      {MENU_ITEMS.map((item) => (
+        <ThemedMenuButton
+          key={item.path}
+          icon={item.icon}
+          label={item.label}
+          color={item.color}
+          onClick={() => onNavigate(item.path)}
+        />
+      ))}
+    </div>
+  );
+});
 MenuGrid.displayName = 'MenuGrid';
 
 // Home content - separated for better memoization
@@ -271,6 +287,7 @@ const ClientDashboard: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-0.5 sm:gap-1">
+                <MenuSizeToggle />
                 <PanelThemeSelector />
                 {isMaster && <PanelSwitcher />}
                 {license && !isMaster && (
