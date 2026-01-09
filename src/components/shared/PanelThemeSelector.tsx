@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Palette, Lock, Check, Cloud, Sun, Moon } from 'lucide-react';
-import { useTheme as useNextTheme } from 'next-themes';
+import { Palette, Lock, Check, Cloud } from 'lucide-react';
 import { useTheme, SPORT_THEMES, SportTheme } from '@/contexts/ThemeContext';
 import {
   Popover,
@@ -12,17 +11,12 @@ import { cn } from '@/lib/utils';
 
 const PanelThemeSelector: React.FC = () => {
   const { currentTheme, setTheme, themes, isGlobalThemeActive, themeConfig, isSyncing } = useTheme();
-  const { theme: colorMode, setTheme: setColorMode } = useNextTheme();
   const [isOpen, setIsOpen] = React.useState(false);
 
   const handleThemeSelect = (theme: SportTheme) => {
     if (isGlobalThemeActive || theme === currentTheme) return;
     setTheme(theme);
     setIsOpen(false);
-  };
-
-  const toggleColorMode = () => {
-    setColorMode(colorMode === 'dark' ? 'light' : 'dark');
   };
 
   return (
@@ -144,33 +138,6 @@ const PanelThemeSelector: React.FC = () => {
                 </motion.button>
               );
             })}
-          </div>
-          
-          {/* Divider */}
-          <div className="h-px bg-border/50" />
-          
-          {/* Color mode toggle */}
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Modo de cor</span>
-            <button
-              onClick={toggleColorMode}
-              className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all",
-                "bg-muted/50 hover:bg-muted border border-border/50"
-              )}
-            >
-              {colorMode === 'dark' ? (
-                <>
-                  <Moon className="w-3.5 h-3.5 text-blue-400" />
-                  <span className="text-xs text-foreground">Escuro</span>
-                </>
-              ) : (
-                <>
-                  <Sun className="w-3.5 h-3.5 text-yellow-500" />
-                  <span className="text-xs text-foreground">Claro</span>
-                </>
-              )}
-            </button>
           </div>
           
           {/* Current theme name with sync indicator */}
