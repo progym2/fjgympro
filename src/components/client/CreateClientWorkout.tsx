@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { 
   Dumbbell, ArrowLeft, Plus, Trash2, Save, Loader2, 
-  Video, ChevronRight, X, Play, Check, Edit2, Sparkles, FileText
+  Video, ChevronRight, X, Play, Check, Edit2, Sparkles, FileText,
+  GripVertical, Copy
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -385,6 +386,20 @@ const CreateClientWorkout: React.FC<CreateClientWorkoutProps> = ({ onBack, onSuc
     setSelectedExercises(selectedExercises.filter((_, i) => i !== index));
   };
 
+  const duplicateExercise = (index: number) => {
+    const exerciseToDuplicate = selectedExercises[index];
+    const duplicated: SelectedExercise = {
+      ...exerciseToDuplicate,
+      exercise_id: exerciseToDuplicate.exercise_id,
+      exercise: { ...exerciseToDuplicate.exercise },
+      notes: exerciseToDuplicate.notes ? `${exerciseToDuplicate.notes} (cópia)` : ''
+    };
+    const newExercises = [...selectedExercises];
+    newExercises.splice(index + 1, 0, duplicated);
+    setSelectedExercises(newExercises);
+    toast.success(`${exerciseToDuplicate.exercise.name} duplicado!`);
+  };
+
   const clearSelection = () => {
     setSelectedExercises([]);
     setPlanName('');
@@ -396,6 +411,10 @@ const CreateClientWorkout: React.FC<CreateClientWorkoutProps> = ({ onBack, onSuc
     const updated = [...selectedExercises];
     updated[index] = { ...updated[index], [field]: value };
     setSelectedExercises(updated);
+  };
+
+  const handleReorder = (newOrder: SelectedExercise[]) => {
+    setSelectedExercises(newOrder);
   };
 
   const handleSave = async () => {
@@ -800,121 +819,156 @@ const CreateClientWorkout: React.FC<CreateClientWorkoutProps> = ({ onBack, onSuc
             </h3>
           </div>
           
-          <ScrollArea className="max-h-96">
-            <div className="space-y-3 pr-2">
-              {selectedExercises.map((ex, index) => {
-                const groupData = getMuscleGroupData(ex.exercise.muscle_group || '');
-                return (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className={`rounded-xl border-2 ${groupData?.borderColor || 'border-border'} bg-gradient-to-r from-card to-muted/30 overflow-hidden shadow-sm hover:shadow-md transition-shadow`}
-                  >
-                    {/* Header */}
-                    <div className={`px-4 py-3 flex items-center justify-between ${groupData?.bgColor || 'bg-muted/20'}`}>
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-lg overflow-hidden ring-2 ring-white/20 shadow-md flex-shrink-0">
-                          <img 
-                            src={groupData?.image} 
-                            alt={ex.exercise.muscle_group || ''} 
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-bold text-sm text-foreground truncate">{ex.exercise.name}</p>
-                          <p className={`text-xs font-medium ${groupData?.textColor || 'text-muted-foreground'}`}>
-                            {ex.exercise.muscle_group}
-                          </p>
-                        </div>
+          <p className="text-xs text-foreground/60">
+            <GripVertical className="w-3 h-3 inline mr-1" />
+            Arraste para reordenar os exercícios
+          </p>
+          
+          <Reorder.Group 
+            axis="y" 
+            values={selectedExercises} 
+            onReorder={handleReorder}
+            className="space-y-3"
+          >
+            {selectedExercises.map((ex, index) => {
+              const groupData = getMuscleGroupData(ex.exercise.muscle_group || '');
+              return (
+                <Reorder.Item
+                  key={`${ex.exercise_id}-${index}`}
+                  value={ex}
+                  className={`rounded-xl border-2 ${groupData?.borderColor || 'border-border'} bg-gradient-to-r from-card to-muted/30 overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing`}
+                  whileDrag={{ 
+                    scale: 1.02, 
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                    zIndex: 50 
+                  }}
+                >
+                  {/* Header */}
+                  <div className={`px-4 py-3 flex items-center justify-between ${groupData?.bgColor || 'bg-muted/20'}`}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      {/* Drag Handle */}
+                      <div className="flex-shrink-0 text-foreground/40 hover:text-foreground/70 transition-colors">
+                        <GripVertical size={20} />
                       </div>
+                      
+                      {/* Order Number */}
+                      <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-bold text-primary">{index + 1}</span>
+                      </div>
+                      
+                      <div className="w-10 h-10 rounded-lg overflow-hidden ring-2 ring-white/20 shadow-md flex-shrink-0">
+                        <img 
+                          src={groupData?.image} 
+                          alt={ex.exercise.muscle_group || ''} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm text-foreground truncate">{ex.exercise.name}</p>
+                        <p className={`text-xs font-medium ${groupData?.textColor || 'text-muted-foreground'}`}>
+                          {ex.exercise.muscle_group}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-destructive hover:bg-destructive/20 flex-shrink-0"
-                        onClick={() => removeExercise(index)}
+                        className="h-8 w-8 text-primary hover:bg-primary/20"
+                        onClick={() => duplicateExercise(index)}
+                        title="Duplicar exercício"
                       >
-                        <Trash2 size={16} />
+                        <Copy size={14} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:bg-destructive/20"
+                        onClick={() => removeExercise(index)}
+                        title="Remover exercício"
+                      >
+                        <Trash2 size={14} />
                       </Button>
                     </div>
-                    
-                    {/* Config Grid */}
-                    <div className="p-4 bg-card/80">
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-semibold text-foreground/70 flex items-center gap-1">
-                            📊 Séries
-                          </Label>
-                          <Input
-                            type="number"
-                            value={ex.sets}
-                            onChange={(e) => updateExercise(index, 'sets', parseInt(e.target.value) || 3)}
-                            className="h-10 text-center text-base font-bold bg-muted/50 border-2 border-border/60 focus:border-primary"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-semibold text-foreground/70 flex items-center gap-1">
-                            🔄 Reps
-                          </Label>
-                          <Input
-                            type="number"
-                            value={ex.reps}
-                            onChange={(e) => updateExercise(index, 'reps', parseInt(e.target.value) || 12)}
-                            className="h-10 text-center text-base font-bold bg-muted/50 border-2 border-border/60 focus:border-primary"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-semibold text-foreground/70 flex items-center gap-1">
-                            🏋️ Peso (kg)
-                          </Label>
-                          <Input
-                            type="number"
-                            value={ex.weight_kg || ''}
-                            onChange={(e) => updateExercise(index, 'weight_kg', e.target.value ? parseFloat(e.target.value) : null)}
-                            className="h-10 text-center text-base font-bold bg-muted/50 border-2 border-border/60 focus:border-primary"
-                            placeholder="—"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-semibold text-foreground/70 flex items-center gap-1">
-                            ⏱️ Descanso
-                          </Label>
-                          <Input
-                            type="number"
-                            value={ex.rest_seconds}
-                            onChange={(e) => updateExercise(index, 'rest_seconds', parseInt(e.target.value) || 60)}
-                            className="h-10 text-center text-base font-bold bg-muted/50 border-2 border-border/60 focus:border-primary"
-                          />
-                        </div>
-                        <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                          <Label className="text-xs font-semibold text-foreground/70 flex items-center gap-1">
-                            📅 Dia
-                          </Label>
-                          <Select
-                            value={ex.day_of_week?.toString() || 'all'}
-                            onValueChange={(v) => updateExercise(index, 'day_of_week', v === 'all' ? null : parseInt(v))}
-                          >
-                            <SelectTrigger className="h-10 text-sm font-semibold bg-muted/50 border-2 border-border/60">
-                              <SelectValue placeholder="—" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">Todos</SelectItem>
-                              {daysOfWeek.map((day) => (
-                                <SelectItem key={day.value} value={day.value.toString()}>
-                                  {day.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                  </div>
+                  
+                  {/* Config Grid */}
+                  <div className="p-4 bg-card/80">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-foreground/70 flex items-center gap-1">
+                          📊 Séries
+                        </Label>
+                        <Input
+                          type="number"
+                          value={ex.sets}
+                          onChange={(e) => updateExercise(index, 'sets', parseInt(e.target.value) || 3)}
+                          className="h-10 text-center text-base font-bold bg-muted/50 border-2 border-border/60 focus:border-primary"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-foreground/70 flex items-center gap-1">
+                          🔄 Reps
+                        </Label>
+                        <Input
+                          type="number"
+                          value={ex.reps}
+                          onChange={(e) => updateExercise(index, 'reps', parseInt(e.target.value) || 12)}
+                          className="h-10 text-center text-base font-bold bg-muted/50 border-2 border-border/60 focus:border-primary"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-foreground/70 flex items-center gap-1">
+                          🏋️ Peso (kg)
+                        </Label>
+                        <Input
+                          type="number"
+                          value={ex.weight_kg || ''}
+                          onChange={(e) => updateExercise(index, 'weight_kg', e.target.value ? parseFloat(e.target.value) : null)}
+                          className="h-10 text-center text-base font-bold bg-muted/50 border-2 border-border/60 focus:border-primary"
+                          placeholder="—"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-foreground/70 flex items-center gap-1">
+                          ⏱️ Descanso
+                        </Label>
+                        <Input
+                          type="number"
+                          value={ex.rest_seconds}
+                          onChange={(e) => updateExercise(index, 'rest_seconds', parseInt(e.target.value) || 60)}
+                          className="h-10 text-center text-base font-bold bg-muted/50 border-2 border-border/60 focus:border-primary"
+                        />
+                      </div>
+                      <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                        <Label className="text-xs font-semibold text-foreground/70 flex items-center gap-1">
+                          📅 Dia
+                        </Label>
+                        <Select
+                          value={ex.day_of_week?.toString() || 'all'}
+                          onValueChange={(v) => updateExercise(index, 'day_of_week', v === 'all' ? null : parseInt(v))}
+                        >
+                          <SelectTrigger className="h-10 text-sm font-semibold bg-muted/50 border-2 border-border/60">
+                            <SelectValue placeholder="—" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos</SelectItem>
+                            {daysOfWeek.map((day) => (
+                              <SelectItem key={day.value} value={day.value.toString()}>
+                                {day.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </ScrollArea>
+                  </div>
+                </Reorder.Item>
+              );
+            })}
+          </Reorder.Group>
         </motion.div>
       )}
 
