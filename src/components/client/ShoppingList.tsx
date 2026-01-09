@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShoppingCart, Check, FileDown, Share2, Plus, Minus, 
   Trash2, Apple, Beef, Wheat, Droplets, Salad, X,
-  DollarSign, TrendingUp, Wallet
+  DollarSign, TrendingUp, Wallet, Pencil, Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,21 @@ import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import SharePdfDialog from './SharePdfDialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 interface FoodItem {
   id: string;
@@ -49,8 +64,15 @@ interface ShoppingListProps {
   onClose?: () => void;
 }
 
+const DAYS_OPTIONS = [
+  { value: 3, label: '3 dias' },
+  { value: 7, label: '7 dias (1 semana)' },
+  { value: 14, label: '14 dias (2 semanas)' },
+  { value: 30, label: '30 dias (1 mês)' },
+];
+
 // Preços estimados por item (em R$) - baseados em valores médios de mercado
-const FOOD_PRICES: Record<string, { price: number; unit: string }> = {
+const DEFAULT_FOOD_PRICES: Record<string, { price: number; unit: string }> = {
   // Proteínas
   chicken: { price: 2.50, unit: '100g' },      // ~R$25/kg
   eggs: { price: 1.50, unit: '2 ovos' },       // ~R$15/dúzia
@@ -88,12 +110,16 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ReactNode; co
   outros: { label: 'Outros', icon: <Apple className="w-4 h-4" />, color: 'text-purple-500' },
 };
 
-const ShoppingList: React.FC<ShoppingListProps> = ({ meals, daysMultiplier = 7, onClose }) => {
+const ShoppingList: React.FC<ShoppingListProps> = ({ meals, daysMultiplier: initialDays = 7, onClose }) => {
+  const [selectedDays, setSelectedDays] = useState(initialDays);
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [customItems, setCustomItems] = useState<ShoppingItem[]>([]);
   const [newItemName, setNewItemName] = useState('');
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [currentPdf, setCurrentPdf] = useState<{ doc: jsPDF; filename: string } | null>(null);
+  const [customPrices, setCustomPrices] = useState<Record<string, number>>({});
+  const [editingPrice, setEditingPrice] = useState<{ itemId: string; name: string; currentPrice: number } | null>(null);
+  const [tempPrice, setTempPrice] = useState('');
 
   // Aggregate foods from all meals with prices
   const shoppingItems = useMemo(() => {
@@ -103,7 +129,8 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ meals, daysMultiplier = 7, 
       meal.foods.forEach(food => {
         const baseId = food.id.split('-')[0]; // Remove timestamp suffix
         const existing = foodMap.get(baseId);
-        const priceInfo = FOOD_PRICES[baseId] || { price: 5.00, unit: food.portion };
+        const defaultPriceInfo = DEFAULT_FOOD_PRICES[baseId] || { price: 5.00, unit: food.portion };
+        const customPrice = customPrices[baseId];
         
         if (existing) {
           existing.quantity += 1;
@@ -115,7 +142,7 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ meals, daysMultiplier = 7, 
             quantity: 1,
             portion: food.portion,
             checked: false,
-            pricePerUnit: priceInfo.price,
+            pricePerUnit: customPrice !== undefined ? customPrice : defaultPriceInfo.price,
           });
         }
       });
@@ -124,11 +151,11 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ meals, daysMultiplier = 7, 
     // Multiply by days
     const items = Array.from(foodMap.values()).map(item => ({
       ...item,
-      quantity: item.quantity * daysMultiplier,
+      quantity: item.quantity * selectedDays,
     }));
 
     return items.sort((a, b) => a.category.localeCompare(b.category));
-  }, [meals, daysMultiplier]);
+  }, [meals, selectedDays, customPrices]);
 
   // Group items by category
   const groupedItems = useMemo(() => {
@@ -161,8 +188,8 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ meals, daysMultiplier = 7, 
       categoryBudgets[cat] = (categoryBudgets[cat] || 0) + (item.pricePerUnit * item.quantity);
     });
     
-    return { totalBudget, checkedBudget, remainingBudget, categoryBudgets };
-  }, [shoppingItems, customItems, checkedItems]);
+    return { totalBudget, checkedBudget, remainingBudget, categoryBudgets, dailyCost: totalBudget / selectedDays };
+  }, [shoppingItems, customItems, checkedItems, selectedDays]);
 
   const toggleItem = (itemId: string) => {
     setCheckedItems(prev => {
@@ -207,16 +234,56 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ meals, daysMultiplier = 7, 
     }));
   };
 
-  const updatePrice = (itemId: string, newPrice: number) => {
-    // Update in custom items
-    if (itemId.startsWith('custom-')) {
+  const openPriceEditor = (itemId: string, name: string, currentPrice: number) => {
+    setEditingPrice({ itemId, name, currentPrice });
+    setTempPrice(currentPrice.toFixed(2).replace('.', ','));
+  };
+
+  const savePriceEdit = () => {
+    if (!editingPrice) return;
+    
+    const parsedPrice = parseFloat(tempPrice.replace(',', '.'));
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      toast.error('Preço inválido');
+      return;
+    }
+    
+    if (editingPrice.itemId.startsWith('custom-')) {
       setCustomItems(prev => prev.map(item => {
-        if (item.id === itemId) {
-          return { ...item, pricePerUnit: newPrice };
+        if (item.id === editingPrice.itemId) {
+          return { ...item, pricePerUnit: parsedPrice };
         }
         return item;
       }));
+    } else {
+      setCustomPrices(prev => ({
+        ...prev,
+        [editingPrice.itemId]: parsedPrice
+      }));
     }
+    
+    toast.success(`Preço de "${editingPrice.name}" atualizado!`);
+    setEditingPrice(null);
+    setTempPrice('');
+  };
+
+  const resetPrice = (itemId: string) => {
+    if (itemId.startsWith('custom-')) {
+      setCustomItems(prev => prev.map(item => {
+        if (item.id === itemId) {
+          return { ...item, pricePerUnit: 5.00 };
+        }
+        return item;
+      }));
+    } else {
+      setCustomPrices(prev => {
+        const newPrices = { ...prev };
+        delete newPrices[itemId];
+        return newPrices;
+      });
+    }
+    toast.success('Preço restaurado ao padrão');
+    setEditingPrice(null);
   };
 
   const totalItems = shoppingItems.length + customItems.length;
@@ -242,7 +309,7 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ meals, daysMultiplier = 7, 
     
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Cardápio para ${daysMultiplier} dias`, pageWidth / 2, 30, { align: 'center' });
+    doc.text(`Cardápio para ${selectedDays} dias`, pageWidth / 2, 30, { align: 'center' });
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -335,7 +402,7 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ meals, daysMultiplier = 7, 
     doc.setFont('helvetica', 'normal');
     doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} - Gym Pro Fitness`, pageWidth / 2, footerY + 15, { align: 'center' });
     
-    return { doc, filename: `lista-compras-${daysMultiplier}dias.pdf` };
+    return { doc, filename: `lista-compras-${selectedDays}dias.pdf` };
   };
 
   const handleExportPDF = () => {
@@ -363,7 +430,7 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ meals, daysMultiplier = 7, 
       })
       .join('\n\n');
     
-    const message = `🛒 *Lista de Compras - ${daysMultiplier} dias*\n\n${itemsList}\n\n💰 *TOTAL: ${formatCurrency(budgetInfo.totalBudget)}*\n\n_Gerado por Gym Pro Fitness_`;
+    const message = `🛒 *Lista de Compras - ${selectedDays} dias*\n\n${itemsList}\n\n💰 *TOTAL: ${formatCurrency(budgetInfo.totalBudget)}*\n📆 Custo diário: ${formatCurrency(budgetInfo.dailyCost)}\n\n_Gerado por Gym Pro Fitness_`;
     
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
@@ -395,15 +462,33 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ meals, daysMultiplier = 7, 
           <div>
             <h3 className="font-semibold">Lista de Compras</h3>
             <p className="text-sm text-muted-foreground">
-              {checkedCount} de {totalItems} itens • {daysMultiplier} dias
+              {checkedCount} de {totalItems} itens
             </p>
           </div>
         </div>
         
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
+          {/* Days selector */}
+          <Select
+            value={selectedDays.toString()}
+            onValueChange={(value) => setSelectedDays(parseInt(value))}
+          >
+            <SelectTrigger className="w-[160px]">
+              <Calendar className="w-4 h-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {DAYS_OPTIONS.map(option => (
+                <SelectItem key={option.value} value={option.value.toString()}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
           <Button variant="outline" size="sm" onClick={handleExportPDF}>
             <FileDown className="w-4 h-4 mr-2" />
-            Exportar PDF
+            PDF
           </Button>
           <Button variant="outline" size="sm" onClick={handleShare}>
             <Share2 className="w-4 h-4 mr-2" />
@@ -459,10 +544,10 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ meals, daysMultiplier = 7, 
           <CardContent className="p-3">
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="w-4 h-4 text-purple-500" />
-              <span className="text-xs text-muted-foreground">Por Dia</span>
+              <span className="text-xs text-muted-foreground">Por Dia ({selectedDays} dias)</span>
             </div>
             <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
-              {formatCurrency(budgetInfo.totalBudget / daysMultiplier)}
+              {formatCurrency(budgetInfo.dailyCost)}
             </p>
           </CardContent>
         </Card>
@@ -538,9 +623,13 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ meals, daysMultiplier = 7, 
                           
                           <div className={`flex-1 min-w-0 ${isChecked ? 'line-through text-muted-foreground' : ''}`}>
                             <p className="font-medium text-sm truncate">{item.name}</p>
-                            <p className="text-xs text-muted-foreground">
+                            <button
+                              onClick={() => openPriceEditor(item.id, item.name, item.pricePerUnit)}
+                              className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
+                            >
                               {item.portion} • {formatCurrency(item.pricePerUnit)}/un
-                            </p>
+                              <Pencil className="w-3 h-3" />
+                            </button>
                           </div>
                           
                           <div className="flex items-center gap-2">
@@ -616,10 +705,62 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ meals, daysMultiplier = 7, 
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            * Preços estimados baseados em valores médios de mercado
+            * Clique no preço de qualquer item para editar manualmente
           </p>
         </CardContent>
       </Card>
+
+      {/* Price Edit Dialog */}
+      <Dialog open={!!editingPrice} onOpenChange={(open) => !open && setEditingPrice(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5" />
+              Editar Preço
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div>
+              <Label className="text-muted-foreground">Item</Label>
+              <p className="font-medium">{editingPrice?.name}</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="price">Preço por unidade (R$)</Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
+                  <Input
+                    id="price"
+                    value={tempPrice}
+                    onChange={(e) => setTempPrice(e.target.value)}
+                    placeholder="0,00"
+                    className="pl-10"
+                    onKeyDown={(e) => e.key === 'Enter' && savePriceEdit()}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Preço padrão: {formatCurrency(DEFAULT_FOOD_PRICES[editingPrice?.itemId || '']?.price || 5.00)}
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => editingPrice && resetPrice(editingPrice.itemId)}
+            >
+              Restaurar Padrão
+            </Button>
+            <Button onClick={savePriceEdit}>
+              <Check className="w-4 h-4 mr-2" />
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Share Dialog */}
       <SharePdfDialog
