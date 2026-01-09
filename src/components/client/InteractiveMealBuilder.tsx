@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Utensils, Plus, Trash2, Calculator, Save, Loader2, 
   Apple, Beef, Wheat, Droplets, Coffee, Moon, Sun, 
   Flame, Target, ChevronRight, Check, Sparkles, History,
-  Copy, Clock
+  Copy, Clock, Zap, TrendingDown, TrendingUp, Scale, 
+  Lightbulb, LayoutTemplate
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,6 +31,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface FoodItem {
   id: string;
@@ -69,6 +77,19 @@ interface SavedPlan {
   created_at: string;
 }
 
+interface DietTemplate {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  color: string;
+  calorieMultiplier: number;
+  proteinMultiplier: number;
+  carbsPercentage: number;
+  fatPercentage: number;
+  meals: { mealId: string; foods: string[] }[];
+}
+
 const FOOD_DATABASE: FoodItem[] = [
   // Proteínas
   { id: 'chicken', name: 'Frango Grelhado', calories: 165, protein: 31, carbs: 0, fat: 3.6, portion: '100g', category: 'proteina' },
@@ -99,6 +120,66 @@ const FOOD_DATABASE: FoodItem[] = [
   { id: 'spinach', name: 'Espinafre', calories: 23, protein: 2.9, carbs: 3.6, fat: 0.4, portion: '100g', category: 'vegetal' },
 ];
 
+const DIET_TEMPLATES: DietTemplate[] = [
+  {
+    id: 'cutting',
+    name: 'Cutting',
+    description: 'Déficit calórico para perda de gordura mantendo massa muscular',
+    icon: <TrendingDown className="w-5 h-5" />,
+    color: 'text-blue-500',
+    calorieMultiplier: 0.8,
+    proteinMultiplier: 2.2,
+    carbsPercentage: 35,
+    fatPercentage: 25,
+    meals: [
+      { mealId: 'breakfast', foods: ['eggs', 'oats', 'banana'] },
+      { mealId: 'morning_snack', foods: ['whey', 'nuts'] },
+      { mealId: 'lunch', foods: ['chicken', 'rice', 'broccoli', 'salad'] },
+      { mealId: 'afternoon_snack', foods: ['tuna', 'bread'] },
+      { mealId: 'dinner', foods: ['fish', 'sweet_potato', 'spinach'] },
+      { mealId: 'supper', foods: ['eggs'] },
+    ]
+  },
+  {
+    id: 'bulking',
+    name: 'Bulking',
+    description: 'Superávit calórico para ganho de massa muscular',
+    icon: <TrendingUp className="w-5 h-5" />,
+    color: 'text-green-500',
+    calorieMultiplier: 1.15,
+    proteinMultiplier: 2.0,
+    carbsPercentage: 50,
+    fatPercentage: 25,
+    meals: [
+      { mealId: 'breakfast', foods: ['eggs', 'oats', 'banana', 'peanut_butter'] },
+      { mealId: 'morning_snack', foods: ['whey', 'banana', 'nuts'] },
+      { mealId: 'lunch', foods: ['beef', 'rice', 'broccoli', 'olive_oil'] },
+      { mealId: 'afternoon_snack', foods: ['chicken', 'bread', 'avocado'] },
+      { mealId: 'dinner', foods: ['fish', 'pasta', 'salad', 'olive_oil'] },
+      { mealId: 'supper', foods: ['whey', 'peanut_butter'] },
+    ]
+  },
+  {
+    id: 'maintenance',
+    name: 'Manutenção',
+    description: 'Manter peso atual com dieta equilibrada',
+    icon: <Scale className="w-5 h-5" />,
+    color: 'text-orange-500',
+    calorieMultiplier: 1.0,
+    proteinMultiplier: 1.8,
+    carbsPercentage: 45,
+    fatPercentage: 25,
+    meals: [
+      { mealId: 'breakfast', foods: ['eggs', 'bread', 'banana'] },
+      { mealId: 'morning_snack', foods: ['nuts'] },
+      { mealId: 'lunch', foods: ['chicken', 'rice', 'salad', 'olive_oil'] },
+      { mealId: 'afternoon_snack', foods: ['whey', 'banana'] },
+      { mealId: 'dinner', foods: ['fish', 'sweet_potato', 'broccoli'] },
+      { mealId: 'supper', foods: ['eggs'] },
+    ]
+  }
+];
+
 const INITIAL_MEALS: MealSlot[] = [
   { id: 'breakfast', name: 'Café da Manhã', icon: <Coffee className="w-5 h-5" />, time: '07:00', foods: [] },
   { id: 'morning_snack', name: 'Lanche da Manhã', icon: <Apple className="w-5 h-5" />, time: '10:00', foods: [] },
@@ -126,6 +207,8 @@ const InteractiveMealBuilder: React.FC = () => {
   const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [addedFoodId, setAddedFoodId] = useState<string | null>(null);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     if (profile?.profile_id) {
@@ -289,13 +372,124 @@ const InteractiveMealBuilder: React.FC = () => {
     });
   };
 
+  // Get current totals first
+  const totals = getTotals();
+  
+  // Calculate remaining nutrients
+  const remaining = useMemo(() => ({
+    calories: Math.max(0, dailyGoals.calories - totals.calories),
+    protein: Math.max(0, dailyGoals.protein - totals.protein),
+    carbs: Math.max(0, dailyGoals.carbs - totals.carbs),
+    fat: Math.max(0, dailyGoals.fat - totals.fat)
+  }), [dailyGoals, totals.calories, totals.protein, totals.carbs, totals.fat]);
+
+  // Smart food suggestions based on remaining goals
+  const suggestedFoods = useMemo(() => {
+    const suggestions: { food: FoodItem; reason: string; priority: number }[] = [];
+    
+    // Analyze what's needed
+    const needsProtein = remaining.protein > 20;
+    const needsCarbs = remaining.carbs > 30;
+    const needsFat = remaining.fat > 10;
+    const caloriesLeft = remaining.calories;
+    
+    FOOD_DATABASE.forEach(food => {
+      let priority = 0;
+      let reasons: string[] = [];
+      
+      // Only suggest if we have calories left
+      if (food.calories <= caloriesLeft + 50) {
+        // High protein need
+        if (needsProtein && food.protein >= 15) {
+          priority += food.protein * 2;
+          reasons.push(`+${food.protein}g proteína`);
+        }
+        
+        // Carbs need
+        if (needsCarbs && food.carbs >= 15 && food.category === 'carboidrato') {
+          priority += food.carbs;
+          reasons.push(`+${food.carbs}g carbos`);
+        }
+        
+        // Fat need
+        if (needsFat && food.fat >= 8 && food.category === 'gordura') {
+          priority += food.fat * 1.5;
+          reasons.push(`+${food.fat}g gordura`);
+        }
+        
+        // Low calorie options when close to goal
+        if (caloriesLeft < 300 && food.calories < 100) {
+          priority += 10;
+          reasons.push('baixa caloria');
+        }
+        
+        // Vegetables are always good
+        if (food.category === 'vegetal') {
+          priority += 5;
+          reasons.push('rico em fibras');
+        }
+        
+        if (priority > 0) {
+          suggestions.push({ 
+            food, 
+            reason: reasons.slice(0, 2).join(', '), 
+            priority 
+          });
+        }
+      }
+    });
+    
+    return suggestions
+      .sort((a, b) => b.priority - a.priority)
+      .slice(0, 6);
+  }, [remaining]);
+
+  // Apply diet template
+  const applyTemplate = (template: DietTemplate) => {
+    const weight = profileData?.weight_kg || 70;
+    
+    // Calculate goals based on template
+    const baseCalories = dailyGoals.calories / (profileData?.fitness_goal === 'weight_loss' ? 0.85 : 1);
+    const targetCalories = Math.round(baseCalories * template.calorieMultiplier);
+    const protein = Math.round(weight * template.proteinMultiplier);
+    const fat = Math.round((targetCalories * template.fatPercentage / 100) / 9);
+    const carbs = Math.round((targetCalories * template.carbsPercentage / 100) / 4);
+    
+    setDailyGoals({
+      calories: targetCalories,
+      protein,
+      carbs,
+      fat
+    });
+    
+    // Populate meals with template foods
+    const newMeals = INITIAL_MEALS.map(meal => {
+      const templateMeal = template.meals.find(m => m.mealId === meal.id);
+      if (templateMeal) {
+        const foods = templateMeal.foods
+          .map(foodId => {
+            const food = FOOD_DATABASE.find(f => f.id === foodId);
+            return food ? { ...food, id: `${food.id}-${Date.now()}-${Math.random()}` } : null;
+          })
+          .filter(Boolean) as FoodItem[];
+        return { ...meal, foods };
+      }
+      return meal;
+    });
+    
+    setMeals(newMeals);
+    setPlanName(`Cardápio ${template.name}`);
+    setShowTemplates(false);
+    toast.success(`Template "${template.name}" aplicado!`);
+  };
+
   const handleSave = async () => {
     if (!profile?.profile_id || !planName.trim()) {
       toast.error('Digite um nome para o cardápio');
       return;
     }
 
-    const totals = getTotals();
+    const currentTotals = getTotals();
     setSaving(true);
 
     try {
@@ -307,10 +501,10 @@ const InteractiveMealBuilder: React.FC = () => {
         created_by: profile.profile_id,
         name: planName,
         description,
-        total_calories: totals.calories,
-        protein_grams: totals.protein,
-        carbs_grams: totals.carbs,
-        fat_grams: totals.fat,
+        total_calories: currentTotals.calories,
+        protein_grams: currentTotals.protein,
+        carbs_grams: currentTotals.carbs,
+        fat_grams: currentTotals.fat,
         is_instructor_plan: false,
         is_active: true
       });
@@ -328,7 +522,6 @@ const InteractiveMealBuilder: React.FC = () => {
     }
   };
 
-  const totals = getTotals();
   const filteredFoods = selectedCategory === 'todos' 
     ? FOOD_DATABASE 
     : FOOD_DATABASE.filter(f => f.category === selectedCategory);
@@ -342,6 +535,135 @@ const InteractiveMealBuilder: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Templates & Suggestions Bar */}
+      <div className="flex flex-wrap gap-2">
+        <Dialog open={showTemplates} onOpenChange={setShowTemplates}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <LayoutTemplate className="w-4 h-4" />
+              Templates
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 font-bebas text-xl">
+                <LayoutTemplate className="w-5 h-5 text-orange-500" />
+                TEMPLATES DE DIETA
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 mt-4">
+              {DIET_TEMPLATES.map((template, index) => (
+                <motion.button
+                  key={template.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  onClick={() => applyTemplate(template)}
+                  className="w-full p-4 bg-background/50 rounded-lg border border-border/50 hover:border-orange-500/50 hover:bg-orange-500/5 text-left transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg bg-background ${template.color}`}>
+                      {template.icon}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium">{template.name}</h4>
+                      <p className="text-xs text-muted-foreground">{template.description}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-orange-500 transition-colors" />
+                  </div>
+                  <div className="flex gap-3 mt-3 text-xs">
+                    <Badge variant="outline" className="bg-background/80">
+                      Calorias: {template.calorieMultiplier > 1 ? '+' : ''}{Math.round((template.calorieMultiplier - 1) * 100)}%
+                    </Badge>
+                    <Badge variant="outline" className="bg-background/80">
+                      Proteína: {template.proteinMultiplier}g/kg
+                    </Badge>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+        
+        <Button 
+          variant={showSuggestions ? "default" : "outline"} 
+          size="sm" 
+          className="gap-2"
+          onClick={() => setShowSuggestions(!showSuggestions)}
+        >
+          <Lightbulb className="w-4 h-4" />
+          Sugestões Inteligentes
+        </Button>
+      </div>
+
+      {/* Smart Suggestions Panel */}
+      <AnimatePresence>
+        {showSuggestions && suggestedFoods.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 backdrop-blur-md rounded-xl p-4 border border-purple-500/30"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Zap className="w-5 h-5 text-purple-500" />
+              <h3 className="font-bebas text-lg text-purple-500">SUGESTÕES PARA SUAS METAS</h3>
+            </div>
+            
+            <div className="flex flex-wrap gap-2 mb-3 text-xs">
+              <Badge variant="outline" className="bg-background/50">
+                Faltam: {remaining.calories} kcal
+              </Badge>
+              <Badge variant="outline" className="bg-background/50 text-red-400">
+                {remaining.protein}g proteína
+              </Badge>
+              <Badge variant="outline" className="bg-background/50 text-blue-400">
+                {remaining.carbs}g carbos
+              </Badge>
+              <Badge variant="outline" className="bg-background/50 text-yellow-400">
+                {remaining.fat}g gordura
+              </Badge>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {suggestedFoods.map((item, index) => (
+                <motion.button
+                  key={item.food.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => {
+                    if (selectedMeal) {
+                      addFoodToMeal(item.food);
+                    } else {
+                      toast.info('Selecione uma refeição primeiro');
+                    }
+                  }}
+                  className={`p-3 bg-background/50 rounded-lg border text-left transition-all ${
+                    selectedMeal 
+                      ? 'border-purple-500/30 hover:border-purple-500 hover:bg-purple-500/10 cursor-pointer' 
+                      : 'border-border/30 opacity-60'
+                  }`}
+                >
+                  <p className="text-sm font-medium truncate">{item.food.name}</p>
+                  <p className="text-xs text-purple-400 mt-1">{item.reason}</p>
+                  <div className="flex gap-2 mt-1 text-xs text-muted-foreground">
+                    <span>{item.food.calories}kcal</span>
+                    <span>P{item.food.protein}g</span>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+            
+            {!selectedMeal && (
+              <p className="text-xs text-muted-foreground text-center mt-3">
+                Selecione uma refeição para adicionar sugestões
+              </p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header with Goals */}
       <div className="bg-gradient-to-br from-orange-500/20 to-yellow-500/20 backdrop-blur-md rounded-xl p-4 sm:p-6 border border-orange-500/30">
         <div className="flex items-center justify-between mb-4">
