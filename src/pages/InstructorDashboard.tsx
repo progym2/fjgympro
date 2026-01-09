@@ -29,9 +29,10 @@ import PanelSwitcher from '@/components/PanelSwitcher';
 
 import PanelThemeSelector from '@/components/shared/PanelThemeSelector';
 import MenuSizeToggle from '@/components/shared/MenuSizeToggle';
+import LayoutModeToggle from '@/components/shared/LayoutModeToggle';
 import InstructorSelector from '@/components/instructor/InstructorSelector';
 import ProfileAvatar from '@/components/shared/ProfileAvatar';
-import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
+import { ThemedMenuButton, ThemedListItem, ThemedHeader } from '@/components/themed';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
@@ -78,7 +79,7 @@ const InstructorDashboard: React.FC = () => {
   const { user, profile, role, license, signOut, licenseExpired, isLicenseValid, isLoading: authLoading } = useAuth();
   const { playClickSound } = useAudio();
   const { isLoaded: bgLoaded } = useProgressiveImage(bgPanels);
-  const { menuSize } = useTheme();
+  const { menuSize, menuLayout } = useTheme();
   const [aboutOpen, setAboutOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [linkedStudentsCount, setLinkedStudentsCount] = useState(0);
@@ -159,27 +160,27 @@ const InstructorDashboard: React.FC = () => {
     setLogoutDialogOpen(true);
   };
 
-  // Memoize menu items - Softer colors
+  // Memoize menu items - Softer colors with descriptions
   const menuItems = useMemo(() => [
-    { icon: UserCog, label: 'Meu Perfil', path: 'profile', color: 'text-sky-400' },
-    { icon: Users, label: 'Meus Alunos', path: 'students', color: 'text-blue-400' },
-    { icon: UserPlus, label: 'Vincular Aluno', path: 'link-student', color: 'text-green-400' },
-    { icon: UserMinus, label: 'Desvincular Aluno', path: 'unlink-student', color: 'text-red-400' },
-    { icon: History, label: 'Histórico de Vínculos', path: 'link-history', color: 'text-slate-400' },
-    { icon: Library, label: 'Biblioteca de Exercícios', path: 'exercises', color: 'text-teal-400' },
-    { icon: Dumbbell, label: 'Criar Treinos', path: 'create-workout', color: 'text-primary/80' },
-    { icon: ClipboardList, label: 'Planos de Treino', path: 'workout-plans', color: 'text-purple-400' },
-    { icon: CalendarDays, label: 'Calendário Alunos', path: 'student-calendar', color: 'text-violet-400' },
-    { icon: Utensils, label: 'Planos Alimentares', path: 'meal-plans', color: 'text-orange-400' },
-    { icon: Calendar, label: 'Agenda', path: 'schedule', color: 'text-cyan-400' },
-    { icon: TrendingUp, label: 'Progresso Alunos', path: 'progress', color: 'text-yellow-400' },
-    { icon: Camera, label: 'Galeria Evolução', path: 'student-gallery', color: 'text-purple-400' },
-    { icon: CreditCard, label: 'Financeiro', path: 'finance', color: 'text-emerald-400' },
-    { icon: FileText, label: 'Relatórios', path: 'reports', color: 'text-indigo-400' },
-    { icon: Bell, label: 'Notificações', path: 'notifications', color: 'text-pink-400' },
-    { icon: QrCode, label: 'Meu QR Code', path: 'my-qrcode', color: 'text-lime-400' },
-    { icon: QrCode, label: 'Leitor QR Code', path: 'qr-scanner', color: 'text-amber-400' },
-    { icon: HardDrive, label: 'Backup & Sync', path: 'backup', color: 'text-slate-400' },
+    { icon: UserCog, label: 'Meu Perfil', path: 'profile', color: 'text-sky-400', description: 'Dados pessoais e CREF' },
+    { icon: Users, label: 'Meus Alunos', path: 'students', color: 'text-blue-400', description: 'Gerenciar alunos vinculados' },
+    { icon: UserPlus, label: 'Vincular Aluno', path: 'link-student', color: 'text-green-400', description: 'Adicionar novo aluno' },
+    { icon: UserMinus, label: 'Desvincular Aluno', path: 'unlink-student', color: 'text-red-400', description: 'Remover vínculo' },
+    { icon: History, label: 'Histórico de Vínculos', path: 'link-history', color: 'text-slate-400', description: 'Ver histórico completo' },
+    { icon: Library, label: 'Biblioteca de Exercícios', path: 'exercises', color: 'text-teal-400', description: 'Exercícios disponíveis' },
+    { icon: Dumbbell, label: 'Criar Treinos', path: 'create-workout', color: 'text-primary/80', description: 'Montar novo treino' },
+    { icon: ClipboardList, label: 'Planos de Treino', path: 'workout-plans', color: 'text-purple-400', description: 'Gerenciar planos' },
+    { icon: CalendarDays, label: 'Calendário Alunos', path: 'student-calendar', color: 'text-violet-400', description: 'Agenda dos alunos' },
+    { icon: Utensils, label: 'Planos Alimentares', path: 'meal-plans', color: 'text-orange-400', description: 'Dietas personalizadas' },
+    { icon: Calendar, label: 'Agenda', path: 'schedule', color: 'text-cyan-400', description: 'Sua agenda pessoal' },
+    { icon: TrendingUp, label: 'Progresso Alunos', path: 'progress', color: 'text-yellow-400', description: 'Evolução dos alunos' },
+    { icon: Camera, label: 'Galeria Evolução', path: 'student-gallery', color: 'text-purple-400', description: 'Fotos de progresso' },
+    { icon: CreditCard, label: 'Financeiro', path: 'finance', color: 'text-emerald-400', description: 'Pagamentos e mensalidades' },
+    { icon: FileText, label: 'Relatórios', path: 'reports', color: 'text-indigo-400', description: 'Relatórios gerenciais' },
+    { icon: Bell, label: 'Notificações', path: 'notifications', color: 'text-pink-400', description: 'Enviar alertas' },
+    { icon: QrCode, label: 'Meu QR Code', path: 'my-qrcode', color: 'text-lime-400', description: 'Seu código QR' },
+    { icon: QrCode, label: 'Leitor QR Code', path: 'qr-scanner', color: 'text-amber-400', description: 'Escanear códigos' },
+    { icon: HardDrive, label: 'Backup & Sync', path: 'backup', color: 'text-slate-400', description: 'Sincronização de dados' },
   ], []);
 
   // Show fitness loading screen during initial load
@@ -239,6 +240,7 @@ const InstructorDashboard: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-0.5 sm:gap-1">
+                <LayoutModeToggle />
                 <MenuSizeToggle />
                 <PanelThemeSelector />
                 {isMaster && <InstructorSelector compact />}
@@ -281,22 +283,37 @@ const InstructorDashboard: React.FC = () => {
                     <PendingStudents />
                   </Suspense>
                   
-                  <div className={cn(
-                    'grid pb-4',
-                    menuSize === 'large'
-                      ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3'
-                      : 'grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-1.5 sm:gap-2'
-                  )}>
-                    {menuItems.map((item) => (
-                      <ThemedMenuButton
-                        key={item.path}
-                        icon={item.icon}
-                        label={item.label}
-                        color={item.color}
-                        onClick={() => { playClickSound(); navigate(item.path); }}
-                      />
-                    ))}
-                  </div>
+                  {menuLayout === 'list' ? (
+                    <div className="space-y-2 pb-4">
+                      {menuItems.map((item) => (
+                        <ThemedListItem
+                          key={item.path}
+                          icon={item.icon}
+                          label={item.label}
+                          description={item.description}
+                          color={item.color}
+                          onClick={() => { playClickSound(); navigate(item.path); }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={cn(
+                      'grid pb-4',
+                      menuSize === 'large'
+                        ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3'
+                        : 'grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-1.5 sm:gap-2'
+                    )}>
+                      {menuItems.map((item) => (
+                        <ThemedMenuButton
+                          key={item.path}
+                          icon={item.icon}
+                          label={item.label}
+                          color={item.color}
+                          onClick={() => { playClickSound(); navigate(item.path); }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               } />
               <Route path="profile" element={<InstructorProfile />} />

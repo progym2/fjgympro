@@ -79,6 +79,8 @@ const ComponentLoader = memo(() => (
 ));
 ComponentLoader.displayName = 'ComponentLoader';
 
+import { Settings } from 'lucide-react';
+
 // Menu items - Softer colors for better readability
 const MENU_ITEMS = [
   // Core training features
@@ -106,9 +108,10 @@ const MENU_ITEMS = [
   { icon: History, label: 'Histórico Vínculos', path: 'link-history', color: 'text-indigo-400', description: 'Histórico de conexões' },
   { icon: UserMinus, label: 'Desvincular', path: 'unlink', color: 'text-red-400', description: 'Remover vínculo' },
   
-  // Offline & Sync
+  // Offline & Sync & Settings
   { icon: HardDrive, label: 'Download Offline', path: 'offline-download', color: 'text-emerald-400', description: 'Baixar dados offline' },
   { icon: HardDrive, label: 'Backup & Sync', path: 'sync', color: 'text-slate-400', description: 'Sincronização de dados' },
+  { icon: Settings, label: 'Configurações', path: '/settings', color: 'text-gray-400', description: 'Preferências do app' },
 ] as const;
 
 // Memoized menu grid - layout otimizado baseado no menuSize e menuLayout

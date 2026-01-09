@@ -29,8 +29,9 @@ import PanelSwitcher from '@/components/PanelSwitcher';
 
 import PanelThemeSelector from '@/components/shared/PanelThemeSelector';
 import MenuSizeToggle from '@/components/shared/MenuSizeToggle';
+import LayoutModeToggle from '@/components/shared/LayoutModeToggle';
 import ProfileAvatar from '@/components/shared/ProfileAvatar';
-import { ThemedMenuButton, ThemedHeader } from '@/components/themed';
+import { ThemedMenuButton, ThemedListItem, ThemedHeader } from '@/components/themed';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
@@ -81,7 +82,7 @@ const AdminDashboard: React.FC = () => {
   const { user, profile, role, license, signOut, licenseExpired, isLicenseValid, isLoading: authLoading } = useAuth();
   const { playClickSound } = useAudio();
   const { isLoaded: bgLoaded } = useProgressiveImage(bgPanels);
-  const { menuSize } = useTheme();
+  const { menuSize, menuLayout } = useTheme();
   const [aboutOpen, setAboutOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -127,31 +128,31 @@ const AdminDashboard: React.FC = () => {
     setLogoutDialogOpen(true);
   };
 
-  // Memoize menu items - Softer colors
+  // Memoize menu items - Softer colors with descriptions
   const menuItems = useMemo(() => [
-    { icon: UserPlus, label: 'Cadastrar Cliente', path: 'register-client', color: 'text-blue-400' },
-    { icon: Dumbbell, label: 'Cadastrar Instrutor', path: 'register-instructor', color: 'text-green-400' },
-    { icon: Users, label: 'Consultar Cadastros', path: 'list-users', color: 'text-purple-400' },
-    { icon: DollarSign, label: 'Receber Mensalidade', path: 'receive-payment', color: 'text-emerald-400' },
-    { icon: FileText, label: 'Gerar Carnês', path: 'payment-plans', color: 'text-cyan-400' },
-    { icon: BarChart3, label: 'Dashboard Financeiro', path: 'dashboard', color: 'text-indigo-400' },
-    { icon: CreditCard, label: 'Financeiro', path: 'finance', color: 'text-teal-400' },
-    { icon: AlertTriangle, label: 'Inadimplentes', path: 'defaulters', color: 'text-red-400' },
-    { icon: Bell, label: 'Enviar Alertas', path: 'alerts', color: 'text-pink-400' },
-    { icon: QrCode, label: 'Leitor QR Code', path: 'qr-scanner', color: 'text-amber-400' },
-    { icon: HardDrive, label: 'Backup & Sync', path: 'backup', color: 'text-slate-400' },
-    { icon: Settings, label: 'Configurações', path: 'settings', color: 'text-gray-400' },
+    { icon: UserPlus, label: 'Cadastrar Cliente', path: 'register-client', color: 'text-blue-400', description: 'Novo cliente no sistema' },
+    { icon: Dumbbell, label: 'Cadastrar Instrutor', path: 'register-instructor', color: 'text-green-400', description: 'Novo instrutor' },
+    { icon: Users, label: 'Consultar Cadastros', path: 'list-users', color: 'text-purple-400', description: 'Buscar usuários' },
+    { icon: DollarSign, label: 'Receber Mensalidade', path: 'receive-payment', color: 'text-emerald-400', description: 'Registrar pagamentos' },
+    { icon: FileText, label: 'Gerar Carnês', path: 'payment-plans', color: 'text-cyan-400', description: 'Criar carnês de pagamento' },
+    { icon: BarChart3, label: 'Dashboard Financeiro', path: 'dashboard', color: 'text-indigo-400', description: 'Visão geral financeira' },
+    { icon: CreditCard, label: 'Financeiro', path: 'finance', color: 'text-teal-400', description: 'Gerenciar finanças' },
+    { icon: AlertTriangle, label: 'Inadimplentes', path: 'defaulters', color: 'text-red-400', description: 'Clientes em atraso' },
+    { icon: Bell, label: 'Enviar Alertas', path: 'alerts', color: 'text-pink-400', description: 'Notificações aos clientes' },
+    { icon: QrCode, label: 'Leitor QR Code', path: 'qr-scanner', color: 'text-amber-400', description: 'Escanear códigos' },
+    { icon: HardDrive, label: 'Backup & Sync', path: 'backup', color: 'text-slate-400', description: 'Sincronização de dados' },
+    { icon: Settings, label: 'Configurações', path: 'settings', color: 'text-gray-400', description: 'Configurações do sistema' },
   ], []);
 
   const masterItems = useMemo(() => [
-    { icon: Trash2, label: 'Lixeira', path: 'trash', color: 'text-red-400' },
-    { icon: Activity, label: 'Logs de Acesso', path: 'access-logs', color: 'text-cyan-400' },
-    { icon: Dumbbell, label: 'Ver Instrutores', path: 'view-instructors', color: 'text-green-400' },
-    { icon: DollarSign, label: 'Financeiro Instrutores', path: 'instructor-finance', color: 'text-emerald-400' },
-    { icon: Key, label: 'Senhas Trial', path: 'trial-passwords', color: 'text-cyan-400' },
-    { icon: Key, label: 'Contas Pré-Geradas', path: 'pre-generated', color: 'text-yellow-400' },
-    { icon: FlaskConical, label: 'Contas de Teste', path: 'test-accounts', color: 'text-orange-400' },
-    { icon: Shield, label: 'Painel Master', path: 'master', color: 'text-primary/80' },
+    { icon: Trash2, label: 'Lixeira', path: 'trash', color: 'text-red-400', description: 'Itens excluídos' },
+    { icon: Activity, label: 'Logs de Acesso', path: 'access-logs', color: 'text-cyan-400', description: 'Registros de acesso' },
+    { icon: Dumbbell, label: 'Ver Instrutores', path: 'view-instructors', color: 'text-green-400', description: 'Lista de instrutores' },
+    { icon: DollarSign, label: 'Financeiro Instrutores', path: 'instructor-finance', color: 'text-emerald-400', description: 'Pagamentos instrutores' },
+    { icon: Key, label: 'Senhas Trial', path: 'trial-passwords', color: 'text-cyan-400', description: 'Gerenciar trials' },
+    { icon: Key, label: 'Contas Pré-Geradas', path: 'pre-generated', color: 'text-yellow-400', description: 'Contas prontas' },
+    { icon: FlaskConical, label: 'Contas de Teste', path: 'test-accounts', color: 'text-orange-400', description: 'Contas para testes' },
+    { icon: Shield, label: 'Painel Master', path: 'master', color: 'text-primary/80', description: 'Controle total' },
   ], []);
 
   const allMenuItems = useMemo(() => 
@@ -211,6 +212,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center gap-0.5 sm:gap-1">
+                <LayoutModeToggle />
                 <MenuSizeToggle />
                 <PanelThemeSelector />
                 {isMaster && <PanelSwitcher />}
@@ -250,22 +252,37 @@ const AdminDashboard: React.FC = () => {
                     <UserCPFSearch />
                   </Suspense>
                   
-                  <div className={cn(
-                    'grid pb-4',
-                    menuSize === 'large'
-                      ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3'
-                      : 'grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-1.5 sm:gap-2'
-                  )}>
-                    {allMenuItems.map((item) => (
-                      <ThemedMenuButton
-                        key={item.path}
-                        icon={item.icon}
-                        label={item.label}
-                        color={item.color}
-                        onClick={() => { playClickSound(); navigate(item.path); }}
-                      />
-                    ))}
-                  </div>
+                  {menuLayout === 'list' ? (
+                    <div className="space-y-2 pb-4">
+                      {allMenuItems.map((item) => (
+                        <ThemedListItem
+                          key={item.path}
+                          icon={item.icon}
+                          label={item.label}
+                          description={item.description}
+                          color={item.color}
+                          onClick={() => { playClickSound(); navigate(item.path); }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={cn(
+                      'grid pb-4',
+                      menuSize === 'large'
+                        ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3'
+                        : 'grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-1.5 sm:gap-2'
+                    )}>
+                      {allMenuItems.map((item) => (
+                        <ThemedMenuButton
+                          key={item.path}
+                          icon={item.icon}
+                          label={item.label}
+                          color={item.color}
+                          onClick={() => { playClickSound(); navigate(item.path); }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               } />
               <Route path="register-client" element={<RegisterClient />} />
