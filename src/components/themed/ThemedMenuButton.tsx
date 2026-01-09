@@ -142,10 +142,10 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
         'group w-full'
       )}
     >
-      {/* Icon container - tamanho compacto para mobile */}
+      {/* Icon container */}
       <motion.div 
         className={cn(
-          'relative p-3 sm:p-4 border-2 transition-all duration-300',
+          'relative p-4 sm:p-5 border-2 transition-all duration-300',
           themeStyles.iconBg,
           themeStyles.iconBorder,
           themeStyles.shape,
@@ -157,7 +157,7 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
       >
         <Icon 
           className={cn(
-            'w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10',
+            'w-8 h-8 sm:w-10 sm:h-10 md:w-11 md:h-11',
             color || themeStyles.iconColor
           )} 
           strokeWidth={1.8} 
@@ -165,15 +165,15 @@ export const ThemedMenuButton: React.FC<ThemedMenuButtonProps> = memo(({
 
         {/* Badge */}
         {badge && (
-          <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center shadow-lg">
+          <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg">
             {badge}
           </span>
         )}
       </motion.div>
 
-      {/* Label - compacto mas legível */}
+      {/* Label */}
       <span className={cn(
-        'font-bebas text-[10px] sm:text-xs md:text-sm tracking-wider text-center leading-tight line-clamp-2',
+        'font-bebas text-xs sm:text-sm md:text-base tracking-wider text-center leading-tight line-clamp-2',
         themeStyles.labelColor,
         fontWeightClass
       )}>
