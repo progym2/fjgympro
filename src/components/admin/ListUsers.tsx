@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Users, Search, Trash2, Key, Loader2, User, Dumbbell, Edit2, Shield, Eye, Unlink, RotateCcw, RefreshCw, CheckCircle, FileSpreadsheet, FileText, Download, X, AlertCircle, UserCheck, Link2Off, History, Undo2, Filter } from 'lucide-react';
@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAudio } from '@/contexts/AudioContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEscapeBack } from '@/hooks/useEscapeBack';
+import { useThemeStyles } from '@/lib/themeStyles';
+import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -54,6 +56,7 @@ const ListUsers: React.FC = () => {
   const navigate = useNavigate();
   const { playClickSound } = useAudio();
   const { role, profile: currentProfile } = useAuth();
+  const themeStyles = useThemeStyles();
   
   // ESC para voltar ao menu admin
   useEscapeBack({ to: '/admin' });
@@ -580,7 +583,7 @@ const ListUsers: React.FC = () => {
 
   const UserCard = ({ user, type, showRestore = false, showReactivate = false }: { user: Profile; type: 'client' | 'instructor'; showRestore?: boolean; showReactivate?: boolean }) => (
     <div
-      className="bg-card/80 backdrop-blur-md rounded-xl p-4 border border-border/50 hover:border-blue-500/30 transition-all"
+      className={cn('backdrop-blur-md rounded-xl p-4 border transition-all', themeStyles.cardBg, themeStyles.cardBorder, themeStyles.cardHoverBorder)}
     >
       <div className="flex items-center gap-4">
         <div className={`w-12 h-12 rounded-full flex items-center justify-center overflow-hidden ${type === 'instructor' ? 'bg-green-500/20 border border-green-500/30' : 'bg-blue-500/20 border border-blue-500/30'}`}>
@@ -757,11 +760,11 @@ const ListUsers: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => { playClickSound(); navigate('/admin'); }}
-            className="text-sm text-muted-foreground hover:text-blue-500 transition-colors"
+            className={cn('text-sm transition-colors', themeStyles.accentColor, 'hover:opacity-80')}
           >
             ← Voltar
           </button>
-          <h2 className="text-xl sm:text-2xl font-bebas text-purple-500 flex items-center gap-2">
+          <h2 className={cn('text-xl sm:text-2xl font-bebas flex items-center gap-2', themeStyles.titleColor)}>
             <Users className="w-6 h-6" />
             {isMaster ? 'TODOS OS CADASTROS' : 'MEUS CADASTROS'}
           </h2>
@@ -823,19 +826,19 @@ const ListUsers: React.FC = () => {
       </div>
 
       {!isMaster && (
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 flex items-center gap-2 text-sm text-blue-400">
+        <div className={cn('rounded-lg p-3 flex items-center gap-2 text-sm border', themeStyles.tipBg, themeStyles.tipBorder, themeStyles.tipText)}>
           <Shield className="w-4 h-4" />
           <span>Exibindo apenas usuários cadastrados por você. Acesse o Painel Master para ver todos.</span>
         </div>
       )}
       
       {isMaster && cpfLinkedFilter && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center gap-2 text-sm text-amber-400">
+        <div className={cn('rounded-lg p-3 flex items-center gap-2 text-sm border', themeStyles.tipBg, themeStyles.tipBorder, themeStyles.tipText)}>
           <Filter className="w-4 h-4" />
           <span>Exibindo apenas usuários que tiveram CPF vinculado automaticamente.</span>
           <button
             onClick={() => setCpfLinkedFilter(false)}
-            className="ml-auto text-amber-500 hover:text-amber-400"
+            className={cn('ml-auto hover:opacity-80', themeStyles.accentColor)}
           >
             <X className="w-4 h-4" />
           </button>
@@ -844,22 +847,22 @@ const ListUsers: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <Loader2 className={cn('w-8 h-8 animate-spin', themeStyles.iconColor)} />
         </div>
       ) : (
         <Tabs defaultValue="clients" className="w-full">
-          <TabsList className={`grid w-full mb-4 ${isMaster ? 'grid-cols-5' : 'grid-cols-2'}`}>
-            <TabsTrigger value="clients">Clientes ({clients.length})</TabsTrigger>
-            <TabsTrigger value="instructors">Instrutores ({instructors.length})</TabsTrigger>
+          <TabsList className={cn('grid w-full mb-4', themeStyles.tabsBg, isMaster ? 'grid-cols-5' : 'grid-cols-2')}>
+            <TabsTrigger value="clients" className={cn('data-[state=active]:' + themeStyles.tabsActiveBg.replace('bg-', ''))}>Clientes ({clients.length})</TabsTrigger>
+            <TabsTrigger value="instructors" className={cn('data-[state=active]:' + themeStyles.tabsActiveBg.replace('bg-', ''))}>Instrutores ({instructors.length})</TabsTrigger>
             {isMaster && (
               <>
-                <TabsTrigger value="pregen" className="text-yellow-500">
+                <TabsTrigger value="pregen" className={themeStyles.accentColor}>
                   Pré-geradas ({preGenAccounts.length})
                 </TabsTrigger>
-                <TabsTrigger value="deleted" className="text-orange-500">
+                <TabsTrigger value="deleted" className={themeStyles.accentColor}>
                   Inativos ({deletedUsers.length})
                 </TabsTrigger>
-                <TabsTrigger value="expired" className="text-red-500">
+                <TabsTrigger value="expired" className={themeStyles.accentColor}>
                   Expirados ({expiredLicenses.length})
                 </TabsTrigger>
               </>
