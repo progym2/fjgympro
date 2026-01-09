@@ -32,6 +32,7 @@ import { useProgressiveImage } from '@/hooks/useProgressiveImage';
 import FitnessLoadingScreen from '@/components/FitnessLoadingScreen';
 
 import bgPanels from '@/assets/gym-bg-fire.jpeg';
+import FireParticles from '@/components/FireParticles';
 
 // Lazy load ALL components - include AboutDialog
 const AboutDialog = lazy(() => import('@/components/AboutDialog'));
@@ -241,6 +242,8 @@ const ClientDashboard: React.FC = () => {
       {/* Vibrant overlay with fire accent */}
       <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background/80" />
       <div className="absolute inset-0 bg-gradient-to-t from-orange-950/20 via-transparent to-transparent" />
+      {/* Fire particles effect */}
+      <FireParticles count={20} />
 
       <div className="relative z-10 h-full flex flex-col pb-14 overflow-y-auto overflow-x-hidden overscroll-contain pt-safe">
         <div className="h-16 sm:h-18" />
