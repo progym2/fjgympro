@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, forwardRef, memo } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { User, Dumbbell, Shield } from 'lucide-react';
 
@@ -29,10 +29,10 @@ const panelConfig = {
   },
 } as const;
 
-const DashboardEntryTransition = memo(forwardRef<HTMLDivElement, DashboardEntryTransitionProps>(({
+const DashboardEntryTransition: React.FC<DashboardEntryTransitionProps> = ({
   panelType,
   onComplete,
-}, ref) => {
+}) => {
   const onCompleteRef = useRef(onComplete);
 
   useEffect(() => {
@@ -40,8 +40,8 @@ const DashboardEntryTransition = memo(forwardRef<HTMLDivElement, DashboardEntryT
   }, [onComplete]);
 
   useEffect(() => {
-    // Ultra-fast transition - 200ms total
-    const timer = window.setTimeout(() => onCompleteRef.current(), 200);
+    // Ultra fast transition - 400ms total
+    const timer = window.setTimeout(() => onCompleteRef.current(), 400);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -50,16 +50,15 @@ const DashboardEntryTransition = memo(forwardRef<HTMLDivElement, DashboardEntryT
 
   return (
     <motion.div
-      ref={ref}
       initial={{ opacity: 1 }}
       animate={{ opacity: 0 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
       className="fixed inset-0 z-[100] flex items-center justify-center bg-background"
     >
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
+        initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.1 }}
+        transition={{ duration: 0.2 }}
         className="flex flex-col items-center gap-3"
       >
         <div className={`p-4 rounded-full ${config.bg} ${config.color}`}>
@@ -71,8 +70,6 @@ const DashboardEntryTransition = memo(forwardRef<HTMLDivElement, DashboardEntryT
       </motion.div>
     </motion.div>
   );
-}));
-
-DashboardEntryTransition.displayName = 'DashboardEntryTransition';
+};
 
 export default DashboardEntryTransition;

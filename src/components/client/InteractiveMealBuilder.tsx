@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Utensils, Plus, Trash2, Calculator, Save, Loader2, 
   Apple, Beef, Wheat, Droplets, Coffee, Moon, Sun, 
-  Flame, Target, ChevronRight, Check, Sparkles, History,
-  Copy, Clock, Zap, TrendingDown, TrendingUp, Scale, 
-  Lightbulb, LayoutTemplate, FileDown, Share2, ShoppingCart
+  Flame, Target, ChevronRight, Check, Sparkles
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +14,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -24,24 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { exportMealPlanToPDF, shareMealPlanViaWhatsApp } from '@/lib/nutritionPdfExport';
-import SharePdfDialog from './SharePdfDialog';
-import ShoppingList from './ShoppingList';
-import jsPDF from 'jspdf';
 
 interface FoodItem {
   id: string;
@@ -68,30 +47,6 @@ interface ProfileData {
   birth_date: string | null;
   gender: string | null;
   fitness_goal: string | null;
-}
-
-interface SavedPlan {
-  id: string;
-  name: string;
-  description: string | null;
-  total_calories: number | null;
-  protein_grams: number | null;
-  carbs_grams: number | null;
-  fat_grams: number | null;
-  created_at: string;
-}
-
-interface DietTemplate {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  color: string;
-  calorieMultiplier: number;
-  proteinMultiplier: number;
-  carbsPercentage: number;
-  fatPercentage: number;
-  meals: { mealId: string; foods: string[] }[];
 }
 
 const FOOD_DATABASE: FoodItem[] = [
@@ -124,66 +79,6 @@ const FOOD_DATABASE: FoodItem[] = [
   { id: 'spinach', name: 'Espinafre', calories: 23, protein: 2.9, carbs: 3.6, fat: 0.4, portion: '100g', category: 'vegetal' },
 ];
 
-const DIET_TEMPLATES: DietTemplate[] = [
-  {
-    id: 'cutting',
-    name: 'Cutting',
-    description: 'Déficit calórico para perda de gordura mantendo massa muscular',
-    icon: <TrendingDown className="w-5 h-5" />,
-    color: 'text-blue-500',
-    calorieMultiplier: 0.8,
-    proteinMultiplier: 2.2,
-    carbsPercentage: 35,
-    fatPercentage: 25,
-    meals: [
-      { mealId: 'breakfast', foods: ['eggs', 'oats', 'banana'] },
-      { mealId: 'morning_snack', foods: ['whey', 'nuts'] },
-      { mealId: 'lunch', foods: ['chicken', 'rice', 'broccoli', 'salad'] },
-      { mealId: 'afternoon_snack', foods: ['tuna', 'bread'] },
-      { mealId: 'dinner', foods: ['fish', 'sweet_potato', 'spinach'] },
-      { mealId: 'supper', foods: ['eggs'] },
-    ]
-  },
-  {
-    id: 'bulking',
-    name: 'Bulking',
-    description: 'Superávit calórico para ganho de massa muscular',
-    icon: <TrendingUp className="w-5 h-5" />,
-    color: 'text-green-500',
-    calorieMultiplier: 1.15,
-    proteinMultiplier: 2.0,
-    carbsPercentage: 50,
-    fatPercentage: 25,
-    meals: [
-      { mealId: 'breakfast', foods: ['eggs', 'oats', 'banana', 'peanut_butter'] },
-      { mealId: 'morning_snack', foods: ['whey', 'banana', 'nuts'] },
-      { mealId: 'lunch', foods: ['beef', 'rice', 'broccoli', 'olive_oil'] },
-      { mealId: 'afternoon_snack', foods: ['chicken', 'bread', 'avocado'] },
-      { mealId: 'dinner', foods: ['fish', 'pasta', 'salad', 'olive_oil'] },
-      { mealId: 'supper', foods: ['whey', 'peanut_butter'] },
-    ]
-  },
-  {
-    id: 'maintenance',
-    name: 'Manutenção',
-    description: 'Manter peso atual com dieta equilibrada',
-    icon: <Scale className="w-5 h-5" />,
-    color: 'text-orange-500',
-    calorieMultiplier: 1.0,
-    proteinMultiplier: 1.8,
-    carbsPercentage: 45,
-    fatPercentage: 25,
-    meals: [
-      { mealId: 'breakfast', foods: ['eggs', 'bread', 'banana'] },
-      { mealId: 'morning_snack', foods: ['nuts'] },
-      { mealId: 'lunch', foods: ['chicken', 'rice', 'salad', 'olive_oil'] },
-      { mealId: 'afternoon_snack', foods: ['whey', 'banana'] },
-      { mealId: 'dinner', foods: ['fish', 'sweet_potato', 'broccoli'] },
-      { mealId: 'supper', foods: ['eggs'] },
-    ]
-  }
-];
-
 const INITIAL_MEALS: MealSlot[] = [
   { id: 'breakfast', name: 'Café da Manhã', icon: <Coffee className="w-5 h-5" />, time: '07:00', foods: [] },
   { id: 'morning_snack', name: 'Lanche da Manhã', icon: <Apple className="w-5 h-5" />, time: '10:00', foods: [] },
@@ -208,19 +103,10 @@ const InteractiveMealBuilder: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [planName, setPlanName] = useState('');
   const [showGoalCalculator, setShowGoalCalculator] = useState(false);
-  const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
-  const [loadingPlans, setLoadingPlans] = useState(false);
-  const [addedFoodId, setAddedFoodId] = useState<string | null>(null);
-  const [showTemplates, setShowTemplates] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [showShareDialog, setShowShareDialog] = useState(false);
-  const [showShoppingList, setShowShoppingList] = useState(false);
-  const [currentPdf, setCurrentPdf] = useState<{ doc: jsPDF; filename: string } | null>(null);
 
   useEffect(() => {
     if (profile?.profile_id) {
       fetchProfileData();
-      fetchSavedPlans();
     }
   }, [profile?.profile_id]);
 
@@ -241,27 +127,6 @@ const InteractiveMealBuilder: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching profile data:', error);
-    }
-  };
-
-  const fetchSavedPlans = async () => {
-    if (!profile?.profile_id) return;
-    setLoadingPlans(true);
-    
-    try {
-      const { data, error } = await supabase
-        .from('meal_plans')
-        .select('id, name, description, total_calories, protein_grams, carbs_grams, fat_grams, created_at')
-        .eq('created_by', profile.profile_id)
-        .order('created_at', { ascending: false })
-        .limit(20);
-      
-      if (error) throw error;
-      setSavedPlans(data || []);
-    } catch (error) {
-      console.error('Error fetching saved plans:', error);
-    } finally {
-      setLoadingPlans(false);
     }
   };
 
@@ -329,18 +194,12 @@ const InteractiveMealBuilder: React.FC = () => {
 
   const addFoodToMeal = (food: FoodItem) => {
     if (!selectedMeal) return;
-    const newFoodId = `${food.id}-${Date.now()}`;
     setMeals(meals.map(meal => 
       meal.id === selectedMeal 
-        ? { ...meal, foods: [...meal.foods, { ...food, id: newFoodId }] }
+        ? { ...meal, foods: [...meal.foods, { ...food, id: `${food.id}-${Date.now()}` }] }
         : meal
     ));
-    
-    // Visual feedback animation
-    setAddedFoodId(newFoodId);
-    setTimeout(() => setAddedFoodId(null), 600);
-    
-    toast.success(`${food.name} adicionado!`, { duration: 1500 });
+    toast.success(`${food.name} adicionado!`);
   };
 
   const removeFoodFromMeal = (mealId: string, foodIndex: number) => {
@@ -351,152 +210,13 @@ const InteractiveMealBuilder: React.FC = () => {
     ));
   };
 
-  const duplicatePlan = async (plan: SavedPlan) => {
-    const newName = `${plan.name} (cópia)`;
-    setPlanName(newName);
-    
-    // Parse the description to restore meals if possible
-    if (plan.description) {
-      toast.success(`Plano "${plan.name}" duplicado! Edite e salve como novo.`);
-    }
-    
-    // Set the goals based on the plan
-    if (plan.total_calories) {
-      setDailyGoals({
-        calories: plan.total_calories,
-        protein: plan.protein_grams || 150,
-        carbs: plan.carbs_grams || 200,
-        fat: plan.fat_grams || 70
-      });
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
-
-  // Get current totals first
-  const totals = getTotals();
-  
-  // Calculate remaining nutrients
-  const remaining = useMemo(() => ({
-    calories: Math.max(0, dailyGoals.calories - totals.calories),
-    protein: Math.max(0, dailyGoals.protein - totals.protein),
-    carbs: Math.max(0, dailyGoals.carbs - totals.carbs),
-    fat: Math.max(0, dailyGoals.fat - totals.fat)
-  }), [dailyGoals, totals.calories, totals.protein, totals.carbs, totals.fat]);
-
-  // Smart food suggestions based on remaining goals
-  const suggestedFoods = useMemo(() => {
-    const suggestions: { food: FoodItem; reason: string; priority: number }[] = [];
-    
-    // Analyze what's needed
-    const needsProtein = remaining.protein > 20;
-    const needsCarbs = remaining.carbs > 30;
-    const needsFat = remaining.fat > 10;
-    const caloriesLeft = remaining.calories;
-    
-    FOOD_DATABASE.forEach(food => {
-      let priority = 0;
-      let reasons: string[] = [];
-      
-      // Only suggest if we have calories left
-      if (food.calories <= caloriesLeft + 50) {
-        // High protein need
-        if (needsProtein && food.protein >= 15) {
-          priority += food.protein * 2;
-          reasons.push(`+${food.protein}g proteína`);
-        }
-        
-        // Carbs need
-        if (needsCarbs && food.carbs >= 15 && food.category === 'carboidrato') {
-          priority += food.carbs;
-          reasons.push(`+${food.carbs}g carbos`);
-        }
-        
-        // Fat need
-        if (needsFat && food.fat >= 8 && food.category === 'gordura') {
-          priority += food.fat * 1.5;
-          reasons.push(`+${food.fat}g gordura`);
-        }
-        
-        // Low calorie options when close to goal
-        if (caloriesLeft < 300 && food.calories < 100) {
-          priority += 10;
-          reasons.push('baixa caloria');
-        }
-        
-        // Vegetables are always good
-        if (food.category === 'vegetal') {
-          priority += 5;
-          reasons.push('rico em fibras');
-        }
-        
-        if (priority > 0) {
-          suggestions.push({ 
-            food, 
-            reason: reasons.slice(0, 2).join(', '), 
-            priority 
-          });
-        }
-      }
-    });
-    
-    return suggestions
-      .sort((a, b) => b.priority - a.priority)
-      .slice(0, 6);
-  }, [remaining]);
-
-  // Apply diet template
-  const applyTemplate = (template: DietTemplate) => {
-    const weight = profileData?.weight_kg || 70;
-    
-    // Calculate goals based on template
-    const baseCalories = dailyGoals.calories / (profileData?.fitness_goal === 'weight_loss' ? 0.85 : 1);
-    const targetCalories = Math.round(baseCalories * template.calorieMultiplier);
-    const protein = Math.round(weight * template.proteinMultiplier);
-    const fat = Math.round((targetCalories * template.fatPercentage / 100) / 9);
-    const carbs = Math.round((targetCalories * template.carbsPercentage / 100) / 4);
-    
-    setDailyGoals({
-      calories: targetCalories,
-      protein,
-      carbs,
-      fat
-    });
-    
-    // Populate meals with template foods
-    const newMeals = INITIAL_MEALS.map(meal => {
-      const templateMeal = template.meals.find(m => m.mealId === meal.id);
-      if (templateMeal) {
-        const foods = templateMeal.foods
-          .map(foodId => {
-            const food = FOOD_DATABASE.find(f => f.id === foodId);
-            return food ? { ...food, id: `${food.id}-${Date.now()}-${Math.random()}` } : null;
-          })
-          .filter(Boolean) as FoodItem[];
-        return { ...meal, foods };
-      }
-      return meal;
-    });
-    
-    setMeals(newMeals);
-    setPlanName(`Cardápio ${template.name}`);
-    setShowTemplates(false);
-    toast.success(`Template "${template.name}" aplicado!`);
-  };
-
   const handleSave = async () => {
     if (!profile?.profile_id || !planName.trim()) {
       toast.error('Digite um nome para o cardápio');
       return;
     }
 
-    const currentTotals = getTotals();
+    const totals = getTotals();
     setSaving(true);
 
     try {
@@ -508,10 +228,10 @@ const InteractiveMealBuilder: React.FC = () => {
         created_by: profile.profile_id,
         name: planName,
         description,
-        total_calories: currentTotals.calories,
-        protein_grams: currentTotals.protein,
-        carbs_grams: currentTotals.carbs,
-        fat_grams: currentTotals.fat,
+        total_calories: totals.calories,
+        protein_grams: totals.protein,
+        carbs_grams: totals.carbs,
+        fat_grams: totals.fat,
         is_instructor_plan: false,
         is_active: true
       });
@@ -520,7 +240,6 @@ const InteractiveMealBuilder: React.FC = () => {
       toast.success('Cardápio salvo com sucesso!');
       setPlanName('');
       setMeals(INITIAL_MEALS);
-      fetchSavedPlans(); // Refresh the history
     } catch (error) {
       console.error('Error saving meal plan:', error);
       toast.error('Erro ao salvar cardápio');
@@ -529,50 +248,7 @@ const InteractiveMealBuilder: React.FC = () => {
     }
   };
 
-  const getExportOptions = () => ({
-    planName: planName || 'Meu Cardápio',
-    meals: meals.map(m => ({
-      name: m.name,
-      time: m.time,
-      foods: m.foods.map(f => ({
-        name: f.name,
-        calories: f.calories,
-        protein: f.protein,
-        carbs: f.carbs,
-        fat: f.fat,
-        portion: f.portion,
-      })),
-    })),
-    goals: dailyGoals,
-    totals: getTotals(),
-    userName: profile?.full_name || undefined,
-  });
-
-  const handleExportPDF = () => {
-    if (meals.every(m => m.foods.length === 0)) {
-      toast.error('Adicione alimentos ao cardápio antes de exportar');
-      return;
-    }
-
-    const result = exportMealPlanToPDF(getExportOptions());
-    toast.success('PDF exportado com sucesso!');
-  };
-
-  const handleShare = () => {
-    if (meals.every(m => m.foods.length === 0)) {
-      toast.error('Adicione alimentos ao cardápio antes de compartilhar');
-      return;
-    }
-
-    const result = exportMealPlanToPDF(getExportOptions());
-    setCurrentPdf(result);
-    setShowShareDialog(true);
-  };
-
-  const handleWhatsAppShare = () => {
-    shareMealPlanViaWhatsApp(getExportOptions());
-  };
-
+  const totals = getTotals();
   const filteredFoods = selectedCategory === 'todos' 
     ? FOOD_DATABASE 
     : FOOD_DATABASE.filter(f => f.category === selectedCategory);
@@ -586,201 +262,6 @@ const InteractiveMealBuilder: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Templates & Suggestions Bar */}
-      <div className="flex flex-wrap gap-2">
-        <Dialog open={showTemplates} onOpenChange={setShowTemplates}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <LayoutTemplate className="w-4 h-4" />
-              Templates
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 font-bebas text-xl">
-                <LayoutTemplate className="w-5 h-5 text-orange-500" />
-                TEMPLATES DE DIETA
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3 mt-4">
-              {DIET_TEMPLATES.map((template, index) => (
-                <motion.button
-                  key={template.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  onClick={() => applyTemplate(template)}
-                  className="w-full p-4 bg-background/50 rounded-lg border border-border/50 hover:border-orange-500/50 hover:bg-orange-500/5 text-left transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg bg-background ${template.color}`}>
-                      {template.icon}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium">{template.name}</h4>
-                      <p className="text-xs text-muted-foreground">{template.description}</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-orange-500 transition-colors" />
-                  </div>
-                  <div className="flex gap-3 mt-3 text-xs">
-                    <Badge variant="outline" className="bg-background/80">
-                      Calorias: {template.calorieMultiplier > 1 ? '+' : ''}{Math.round((template.calorieMultiplier - 1) * 100)}%
-                    </Badge>
-                    <Badge variant="outline" className="bg-background/80">
-                      Proteína: {template.proteinMultiplier}g/kg
-                    </Badge>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-          </DialogContent>
-        </Dialog>
-        
-        <Button 
-          variant={showSuggestions ? "default" : "outline"} 
-          size="sm" 
-          className="gap-2"
-          onClick={() => setShowSuggestions(!showSuggestions)}
-        >
-          <Lightbulb className="w-4 h-4" />
-          Sugestões Inteligentes
-        </Button>
-
-        {/* Export PDF Button */}
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="gap-2 ml-auto"
-          onClick={handleExportPDF}
-        >
-          <FileDown className="w-4 h-4" />
-          <span className="hidden sm:inline">Exportar</span> PDF
-        </Button>
-
-        {/* Share Button */}
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="gap-2"
-          onClick={handleShare}
-        >
-          <Share2 className="w-4 h-4" />
-          <span className="hidden sm:inline">Compartilhar</span>
-        </Button>
-
-        {/* Shopping List Button */}
-        <Button 
-          variant={showShoppingList ? "default" : "outline"}
-          size="sm" 
-          className="gap-2"
-          onClick={() => setShowShoppingList(!showShoppingList)}
-        >
-          <ShoppingCart className="w-4 h-4" />
-          <span className="hidden sm:inline">Lista de Compras</span>
-        </Button>
-      </div>
-
-      {/* Shopping List Panel */}
-      <AnimatePresence>
-        {showShoppingList && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <Card className="bg-gradient-to-br from-emerald-500/10 to-green-500/10 border-emerald-500/30">
-              <CardContent className="pt-6">
-                <ShoppingList 
-                  meals={meals} 
-                  daysMultiplier={7}
-                  onClose={() => setShowShoppingList(false)} 
-                />
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Share Dialog */}
-      <SharePdfDialog
-        open={showShareDialog}
-        onOpenChange={setShowShareDialog}
-        pdfDoc={currentPdf?.doc || null}
-        filename={currentPdf?.filename || ''}
-        messageType="meal_plan"
-        senderName={profile?.full_name || ''}
-        onWhatsAppShare={handleWhatsAppShare}
-      />
-
-      {/* Smart Suggestions Panel */}
-      <AnimatePresence>
-        {showSuggestions && suggestedFoods.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 backdrop-blur-md rounded-xl p-4 border border-purple-500/30"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Zap className="w-5 h-5 text-purple-500" />
-              <h3 className="font-bebas text-lg text-purple-500">SUGESTÕES PARA SUAS METAS</h3>
-            </div>
-            
-            <div className="flex flex-wrap gap-2 mb-3 text-xs">
-              <Badge variant="outline" className="bg-background/50">
-                Faltam: {remaining.calories} kcal
-              </Badge>
-              <Badge variant="outline" className="bg-background/50 text-red-400">
-                {remaining.protein}g proteína
-              </Badge>
-              <Badge variant="outline" className="bg-background/50 text-blue-400">
-                {remaining.carbs}g carbos
-              </Badge>
-              <Badge variant="outline" className="bg-background/50 text-yellow-400">
-                {remaining.fat}g gordura
-              </Badge>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {suggestedFoods.map((item, index) => (
-                <motion.button
-                  key={item.food.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => {
-                    if (selectedMeal) {
-                      addFoodToMeal(item.food);
-                    } else {
-                      toast.info('Selecione uma refeição primeiro');
-                    }
-                  }}
-                  className={`p-3 bg-background/50 rounded-lg border text-left transition-all ${
-                    selectedMeal 
-                      ? 'border-purple-500/30 hover:border-purple-500 hover:bg-purple-500/10 cursor-pointer' 
-                      : 'border-border/30 opacity-60'
-                  }`}
-                >
-                  <p className="text-sm font-medium truncate">{item.food.name}</p>
-                  <p className="text-xs text-purple-400 mt-1">{item.reason}</p>
-                  <div className="flex gap-2 mt-1 text-xs text-muted-foreground">
-                    <span>{item.food.calories}kcal</span>
-                    <span>P{item.food.protein}g</span>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-            
-            {!selectedMeal && (
-              <p className="text-xs text-muted-foreground text-center mt-3">
-                Selecione uma refeição para adicionar sugestões
-              </p>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Header with Goals */}
       <div className="bg-gradient-to-br from-orange-500/20 to-yellow-500/20 backdrop-blur-md rounded-xl p-4 sm:p-6 border border-orange-500/30">
         <div className="flex items-center justify-between mb-4">
@@ -904,91 +385,54 @@ const InteractiveMealBuilder: React.FC = () => {
 
       {/* Meal Slots */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <AnimatePresence mode="wait">
-          {meals.map((meal, mealIndex) => (
-            <motion.div
-              key={meal.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: mealIndex * 0.05, duration: 0.2 }}
-            >
-              <Card 
-                className={`bg-card/80 backdrop-blur-md border cursor-pointer transition-all duration-200 ${
-                  selectedMeal === meal.id 
-                    ? 'border-orange-500 ring-2 ring-orange-500/20 scale-[1.02]' 
-                    : 'border-border/50 hover:border-orange-500/50 hover:scale-[1.01]'
-                }`}
-                onClick={() => setSelectedMeal(selectedMeal === meal.id ? null : meal.id)}
-              >
-                <CardHeader className="py-3 px-4">
-                  <CardTitle className="text-sm flex items-center justify-between">
-                    <motion.span 
-                      className="flex items-center gap-2"
-                      animate={selectedMeal === meal.id ? { x: [0, 3, 0] } : {}}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <span className="text-orange-500">{meal.icon}</span>
-                      <span className="text-sm font-medium text-foreground">{meal.name}</span>
-                    </motion.span>
-                    <Badge variant="outline" className="text-xs bg-background/80 text-muted-foreground border-border">{meal.time}</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="px-4 pb-3 pt-0">
-                  {meal.foods.length === 0 ? (
-                    <motion.p 
-                      className="text-xs text-muted-foreground text-center py-2"
-                      animate={selectedMeal === meal.id ? { opacity: [0.5, 1] } : {}}
-                    >
-                      Clique para adicionar alimentos
-                    </motion.p>
-                  ) : (
-                    <div className="space-y-1">
-                      <AnimatePresence>
-                        {meal.foods.map((food, idx) => (
-                          <motion.div 
-                            key={`${food.id}-${idx}`} 
-                            initial={{ opacity: 0, x: -10, scale: 0.95 }}
-                            animate={{ 
-                              opacity: 1, 
-                              x: 0, 
-                              scale: 1,
-                              backgroundColor: addedFoodId === food.id ? 'hsl(var(--primary) / 0.2)' : 'transparent'
-                            }}
-                            exit={{ opacity: 0, x: 10, scale: 0.95 }}
-                            transition={{ duration: 0.2 }}
-                            className="flex items-center justify-between text-xs bg-background/50 rounded px-2 py-1"
-                          >
-                            <span className="truncate flex-1">{food.name}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-muted-foreground">{food.calories}kcal</span>
-                              <motion.button 
-                                onClick={(e) => { e.stopPropagation(); removeFoodFromMeal(meal.id, idx); }}
-                                className="text-destructive hover:text-destructive/80"
-                                whileHover={{ scale: 1.2 }}
-                                whileTap={{ scale: 0.9 }}
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </motion.button>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
-                      <motion.div 
-                        className="text-xs text-orange-500 font-medium pt-1 border-t border-border/50"
-                        key={meal.foods.reduce((acc, f) => acc + f.calories, 0)}
-                        initial={{ scale: 1 }}
-                        animate={{ scale: [1, 1.05, 1] }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        Total: {meal.foods.reduce((acc, f) => acc + f.calories, 0)} kcal
-                      </motion.div>
+        {meals.map((meal) => (
+          <Card 
+            key={meal.id} 
+            className={`bg-card/80 backdrop-blur-md border cursor-pointer transition-all ${
+              selectedMeal === meal.id 
+                ? 'border-orange-500 ring-2 ring-orange-500/20' 
+                : 'border-border/50 hover:border-orange-500/50'
+            }`}
+            onClick={() => setSelectedMeal(selectedMeal === meal.id ? null : meal.id)}
+          >
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm flex items-center justify-between">
+                <span className="flex items-center gap-2 font-semibold text-foreground">
+                  <span className="text-orange-500">{meal.icon}</span>
+                  <span className="text-base tracking-wide">{meal.name}</span>
+                </span>
+                <Badge variant="outline" className="text-xs bg-background/80 text-foreground border-border">{meal.time}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-3 pt-0">
+              {meal.foods.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-2">
+                  Clique para adicionar alimentos
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  {meal.foods.map((food, idx) => (
+                    <div key={`${food.id}-${idx}`} className="flex items-center justify-between text-xs bg-background/50 rounded px-2 py-1">
+                      <span className="truncate flex-1">{food.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">{food.calories}kcal</span>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); removeFoodFromMeal(meal.id, idx); }}
+                          className="text-destructive hover:text-destructive/80"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+                  ))}
+                  <div className="text-xs text-orange-500 font-medium pt-1 border-t border-border/50">
+                    Total: {meal.foods.reduce((acc, f) => acc + f.calories, 0)} kcal
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Food Selection Panel */}
@@ -1017,16 +461,13 @@ const InteractiveMealBuilder: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 max-h-64 overflow-y-auto">
-              {filteredFoods.map((food, index) => (
+              {filteredFoods.map((food) => (
                 <motion.button
                   key={food.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.02, duration: 0.15 }}
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => addFoodToMeal(food)}
-                  className="p-3 bg-background/50 rounded-lg border border-border/50 hover:border-orange-500 hover:bg-orange-500/10 text-left transition-colors duration-150"
+                  className="p-3 bg-background/50 rounded-lg border border-border/50 hover:border-orange-500/50 text-left transition-all"
                 >
                   <p className="text-sm font-medium truncate">{food.name}</p>
                   <p className="text-xs text-muted-foreground">{food.portion}</p>
@@ -1034,13 +475,6 @@ const InteractiveMealBuilder: React.FC = () => {
                     <span className="text-orange-500">{food.calories}kcal</span>
                     <span className="text-red-400">P{food.protein}g</span>
                   </div>
-                  <motion.div
-                    className="mt-1 flex items-center gap-1 text-xs text-green-500 opacity-0"
-                    whileHover={{ opacity: 1 }}
-                  >
-                    <Plus className="w-3 h-3" />
-                    Adicionar
-                  </motion.div>
                 </motion.button>
               ))}
             </div>
@@ -1060,98 +494,14 @@ const InteractiveMealBuilder: React.FC = () => {
               className="bg-background/50"
             />
           </div>
-          <div className="flex gap-2 sm:self-end">
-            {/* History Sheet */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="shrink-0">
-                  <History className="w-4 h-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[340px] sm:w-[400px]">
-                <SheetHeader>
-                  <SheetTitle className="flex items-center gap-2 font-bebas text-lg">
-                    <History className="w-5 h-5 text-orange-500" />
-                    HISTÓRICO DE CARDÁPIOS
-                  </SheetTitle>
-                </SheetHeader>
-                <ScrollArea className="h-[calc(100vh-100px)] mt-4 pr-4">
-                  {loadingPlans ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
-                    </div>
-                  ) : savedPlans.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Utensils className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">Nenhum cardápio salvo</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {savedPlans.map((plan, index) => (
-                        <motion.div
-                          key={plan.id}
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-orange-500/50 transition-colors"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm truncate">{plan.name}</h4>
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                                <Clock className="w-3 h-3" />
-                                {formatDate(plan.created_at)}
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => duplicatePlan(plan)}
-                              className="shrink-0 h-8 w-8 p-0"
-                            >
-                              <Copy className="w-4 h-4" />
-                            </Button>
-                          </div>
-                          
-                          <div className="grid grid-cols-4 gap-1 mt-2 text-xs">
-                            <div className="bg-background/80 rounded px-2 py-1 text-center">
-                              <span className="text-orange-500 font-medium">{plan.total_calories || '-'}</span>
-                              <p className="text-muted-foreground text-[10px]">kcal</p>
-                            </div>
-                            <div className="bg-background/80 rounded px-2 py-1 text-center">
-                              <span className="text-red-400 font-medium">{plan.protein_grams || '-'}</span>
-                              <p className="text-muted-foreground text-[10px]">prot</p>
-                            </div>
-                            <div className="bg-background/80 rounded px-2 py-1 text-center">
-                              <span className="text-blue-400 font-medium">{plan.carbs_grams || '-'}</span>
-                              <p className="text-muted-foreground text-[10px]">carb</p>
-                            </div>
-                            <div className="bg-background/80 rounded px-2 py-1 text-center">
-                              <span className="text-yellow-400 font-medium">{plan.fat_grams || '-'}</span>
-                              <p className="text-muted-foreground text-[10px]">gord</p>
-                            </div>
-                          </div>
-                          
-                          {plan.description && (
-                            <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{plan.description}</p>
-                          )}
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </SheetContent>
-            </Sheet>
-            
-            <Button 
-              onClick={handleSave} 
-              disabled={saving || !planName.trim() || totals.calories === 0}
-              className="bg-orange-500 hover:bg-orange-600"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-              {saving ? 'Salvando...' : 'Salvar'}
-            </Button>
-          </div>
+          <Button 
+            onClick={handleSave} 
+            disabled={saving || !planName.trim() || totals.calories === 0}
+            className="bg-orange-500 hover:bg-orange-600 sm:self-end"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+            {saving ? 'Salvando...' : 'Salvar Cardápio'}
+          </Button>
         </div>
       </div>
     </div>

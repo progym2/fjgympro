@@ -1,25 +1,22 @@
-import React, { memo, forwardRef } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 
 interface PageTransitionProps {
   children: React.ReactNode;
 }
 
-// Ultra-fast transition - 30ms for perceived instant loading
-const PageTransition = memo(forwardRef<HTMLDivElement, PageTransitionProps>(({ children }, ref) => {
+// Ultra-fast fade transition - 100ms
+const PageTransition: React.FC<PageTransitionProps> = ({ children }) => {
   return (
     <motion.div
-      ref={ref}
-      initial={{ opacity: 0.9 }}
+      initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.03, ease: 'linear' }}
+      transition={{ duration: 0.1, ease: 'easeOut' }}
       className="w-full h-full"
     >
       {children}
     </motion.div>
   );
-}));
-
-PageTransition.displayName = 'PageTransition';
+};
 
 export default PageTransition;

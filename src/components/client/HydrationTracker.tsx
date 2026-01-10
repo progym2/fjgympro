@@ -1,18 +1,15 @@
-import React, { useState, useEffect, useCallback, useMemo, forwardRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Droplets, Timer, Bell, Play, Pause, RotateCcw, Target, 
   TrendingUp, Settings, Check, Clock, RefreshCw, Calendar, BarChart3,
-  BellRing, Smartphone, Trophy, Heart, ChevronDown, ArrowLeft
+  BellRing, Smartphone, Trophy, Heart
 } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
@@ -438,7 +435,7 @@ const TimerPreset: React.FC<{
   </motion.button>
 );
 
-const HydrationTracker = forwardRef<HTMLDivElement>((_, ref) => {
+const HydrationTracker: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [records, setRecords] = useState<HydrationRecord[]>([]);
@@ -854,42 +851,19 @@ const HydrationTracker = forwardRef<HTMLDivElement>((_, ref) => {
     );
   }
 
-  // Section collapse states
-  const [progressExpanded, setProgressExpanded] = useState(true);
-  const [glassesExpanded, setGlassesExpanded] = useState(true);
-  const [quickAddExpanded, setQuickAddExpanded] = useState(true);
-  const [timerExpanded, setTimerExpanded] = useState(true);
-  const [settingsExpanded, setSettingsExpanded] = useState(false);
-  const [recordsExpanded, setRecordsExpanded] = useState(true);
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="h-full flex flex-col overflow-hidden"
     >
-      {/* Back button */}
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b border-border/30">
-        <div className="flex items-center gap-3 p-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/client')}
-            className="h-8 px-2 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Voltar
-          </Button>
-        </div>
-      </div>
-
       <ClientPageHeader 
         title="HIDRATAÇÃO" 
         icon={<Droplets className="w-5 h-5" />} 
         iconColor="text-cyan-500" 
       />
 
-      <div className="flex-1 overflow-auto space-y-4 p-4">
+      <div className="flex-1 overflow-auto space-y-6">
 
       {/* Tabs for Today/Weekly/Achievements/Health */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -1120,189 +1094,107 @@ const HydrationTracker = forwardRef<HTMLDivElement>((_, ref) => {
         )}
       </AnimatePresence>
 
-      {/* Progress Card - Collapsible */}
-      <Card className="overflow-hidden border-cyan-500/20 bg-gradient-to-br from-card via-card to-cyan-500/5">
-        <Collapsible open={progressExpanded} onOpenChange={setProgressExpanded}>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-muted/20 transition-colors p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500/30 to-cyan-500/10 border border-cyan-500/20">
-                    <TrendingUp className="w-5 h-5 text-cyan-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-bebas text-xl tracking-wide text-foreground">PROGRESSO HOJE</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {progressPercentage.toFixed(0)}% da meta diária
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-cyan-500/10 text-cyan-500 border-cyan-500/20">
-                    {totalToday}ml
-                  </Badge>
-                  <motion.div
-                    animate={{ rotate: progressExpanded ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                  </motion.div>
-                </div>
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
+      {/* Progress Card */}
+      <div className="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 backdrop-blur-md rounded-xl p-6 border border-cyan-500/30">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-sm text-muted-foreground">Consumo Hoje</p>
+            <p className="text-5xl font-bold text-cyan-400">{totalToday}<span className="text-2xl">ml</span></p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-muted-foreground">Meta: {settings.daily_goal_ml}ml</p>
+            <p className="text-lg font-medium text-foreground">
+              Faltam: <span className="text-cyan-400">{remaining}ml</span>
+            </p>
+          </div>
+        </div>
+        
+        <div className="relative h-6 bg-background/50 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${progressPercentage}%` }}
+            className="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full"
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-sm font-bold text-white drop-shadow-md">
+              {progressPercentage.toFixed(0)}%
+            </span>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+          <span>Copos completados: {completedSlots}/{timeSlots.length}</span>
+          <span className={totalToday >= expectedIntake ? 'text-green-400' : 'text-yellow-400'}>
+            {totalToday >= expectedIntake ? '✓ No ritmo!' : '⚠ Atrasado'}
+          </span>
+        </div>
 
-          <CollapsibleContent>
-            <CardContent className="pt-0 px-4 pb-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Consumo Hoje</p>
-                  <p className="text-4xl font-bold text-cyan-400">{totalToday}<span className="text-xl">ml</span></p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Meta: {settings.daily_goal_ml}ml</p>
-                  <p className="text-lg font-medium text-foreground">
-                    Faltam: <span className="text-cyan-400">{remaining}ml</span>
-                  </p>
-                </div>
-              </div>
-              
-              <div className="relative h-5 bg-background/50 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progressPercentage}%` }}
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full"
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-bold text-white drop-shadow-md">
-                    {progressPercentage.toFixed(0)}%
-                  </span>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Copos completados: {completedSlots}/{timeSlots.length}</span>
-                <span className={totalToday >= expectedIntake ? 'text-green-400' : 'text-yellow-400'}>
-                  {totalToday >= expectedIntake ? '✓ No ritmo!' : '⚠ Atrasado'}
-                </span>
-              </div>
+        {progressPercentage >= 100 && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="mt-4 p-3 bg-green-500/20 rounded-lg text-center"
+          >
+            <p className="text-green-500 font-medium">🎉 Meta diária alcançada! Parabéns!</p>
+          </motion.div>
+        )}
+      </div>
 
-              {progressPercentage >= 100 && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="p-3 bg-green-500/20 rounded-lg text-center border border-green-500/30"
-                >
-                  <p className="text-green-500 font-medium">🎉 Meta diária alcançada! Parabéns!</p>
-                </motion.div>
-              )}
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
+      {/* Interactive Hourly Glasses - Main Feature */}
+      <div className="bg-card/80 backdrop-blur-md rounded-xl p-6 border border-cyan-500/30">
+        <h3 className="font-bebas text-lg mb-2 flex items-center gap-2 text-cyan-500">
+          <Clock className="w-5 h-5" />
+          DISTRIBUIÇÃO POR HORÁRIO
+        </h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Toque no copo para marcar que você bebeu. Copos cheios indicam água a beber.
+        </p>
+        
+        <div className="overflow-x-auto pb-2">
+          <div className="flex gap-3 min-w-max justify-center">
+            {timeSlots.map((slot, idx) => (
+              <InteractiveGlass
+                key={idx}
+                slot={slot}
+                onClick={() => addWaterForSlot(slot)}
+                disabled={saving}
+              />
+            ))}
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-center gap-6 mt-4 text-xs">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-gradient-to-b from-cyan-400/70 to-blue-500/70" />
+            <span className="text-muted-foreground">Água a beber</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">
+              <Check className="w-3 h-3 text-green-400" />
+            </div>
+            <span className="text-muted-foreground">Concluído</span>
+          </div>
+        </div>
+      </div>
 
-      {/* Interactive Hourly Glasses - Collapsible */}
-      <Card className="overflow-hidden border-blue-500/20 bg-gradient-to-br from-card via-card to-blue-500/5">
-        <Collapsible open={glassesExpanded} onOpenChange={setGlassesExpanded}>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-muted/20 transition-colors p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/30 to-blue-500/10 border border-blue-500/20">
-                    <Clock className="w-5 h-5 text-blue-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-bebas text-xl tracking-wide text-foreground">DISTRIBUIÇÃO POR HORÁRIO</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Toque no copo para marcar que você bebeu
-                    </p>
-                  </div>
-                </div>
-                <motion.div
-                  animate={{ rotate: glassesExpanded ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                </motion.div>
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-
-          <CollapsibleContent>
-            <CardContent className="pt-0 px-4 pb-4 space-y-4">
-              <div className="overflow-x-auto pb-2">
-                <div className="flex gap-3 min-w-max justify-center">
-                  {timeSlots.map((slot, idx) => (
-                    <InteractiveGlass
-                      key={idx}
-                      slot={slot}
-                      onClick={() => addWaterForSlot(slot)}
-                      disabled={saving}
-                    />
-                  ))}
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-center gap-6 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-gradient-to-b from-cyan-400/70 to-blue-500/70" />
-                  <span className="text-muted-foreground">Água a beber</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-green-500/30 flex items-center justify-center">
-                    <Check className="w-3 h-3 text-green-400" />
-                  </div>
-                  <span className="text-muted-foreground">Concluído</span>
-                </div>
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
-
-      {/* Quick Add Water - Collapsible */}
-      <Card className="overflow-hidden border-teal-500/20 bg-gradient-to-br from-card via-card to-teal-500/5">
-        <Collapsible open={quickAddExpanded} onOpenChange={setQuickAddExpanded}>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-muted/20 transition-colors p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-teal-500/30 to-teal-500/10 border border-teal-500/20">
-                    <Droplets className="w-5 h-5 text-teal-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-bebas text-xl tracking-wide text-foreground">ADICIONAR RÁPIDO</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Toque nas gotas para registrar
-                    </p>
-                  </div>
-                </div>
-                <motion.div
-                  animate={{ rotate: quickAddExpanded ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                </motion.div>
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-
-          <CollapsibleContent>
-            <CardContent className="pt-0 px-4 pb-4">
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 justify-items-center">
-                {[100, 150, 200, 250, 300, 500].map((amount) => (
-                  <InteractiveDroplet
-                    key={amount}
-                    amount={amount}
-                    onDrink={() => addWater(amount)}
-                    disabled={saving}
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
+      {/* Quick Add Water */}
+      <div className="bg-card/80 backdrop-blur-md rounded-xl p-6 border border-border/50">
+        <h3 className="font-bebas text-lg mb-4 flex items-center gap-2 text-cyan-500">
+          <Droplets className="w-5 h-5" />
+          ADICIONAR RÁPIDO
+        </h3>
+        
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 justify-items-center">
+          {[100, 150, 200, 250, 300, 500].map((amount) => (
+            <InteractiveDroplet
+              key={amount}
+              amount={amount}
+              onDrink={() => addWater(amount)}
+              disabled={saving}
+            />
+          ))}
+        </div>
+      </div>
 
       {/* Custom Timer */}
       <div className="bg-card/80 backdrop-blur-md rounded-xl p-6 border border-cyan-500/30">
@@ -1613,8 +1505,6 @@ const HydrationTracker = forwardRef<HTMLDivElement>((_, ref) => {
       </div>
     </motion.div>
   );
-});
-
-HydrationTracker.displayName = 'HydrationTracker';
+};
 
 export default HydrationTracker;

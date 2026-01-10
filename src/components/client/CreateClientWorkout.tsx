@@ -188,19 +188,6 @@ const CreateClientWorkout: React.FC<CreateClientWorkoutProps> = ({ onBack, onSuc
     handleCancelExit 
   } = useUnsavedChanges({ hasChanges });
 
-  // Handle ESC key to go back
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        handleBack();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hasChanges]);
-
   useEffect(() => {
     fetchAllExercises();
   }, []);
@@ -515,23 +502,15 @@ const CreateClientWorkout: React.FC<CreateClientWorkoutProps> = ({ onBack, onSuc
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2 sm:space-y-3">
-      {/* Fixed Back Button */}
-      <div className="sticky top-0 z-50 -mx-4 px-4 py-2 bg-background/95 backdrop-blur-md border-b border-border/50 -mt-2 mb-2">
-        <div className="flex items-center justify-between">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleBack} 
-            className="h-9 px-4 text-sm font-semibold border-2 border-primary/50 hover:border-primary hover:bg-primary/10 shadow-sm"
-          >
-            <ArrowLeft size={16} className="mr-2" /> Voltar
-          </Button>
-          <div className="flex items-center gap-2">
-            <Dumbbell className="w-4 h-4 text-primary" />
-            <h2 className="text-base sm:text-lg font-bebas text-primary tracking-wider">CRIAR MEU TREINO</h2>
-          </div>
-          <div className="w-20" /> {/* Spacer for balance */}
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <Dumbbell className="w-4 h-4 text-primary" />
+          <h2 className="text-base sm:text-lg font-bebas text-primary tracking-wider">CRIAR MEU TREINO</h2>
         </div>
+        <Button variant="ghost" size="sm" onClick={handleBack} className="h-7 text-xs">
+          <ArrowLeft size={14} className="mr-1" /> Voltar
+        </Button>
       </div>
 
       {/* Templates Section */}

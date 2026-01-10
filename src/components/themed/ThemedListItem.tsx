@@ -1,4 +1,4 @@
-import React, { memo, useMemo, forwardRef } from 'react';
+import React, { memo, useMemo } from 'react';
 import { useTheme, SportTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import { LucideIcon, ChevronRight } from 'lucide-react';
@@ -108,7 +108,7 @@ const getThemeStyles = (themeId: SportTheme) => {
   return styles[themeId] || styles.fire;
 };
 
-export const ThemedListItem = memo(forwardRef<HTMLButtonElement, ThemedListItemProps>(({
+export const ThemedListItem: React.FC<ThemedListItemProps> = memo(({
   icon: Icon,
   label,
   description,
@@ -116,13 +116,12 @@ export const ThemedListItem = memo(forwardRef<HTMLButtonElement, ThemedListItemP
   color,
   badge,
   disabled = false,
-}, ref) => {
+}) => {
   const { currentTheme } = useTheme();
   const themeStyles = useMemo(() => getThemeStyles(currentTheme), [currentTheme]);
 
   return (
     <motion.button
-      ref={ref}
       onClick={onClick}
       disabled={disabled}
       whileHover={{ x: 4 }}
@@ -183,7 +182,7 @@ export const ThemedListItem = memo(forwardRef<HTMLButtonElement, ThemedListItemP
       />
     </motion.button>
   );
-}));
+});
 
 ThemedListItem.displayName = 'ThemedListItem';
 

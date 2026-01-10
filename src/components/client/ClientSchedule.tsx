@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, startOfMonth, endOfMonth, isSameDay, isBefore, isAfter, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import WorkoutDayLog from '@/components/shared/WorkoutDayLog';
-import { useEscapeBack } from '@/hooks/useEscapeBack';
 
 interface WorkoutLog {
   id: string;
@@ -33,9 +32,6 @@ const ClientSchedule: React.FC = () => {
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
-
-  // ESC to go back
-  useEscapeBack({ to: '/client' });
 
   useEffect(() => {
     if (profile) {
@@ -142,22 +138,15 @@ const ClientSchedule: React.FC = () => {
       animate={{ opacity: 1 }}
       className="space-y-4"
     >
-      {/* Sticky Back Button */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm py-2 -mx-2 px-2 border-b border-border/30">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => navigate('/client')}
-          className="bg-card/80 hover:bg-card text-foreground border-border/50"
-        >
-          <ArrowLeft size={16} className="mr-2" /> Voltar
-        </Button>
-      </div>
-
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <CalendarIcon className="w-6 h-6 text-purple-500" />
-        <h2 className="text-2xl font-bebas text-purple-500 tracking-wider">AGENDA</h2>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <CalendarIcon className="w-6 h-6 text-purple-500" />
+          <h2 className="text-2xl font-bebas text-purple-500 tracking-wider">AGENDA</h2>
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/client')}>
+          <ArrowLeft size={16} className="mr-1" /> Voltar
+        </Button>
       </div>
 
       {/* Mini Calendar */}

@@ -1,6 +1,7 @@
-import React, { useState, forwardRef, memo } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dumbbell, Clock, Target, Weight, RotateCcw, Info, Play } from 'lucide-react';
+import { X, Dumbbell, Clock, Target, Weight, RotateCcw, Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -9,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import ExerciseVideoModal from './ExerciseVideoModal';
 
 interface Exercise {
   id: string;
@@ -54,7 +54,7 @@ const muscleColors: Record<string, string> = {
   'Cardio': 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
 };
 
-const WorkoutDetailsModal = forwardRef<HTMLDivElement, WorkoutDetailsModalProps>(({
+const WorkoutDetailsModal: React.FC<WorkoutDetailsModalProps> = ({
   isOpen,
   onClose,
   planName,
@@ -63,27 +63,7 @@ const WorkoutDetailsModal = forwardRef<HTMLDivElement, WorkoutDetailsModalProps>
   dayName,
   isToday,
   isLocked,
-}, ref) => {
-  const [videoModal, setVideoModal] = useState<{
-    exerciseName: string;
-    muscleGroup: string;
-    sets: number;
-    reps: number;
-    restSeconds: number;
-    videoUrl?: string | null;
-  } | null>(null);
-
-  const openVideoModal = (ex: WorkoutExercise) => {
-    setVideoModal({
-      exerciseName: ex.exercise?.name || 'Exercício',
-      muscleGroup: ex.exercise?.muscle_group || '',
-      sets: ex.sets,
-      reps: ex.reps,
-      restSeconds: ex.rest_seconds,
-      videoUrl: ex.exercise?.video_url
-    });
-  };
-
+}) => {
   // Group exercises by muscle group
   const groupedExercises = exercises.reduce((acc, ex) => {
     const group = ex.exercise?.muscle_group || 'Outros';
@@ -101,178 +81,151 @@ const WorkoutDetailsModal = forwardRef<HTMLDivElement, WorkoutDetailsModalProps>
   const estimatedMinutes = Math.ceil(estimatedTime / 60);
 
   return (
-    <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent ref={ref} className="max-w-lg max-h-[85vh] p-0 overflow-hidden bg-card border-border">
-          <DialogHeader className="p-4 pb-2 border-b border-border/50">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <DialogTitle className="text-lg font-bold flex items-center gap-2">
-                  <Dumbbell className="w-5 h-5 text-primary" />
-                  {planName}
-                </DialogTitle>
-                {planDescription && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                    {planDescription}
-                  </p>
-                )}
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <Badge variant="outline" className="text-xs">
-                    {dayName}
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-lg max-h-[85vh] p-0 overflow-hidden bg-card border-border">
+        <DialogHeader className="p-4 pb-2 border-b border-border/50">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <DialogTitle className="text-lg font-bold flex items-center gap-2">
+                <Dumbbell className="w-5 h-5 text-primary" />
+                {planName}
+              </DialogTitle>
+              {planDescription && (
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                  {planDescription}
+                </p>
+              )}
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <Badge variant="outline" className="text-xs">
+                  {dayName}
+                </Badge>
+                {isToday && (
+                  <Badge className="bg-primary/20 text-primary text-xs">
+                    Hoje
                   </Badge>
-                  {isToday && (
-                    <Badge className="bg-primary/20 text-primary text-xs">
-                      Hoje
-                    </Badge>
-                  )}
-                  {isLocked && (
-                    <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-500">
-                      Visualização
-                    </Badge>
-                  )}
-                </div>
+                )}
+                {isLocked && (
+                  <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-500">
+                    Visualização
+                  </Badge>
+                )}
               </div>
             </div>
-          </DialogHeader>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-2 p-4 bg-muted/30">
-            <div className="text-center p-2 rounded-lg bg-card/50">
-              <div className="text-lg font-bold text-primary">{exercises.length}</div>
-              <div className="text-[10px] text-muted-foreground">Exercícios</div>
-            </div>
-            <div className="text-center p-2 rounded-lg bg-card/50">
-              <div className="text-lg font-bold text-primary">{totalSets}</div>
-              <div className="text-[10px] text-muted-foreground">Séries</div>
-            </div>
-            <div className="text-center p-2 rounded-lg bg-card/50">
-              <div className="text-lg font-bold text-primary">~{estimatedMinutes}</div>
-              <div className="text-[10px] text-muted-foreground">Minutos</div>
-            </div>
           </div>
+        </DialogHeader>
 
-          {/* Tip for video */}
-          <div className="mx-4 p-2 rounded-lg bg-primary/10 border border-primary/20">
-            <p className="text-xs text-primary text-center flex items-center justify-center gap-2">
-              <Play className="w-4 h-4" />
-              Clique em qualquer exercício para ver o vídeo de execução
-            </p>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-2 p-4 bg-muted/30">
+          <div className="text-center p-2 rounded-lg bg-card/50">
+            <div className="text-lg font-bold text-primary">{exercises.length}</div>
+            <div className="text-[10px] text-muted-foreground">Exercícios</div>
           </div>
+          <div className="text-center p-2 rounded-lg bg-card/50">
+            <div className="text-lg font-bold text-primary">{totalSets}</div>
+            <div className="text-[10px] text-muted-foreground">Séries</div>
+          </div>
+          <div className="text-center p-2 rounded-lg bg-card/50">
+            <div className="text-lg font-bold text-primary">~{estimatedMinutes}</div>
+            <div className="text-[10px] text-muted-foreground">Minutos</div>
+          </div>
+        </div>
 
-          {/* Exercises List */}
-          <ScrollArea className="flex-1 max-h-[45vh]">
-            <div className="p-4 space-y-4">
-              {exercises.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Info className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                  <p>Nenhum exercício para este dia</p>
-                </div>
-              ) : (
-                Object.entries(groupedExercises).map(([muscleGroup, groupExercises]) => (
-                  <div key={muscleGroup}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge className={`text-xs ${muscleColors[muscleGroup] || 'bg-muted'}`}>
-                        <Target className="w-3 h-3 mr-1" />
-                        {muscleGroup}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        ({groupExercises.length} exercício{groupExercises.length > 1 ? 's' : ''})
-                      </span>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      {groupExercises.map((ex, index) => (
-                        <motion.button
-                          key={ex.id}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          onClick={() => openVideoModal(ex)}
-                          className="w-full bg-card/80 rounded-lg p-3 border border-border/50 hover:bg-primary/10 hover:border-primary/30 transition-colors text-left group"
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 rounded-full bg-primary/20 group-hover:bg-primary/30 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0 transition-colors">
-                              <Play className="w-4 h-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
-                                {ex.exercise?.name || 'Exercício'}
-                              </h4>
-                              {ex.exercise?.description && (
-                                <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                                  {ex.exercise.description}
-                                </p>
+        {/* Exercises List */}
+        <ScrollArea className="flex-1 max-h-[45vh]">
+          <div className="p-4 space-y-4">
+            {exercises.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Info className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                <p>Nenhum exercício para este dia</p>
+              </div>
+            ) : (
+              Object.entries(groupedExercises).map(([muscleGroup, groupExercises]) => (
+                <div key={muscleGroup}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge className={`text-xs ${muscleColors[muscleGroup] || 'bg-muted'}`}>
+                      <Target className="w-3 h-3 mr-1" />
+                      {muscleGroup}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      ({groupExercises.length} exercício{groupExercises.length > 1 ? 's' : ''})
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {groupExercises.map((ex, index) => (
+                      <motion.div
+                        key={ex.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="bg-card/80 rounded-lg p-3 border border-border/50"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-sm truncate">
+                              {ex.exercise?.name || 'Exercício'}
+                            </h4>
+                            {ex.exercise?.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                                {ex.exercise.description}
+                              </p>
+                            )}
+                            
+                            {/* Exercise Details */}
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              <div className="flex items-center gap-1 text-xs bg-muted/50 px-2 py-1 rounded">
+                                <Target className="w-3 h-3 text-primary" />
+                                <span>{ex.sets}x{ex.reps}</span>
+                              </div>
+                              
+                              {ex.weight_kg && ex.weight_kg > 0 && (
+                                <div className="flex items-center gap-1 text-xs bg-muted/50 px-2 py-1 rounded">
+                                  <Weight className="w-3 h-3 text-primary" />
+                                  <span>{ex.weight_kg}kg</span>
+                                </div>
                               )}
                               
-                              {/* Exercise Details */}
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                <div className="flex items-center gap-1 text-xs bg-muted/50 px-2 py-1 rounded">
-                                  <Target className="w-3 h-3 text-primary" />
-                                  <span>{ex.sets}x{ex.reps}</span>
-                                </div>
-                                
-                                {ex.weight_kg && ex.weight_kg > 0 && (
-                                  <div className="flex items-center gap-1 text-xs bg-muted/50 px-2 py-1 rounded">
-                                    <Weight className="w-3 h-3 text-primary" />
-                                    <span>{ex.weight_kg}kg</span>
-                                  </div>
-                                )}
-                                
-                                <div className="flex items-center gap-1 text-xs bg-muted/50 px-2 py-1 rounded">
-                                  <RotateCcw className="w-3 h-3 text-primary" />
-                                  <span>{ex.rest_seconds}s</span>
-                                </div>
-                                
-                                {ex.exercise?.equipment && (
-                                  <div className="flex items-center gap-1 text-xs bg-muted/50 px-2 py-1 rounded">
-                                    <Dumbbell className="w-3 h-3 text-muted-foreground" />
-                                    <span className="text-muted-foreground">{ex.exercise.equipment}</span>
-                                  </div>
-                                )}
+                              <div className="flex items-center gap-1 text-xs bg-muted/50 px-2 py-1 rounded">
+                                <RotateCcw className="w-3 h-3 text-primary" />
+                                <span>{ex.rest_seconds}s</span>
                               </div>
+                              
+                              {ex.exercise?.equipment && (
+                                <div className="flex items-center gap-1 text-xs bg-muted/50 px-2 py-1 rounded">
+                                  <Dumbbell className="w-3 h-3 text-muted-foreground" />
+                                  <span className="text-muted-foreground">{ex.exercise.equipment}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
-                        </motion.button>
-                      ))}
-                    </div>
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
-                ))
-              )}
-            </div>
-          </ScrollArea>
-
-          {/* Footer */}
-          <div className="p-4 border-t border-border/50 bg-muted/20">
-            {isLocked ? (
-              <p className="text-xs text-center text-muted-foreground">
-                🔒 Este treino só pode ser executado no dia correto
-              </p>
-            ) : (
-              <p className="text-xs text-center text-green-500">
-                ✓ Treino disponível para execução
-              </p>
+                </div>
+              ))
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </ScrollArea>
 
-      {/* Video Modal */}
-      {videoModal && (
-        <ExerciseVideoModal
-          isOpen={true}
-          onClose={() => setVideoModal(null)}
-          exerciseName={videoModal.exerciseName}
-          muscleGroup={videoModal.muscleGroup}
-          sets={videoModal.sets}
-          reps={videoModal.reps}
-          restSeconds={videoModal.restSeconds}
-          videoUrl={videoModal.videoUrl}
-        />
-      )}
-    </>
+        {/* Footer */}
+        <div className="p-4 border-t border-border/50 bg-muted/20">
+          {isLocked ? (
+            <p className="text-xs text-center text-muted-foreground">
+              🔒 Este treino só pode ser executado no dia correto
+            </p>
+          ) : (
+            <p className="text-xs text-center text-green-500">
+              ✓ Treino disponível para execução
+            </p>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
-});
+};
 
-WorkoutDetailsModal.displayName = 'WorkoutDetailsModal';
-
-export default memo(WorkoutDetailsModal);
+export default WorkoutDetailsModal;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, forwardRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Save, Calculator, Shield, Award, Key, Info, Database } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,7 +17,7 @@ import { useEscapeBack } from '@/hooks/useEscapeBack';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import CacheStatusIndicator from '@/components/shared/CacheStatusIndicator';
 
-const Profile = forwardRef<HTMLDivElement>((_, ref) => {
+const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -492,8 +492,6 @@ const Profile = forwardRef<HTMLDivElement>((_, ref) => {
       </div>
     </div>
   );
-});
-
-Profile.displayName = 'Profile';
+};
 
 export default Profile;

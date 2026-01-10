@@ -11,7 +11,7 @@ import { format, startOfWeek, endOfWeek, subWeeks, differenceInMinutes, addDays 
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { useThemeStyles } from '@/lib/themeStyles';
+
 interface WorkoutLog {
   id: string;
   workout_plan_id: string;
@@ -33,7 +33,6 @@ interface WeeklyStats {
 
 const WorkoutWeeklyStats: React.FC = () => {
   const { profile } = useAuth();
-  const themeStyles = useThemeStyles();
   const [stats, setStats] = useState<WeeklyStats>({
     totalWorkouts: 0,
     totalMinutes: 0,
@@ -174,7 +173,7 @@ const WorkoutWeeklyStats: React.FC = () => {
 
   if (loading) {
     return (
-      <div className={`${themeStyles.cardBg} backdrop-blur-md rounded-xl p-3 border ${themeStyles.cardBorder} animate-pulse`}>
+      <div className="bg-card/60 backdrop-blur-md rounded-xl p-3 border border-border/50 animate-pulse">
         <div className="h-16 bg-muted/30 rounded" />
       </div>
     );
@@ -184,8 +183,7 @@ const WorkoutWeeklyStats: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`${themeStyles.cardBg} backdrop-blur-sm rounded-xl border ${themeStyles.cardBorder} ${themeStyles.cardHoverBorder} overflow-hidden shadow-lg transition-all duration-300`}
-      style={{ boxShadow: `0 4px 20px ${themeStyles.glowColor}` }}
+      className="bg-card/60 backdrop-blur-md rounded-xl border border-border/50 overflow-hidden"
     >
       {/* Stats Header - Always visible */}
       <div 
@@ -194,53 +192,49 @@ const WorkoutWeeklyStats: React.FC = () => {
       >
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-lg ${themeStyles.iconBg}`}>
-              <TrendingUp size={14} className={themeStyles.iconColor} />
-            </div>
-            <span className={`text-xs font-bold uppercase tracking-wide ${themeStyles.titleColor}`}>
-              Esta Semana
-            </span>
+            <TrendingUp size={14} className="text-primary" />
+            <span className="text-xs font-medium text-muted-foreground">Esta Semana</span>
           </div>
           <div className="flex items-center gap-1">
             {stats.streak > 0 && (
-              <Badge className="bg-orange-500/20 text-orange-400 text-[10px] px-1.5 border border-orange-500/30">
+              <Badge className="bg-orange-500/20 text-orange-400 text-[10px] px-1.5">
                 <Flame size={10} className="mr-0.5" />
                 {stats.streak}d
               </Badge>
             )}
             {expanded ? (
-              <ChevronUp size={14} className={themeStyles.accentColor} />
+              <ChevronUp size={14} className="text-muted-foreground" />
             ) : (
-              <ChevronDown size={14} className={themeStyles.accentColor} />
+              <ChevronDown size={14} className="text-muted-foreground" />
             )}
           </div>
         </div>
 
         {/* Quick Stats Row */}
         <div className="grid grid-cols-3 gap-2">
-          <div className={`text-center p-2 rounded-lg ${themeStyles.highlightBg} border ${themeStyles.cardBorder}`}>
-            <div className={`text-lg font-bold ${themeStyles.titleColor}`}>{stats.totalWorkouts}</div>
-            <div className="text-[10px] text-foreground/70 font-medium">Treinos</div>
+          <div className="text-center p-1.5 rounded-lg bg-primary/10">
+            <div className="text-lg font-bold text-primary">{stats.totalWorkouts}</div>
+            <div className="text-[9px] text-muted-foreground">Treinos</div>
           </div>
-          <div className="text-center p-2 rounded-lg bg-green-500/20 border border-green-500/30">
-            <div className="text-lg font-bold text-green-500">
+          <div className="text-center p-1.5 rounded-lg bg-green-500/10">
+            <div className="text-lg font-bold text-green-400">
               {stats.totalMinutes >= 60 
                 ? `${Math.floor(stats.totalMinutes / 60)}h` 
                 : `${stats.totalMinutes}m`
               }
             </div>
-            <div className="text-[10px] text-foreground/70 font-medium">Tempo</div>
+            <div className="text-[9px] text-muted-foreground">Tempo</div>
           </div>
-          <div className="text-center p-2 rounded-lg bg-amber-500/20 border border-amber-500/30">
-            <div className="text-lg font-bold text-amber-500">{Math.round(goalProgress)}%</div>
-            <div className="text-[10px] text-foreground/70 font-medium">Meta</div>
+          <div className="text-center p-1.5 rounded-lg bg-amber-500/10">
+            <div className="text-lg font-bold text-amber-400">{Math.round(goalProgress)}%</div>
+            <div className="text-[9px] text-muted-foreground">Meta</div>
           </div>
         </div>
 
         {/* Goal Progress */}
-        <div className="mt-3">
-          <Progress value={goalProgress} className="h-2" />
-          <p className={`text-[10px] mt-1.5 text-center font-medium ${themeStyles.accentColor}`}>
+        <div className="mt-2">
+          <Progress value={goalProgress} className="h-1.5" />
+          <p className="text-[9px] text-muted-foreground mt-1 text-center">
             {stats.totalWorkouts}/{weeklyGoal} treinos na meta semanal
           </p>
         </div>
@@ -252,14 +246,14 @@ const WorkoutWeeklyStats: React.FC = () => {
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
-          className={`border-t ${themeStyles.cardBorder} ${themeStyles.cardBg}`}
+          className="border-t border-border/50"
         >
           <div className="p-3 space-y-3">
             {/* Weekly Chart */}
             <div>
               <div className="flex items-center gap-1.5 mb-2">
-                <BarChart3 size={12} className={themeStyles.iconColor} />
-                <span className={`text-[10px] font-bold uppercase tracking-wide ${themeStyles.titleColor}`}>
+                <BarChart3 size={12} className="text-primary" />
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
                   Evolução Semanal
                 </span>
               </div>
@@ -280,16 +274,16 @@ const WorkoutWeeklyStats: React.FC = () => {
                         transition={{ delay: index * 0.05, duration: 0.3 }}
                         className={`w-full max-w-6 rounded-t-sm ${
                           count > 0 
-                            ? `bg-gradient-to-t from-primary to-primary/70` 
+                            ? 'bg-gradient-to-t from-primary to-primary/70' 
                             : 'bg-muted/40'
                         } ${isToday ? 'ring-1 ring-primary/50' : ''}`}
                         title={`${count} treino${count !== 1 ? 's' : ''}`}
                       />
-                      <span className={`text-[9px] font-medium ${isToday ? `${themeStyles.titleColor} font-bold` : 'text-foreground/70'}`}>
+                      <span className={`text-[8px] ${isToday ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
                         {day}
                       </span>
                       {count > 0 && (
-                        <span className={`text-[9px] font-bold -mt-0.5 ${themeStyles.titleColor}`}>{count}</span>
+                        <span className="text-[8px] text-primary font-bold -mt-0.5">{count}</span>
                       )}
                     </div>
                   );
@@ -298,10 +292,10 @@ const WorkoutWeeklyStats: React.FC = () => {
             </div>
 
             {/* History Section */}
-            <div className={`border-t ${themeStyles.cardBorder} pt-3`}>
+            <div className="border-t border-border/30 pt-3">
               <div className="flex items-center gap-1.5 mb-2">
-                <Calendar size={12} className={themeStyles.iconColor} />
-                <span className={`text-[10px] font-bold uppercase tracking-wide ${themeStyles.titleColor}`}>
+                <Calendar size={12} className="text-muted-foreground" />
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
                   Histórico Recente
                 </span>
               </div>
@@ -318,17 +312,17 @@ const WorkoutWeeklyStats: React.FC = () => {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className={`flex items-center justify-between p-2 rounded-lg ${themeStyles.tipBg} hover:opacity-80 transition-colors border ${themeStyles.tipBorder}`}
+                      className="flex items-center justify-between p-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
                           <Trophy size={8} className="text-green-400" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[11px] font-semibold text-foreground truncate">
+                          <p className="text-[10px] font-medium truncate">
                             {log.workout_plan?.name || 'Treino'}
                           </p>
-                          <p className="text-[10px] text-foreground/60 font-medium">
+                          <p className="text-[9px] text-muted-foreground">
                             {format(new Date(log.completed_at!), "EEE, dd/MM", { locale: ptBR })}
                           </p>
                         </div>
@@ -345,10 +339,10 @@ const WorkoutWeeklyStats: React.FC = () => {
 
             {/* Week Summary */}
             {stats.workoutsThisWeek.length > 0 && (
-              <div className={`pt-2 border-t ${themeStyles.cardBorder}`}>
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-foreground/70 font-medium">Média por treino</span>
-                  <span className={`font-semibold ${themeStyles.titleColor}`}>
+              <div className="pt-2 border-t border-border/30">
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="text-muted-foreground">Média por treino</span>
+                  <span className="text-primary font-medium">
                     {stats.totalWorkouts > 0 
                       ? `${Math.round(stats.totalMinutes / stats.totalWorkouts)}min`
                       : '-'
